@@ -358,6 +358,10 @@
   .section { padding: var(--section-y) var(--pad); }
   .stack { display: flex; flex-direction: column; }
 
+  /* alternating section backgrounds (legacy: inline style="background:var(--sec-*)") */
+  .sec-light { background: var(--color-surface-section-light); }
+  .sec-tint { background: var(--color-surface-section-tint); }
+
   .sec-title { font-weight: 400; font-size: 40px; color: var(--color-text-heading-dark); text-transform: capitalize; }
   .sec-lead { font-weight: 400; font-size: 16px; color: var(--color-text-tertiary); }
   .sub-title { font-weight: 500; font-size: 24px; color: var(--color-text-primary); }
@@ -547,6 +551,15 @@
     display: flex; align-items: center; justify-content: center; padding: 8px 20px;
     font-weight: 500; font-size: 12px; color: var(--color-action-primary-ink); white-space: nowrap;
   }
+
+  /* ===== ghost button on dark surfaces (was duplicated in 5 page blocks) ===== */
+  .btn-ghost {
+    background: var(--color-charcoal-750); border: 1px solid var(--color-gray-500);
+    color: var(--color-white); height: 40px; width: 200px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; padding: 8px 20px;
+    font-weight: 500; font-size: 12px; white-space: nowrap;
+  }
+  .btn-ghost:hover { background: var(--color-charcoal-650); }
 
   /* ===== final CTA ===== */
   .cta-sec { padding: var(--section-y) var(--pad); }
