@@ -82,3 +82,16 @@ import { footerBrand, footerColumns, footerLegal } from '../../data/navigation';
     ></path>
   </svg>
 </button>
+
+<script>
+  // Back-to-top: appears after 600px of scroll (was duplicated per page).
+  const tt = document.querySelector<HTMLButtonElement>('.to-top');
+  if (tt) {
+    window.addEventListener(
+      'scroll',
+      () => tt.classList.toggle('show', window.pageYOffset > 600),
+      { passive: true }
+    );
+    tt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+</script>

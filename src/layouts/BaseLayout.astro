@@ -79,5 +79,51 @@ const title = fullTitle(seo.title);
     <MegaNav />
 
     <slot name="body-end" />
+
+    <script>
+      // Scroll reveal (progressive enhancement) — parity with legacy app.js.
+      // Gated on .js-reveal so the hidden state never applies without JS;
+      // skipped under prefers-reduced-motion / missing IntersectionObserver.
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      if (!reduce && 'IntersectionObserver' in window) {
+        const SELECTOR = [
+          '.hero-inner > *', '.calc-hero > *',
+          '.section > *', '.faq-cols', '.cta-box',
+          'footer .foot-top > *', 'footer .foot-bottom',
+        ].join(',');
+
+        const blocks = Array.from(document.querySelectorAll<HTMLElement>(SELECTOR)).filter(
+          (el) => !el.classList.contains('sr-only')
+        );
+
+        if (blocks.length) {
+          document.documentElement.classList.add('js-reveal');
+          blocks.forEach((el) => el.setAttribute('data-reveal', ''));
+
+          // gentle stagger between blocks that share a parent
+          blocks.forEach((el) => {
+            const sibs = Array.from(el.parentNode!.children).filter((c) =>
+              c.hasAttribute('data-reveal')
+            );
+            const i = sibs.indexOf(el);
+            if (i > 0) el.style.transitionDelay = `${Math.min(i * 70, 280)}ms`;
+          });
+
+          const io = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((e) => {
+                if (e.isIntersecting) {
+                  e.target.classList.add('is-visible');
+                  io.unobserve(e.target);
+                }
+              });
+            },
+            { rootMargin: '0px 0px -8% 0px', threshold: 0.06 }
+          );
+
+          blocks.forEach((el) => io.observe(el));
+        }
+      }
+    </script>
   </body>
 </html>
