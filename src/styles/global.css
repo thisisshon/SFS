@@ -1,0 +1,45 @@
+/* =====================================================================
+   Shriram Financial Services — global stylesheet (single source of truth)
+
+   Structure:
+     1. Tailwind entry
+     2. @theme — THE DESIGN TOKENS (colors, type, spacing, radii, shadows)
+        ⚠ Token VALUES are placeholders pending the legacy-style audit and,
+        later, the cleaned design system returning from Figma. Token NAMES
+        are the stable API — components bind to names, never raw values.
+     3. Base layer — global element defaults (font, line-height, resets)
+     4. Components layer — the design-system component classes
+   ===================================================================== */
+
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/* 2. DESIGN TOKENS — to be populated from the legacy style audit.     */
+/* ------------------------------------------------------------------ */
+@theme {
+  /* Font: the site's single typeface. */
+  --font-sans: 'Outfit', sans-serif;
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Base — global element defaults.                                  */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  /* Site-wide rule: every text element renders at line-height 1.5. */
+  body {
+    line-height: 1.5;
+  }
+
+  /* Form controls don't inherit font-family by default — force it so any
+     new interactive element is covered automatically. */
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
