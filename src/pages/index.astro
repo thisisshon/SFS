@@ -1,0 +1,3146 @@
+---
+/**
+ * Homepage — /
+ *
+ * The ONLY page with the legacy `home.css` fork. This port dissolves the fork
+ * into a scoped page <style> while preserving pixel parity:
+ *   - Chrome (nav + mega-overlay) comes from BaseLayout (Header/MegaNav); the
+ *     fork's `.ds-nav` / `.ds-mobile-menu` / `#nav-panel` markup + CSS + wiring
+ *     scripts are dropped (byte-identical to shared — homepage-port-spec §1).
+ *   - Footer is genuinely different from the shared one, so it stays page-local
+ *     via footer="custom"; its alpha-whites are flattened to solid hex over the
+ *     #0a0b07 footer bg (rule 5 — see the flatten table in the <style>).
+ *   - Body/section bg keeps the fork's #fffcf3 (--color-surface-page-home) on a
+ *     `.home` wrapper; the global body bg is untouched.
+ *   - "Inter" font references become var(--font-sans) (Outfit) — rule 3.
+ *   - Tailwind preflight / @property / @theme token block / scrollbar-hiding are
+ *     dropped (Astro+Tailwind v4 + global.css provide those).
+ *   - The visually-distinctive features (hero video wash, pinned "Why Shriram"
+ *     scroll section, dark product-card reveal grid, Antara band) keep every
+ *     gradient / animation / scroll value EXACT.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { organizationSchema, faqPageSchema } from '../lib/seo';
+
+// Homepage FAQ — verbatim from the 7 <details> below, same order. Drives the
+// FAQPage JSON-LD; the visible markup stays the native <details> list.
+const FAQS = [
+  {
+    q: 'What is a Demat Account?',
+    a: 'A Demat Account holds your financial shares, mutual funds, and bonds safely in an electronic format. It is mandatory for trading in the Indian stock market.',
+  },
+  {
+    q: 'What are the benefits of a Demat Account?',
+    a: 'A Demat account completely eliminates the risk of theft, loss, or damage to physical paper certificates. It enables instant, one-click online buying and selling of shares, reduces paperwork, and ensures all your investments are visible in one secure place.',
+  },
+  {
+    q: 'What are the brokerage charges for options trading with Shriram Securities?',
+    a: 'Shriram Securities charges a flat ₹20 per executed order for options trading. Use our Brokerage Calculator to estimate total costs including STT, GST, and exchange charges.',
+  },
+  {
+    q: 'Are there any charges associated with the Demat Account?',
+    a: 'Account opening and Annual Maintenance Charges (AMC) are ₹0 for both Trading and Demat Accounts. Standard SEBI and exchange-mandated statutory charges (STT, exchange transaction charges, GST, SEBI fees) apply to all trades as per regulations.',
+  },
+  {
+    q: 'What is Intraday brokerage and Option brokerage?',
+    a: 'Intraday brokerage is the small fee charged when you buy and sell a stock on the exact same day. Option brokerage is a fixed flat fee (like our standard ₹20 per order) charged for trading in options contracts, regardless of how big or small the transaction volume is.',
+  },
+  {
+    q: 'Can I have multiple Demat Accounts?',
+    a: 'Yes, absolutely! Legally, you can open more than one Demat account in India, provided they are opened with different stockbrokers. However, you can only link one Demat account to your primary trading account at a time.',
+  },
+  {
+    q: 'Is a Demat Account mandatory for applying for an IPO?',
+    a: 'Yes. When a new company lists on the share market, its digital shares must be deposited directly into an electronic account. Therefore, you must have an active Demat account to apply for and receive shares in an IPO.',
+  },
+];
+
+const seo = {
+  // Legacy <title> carried a duplicated site-name suffix — dropped (BaseLayout
+  // appends the site name once).
+  title: 'Online Stock Trading & Wealth Management | Shriram Financial Services',
+  description:
+    "Trade stocks, invest in mutual funds, and manage wealth with India's SEBI-registered advisor-led platform. Zero delivery brokerage. Open a free Demat account today.",
+  path: '/',
+  jsonLd: [
+    organizationSchema(Astro.site!.href),
+    faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a }))),
+  ],
+};
+---
+
+<BaseLayout seo={seo} footer="custom">
+  <div class="home">
+    <!-- ================= HERO ================= -->
+    <section class="el-sec">
+      <div class="hero-wave" aria-hidden="true"></div>
+      <video
+        id="hero-video"
+        class="hero-video"
+        autoplay
+        muted
+        playsinline
+        loop
+        preload="auto"
+        aria-hidden="true"
+      >
+        <source src="/videos/9150545-hd_1920_1080_24fps.mp4" type="video/mp4" />
+      </video>
+      <!-- Figma 863:6389 — cream gradient wash over the video (CSS, not an image) -->
+      <div
+        class="hero-box"
+        aria-hidden="true"
+        style="background:linear-gradient(172deg, rgba(255,252,243,0) 60%, rgb(255,252,243) 92%)"
+      >
+      </div>
+      <div class="hero-box-2">
+        <!-- Left text -->
+        <div class="reveal reveal-1 hero-box-3">
+          <h1 class="hero-title" style="font-family:var(--font-sans)">
+            We help you level up.<br />
+            <span
+              ><span class="hero-label" style="color:#4d6710">Expert-Driven</span> strategies; now yours.</span
+            >
+          </h1>
+          <p class="hero-text">
+            Invest with confidence using India's most trusted, advisor-led platform.
+          </p>
+          <!-- Trust badges -->
+          <div class="hero-box-4">
+            <div class="hero-box-5">
+              <span class="hero-label-2">Trusted By 10L+ Investors</span>
+            </div><div class="hero-box-5">
+              <span class="hero-label-3"></span>
+              <span class="hero-label-2">In-House Analyst Team</span>
+            </div><div class="hero-box-5">
+              <span class="hero-label-3"></span>
+              <span class="hero-label-2">Pan-India Presence</span>
+            </div>
+          </div>
+          <div class="hero-box-6">
+            <a href="/about/antara/" class="hero-link" style="width:220px">Explore Shriram X</a>
+          </div>
+        </div>
+        <!-- Right: glass Open Demat card -->
+        <div class="reveal reveal-2 hero-box-7">
+          <div class="hero-box-8">
+            <!-- Title + badges (gap-[16px] per Figma) -->
+            <div class="hero-box-9">
+              <h2 class="hero-title-2">
+                Open a Demat Account
+              </h2>
+              <div class="hero-box-10">
+                <div class="hero-box-11">
+                  <span class="hero-label-4">100% Paperless</span>
+                </div><div class="hero-box-11">
+                  <span class="hero-label-3"></span>
+                  <span class="hero-label-4">Open Within Minutes</span>
+                </div><div class="hero-box-11">
+                  <span class="hero-label-3"></span>
+                  <span class="hero-label-4">SEBI Regulated</span>
+                </div>
+              </div>
+            </div>
+            <!-- Form fields (gap-[48px] from title block, gap-[24px] between fields) -->
+            <div class="hero-box-12">
+              <!-- Mobile input (Figma 163:3230 — 48px, 18px flag circle, 10px label, 14px number) -->
+              <div class="hero-box-13">
+                <span class="hero-label-5">
+                  <img src="/images/india-flag.png" alt="India" class="hero-img" />
+                </span>
+                <span class="hero-label-6"></span>
+                <div class="hero-box-14">
+                  <label for="hero-mobile" class="hero-label-7">Mobile Number</label>
+                  <div class="hero-box-15">
+                    <span class="hero-label-8">+91</span>
+                    <input id="hero-mobile" type="tel" placeholder="00000 00000" class="hero-field" />
+                  </div>
+                </div>
+              </div>
+              <!-- Consent text -->
+              <p class="hero-text-2">
+                By continuing, I agree to receive the OTP and updates via SMS/WhatsApp
+              </p>
+              <!-- Buttons (gap-[16px]) -->
+              <div class="hero-box-9">
+                <a
+                  id="hero-get-started"
+                  href="https://signup.way2wealth.com/way2wealth/individual_new"
+                  class="hero-link-2"
+                >
+                  Get Started
+                </a>
+                <p class="hero-text-3">
+                  Already a part of us? <a href="/about/antara-web-login/" class="hero-link-3"
+                    >Login Here.</a
+                  >
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= WHY SHRIRAM (pinned scroll section) ================= -->
+    <section class="el-sec-2" id="differ-pin-wrap" style="height:280vh">
+      <div class="why-pin why-box">
+        <!-- Figma 163:3255 — block sits 32px from screen edges, not site-wrap width -->
+        <div class="why-box-2">
+          <div
+            class="why-fill why-box-3"
+            style="background:radial-gradient(ellipse 132% 312% at 117% -4%,#4F583B 0%,#3F4733 14%,#363A2C 25%,#2a2d23 38%,#1d1d1d 55%,#1d1d1d 100%);"
+          >
+            <!-- Shriram history collage on the left at 10% opacity (Figma 222:3636 / 185:3410);
+                 drifts slowly upward with scroll progress -->
+            <div
+              class="why-box-4"
+              style="-webkit-mask-image:linear-gradient(to right,#000 55%,transparent 95%);mask-image:linear-gradient(to right,#000 55%,transparent 95%);"
+            >
+              <img id="differ-collage" src="/images/differ-collage.png" alt="" class="why-img" />
+            </div>
+            <!-- Same gradient painted ON TOP, fading in left->right to bury the photo edge -->
+            <div
+              class="why-box-5"
+              style="background:radial-gradient(ellipse 132% 312% at 117% -4%,#4F583B 0%,#3F4733 14%,#363A2C 25%,#2a2d23 38%,#1d1d1d 55%,#1d1d1d 100%);-webkit-mask-image:linear-gradient(to right,transparent 25%,#000 58%);mask-image:linear-gradient(to right,transparent 25%,#000 58%);"
+            >
+            </div>
+            <!-- Centered columns (Figma placement); right rail spans the entire section height -->
+            <div class="why-box-6">
+              <!-- Left: heading + subtitle (Figma: 648px col, 40px/18px type, 16px gap) -->
+              <div class="why-box-7">
+                <h2 class="why-title" style="font-family:var(--font-sans);color:#fff">
+                  Why Shriram Financial <span class="why-label">Services?</span>
+                </h2>
+                <p class="why-text">
+                  Real advisors. Smart tech. Better returns. SEBI-registered research paired with
+                  dedicated relationship managers — so every financial decision you make is backed by
+                  expertise.
+                </p>
+              </div>
+              <!-- Right: full-height card rail with glassy top/bottom edge fades -->
+              <div class="why-box-8">
+                <div id="differ-scroll" class="why-box-9">
+                  <div class="why-box-10" style="box-shadow:0 18px 40px -12px rgba(243,184,63,0.30);">
+                    <div class="why-box-11">
+                      <div class="why-box-12">
+                        <h3 class="why-subtitle" style="font-family:var(--font-sans)">
+                          I. Research-Backed Insights
+                        </h3>
+                        <p class="why-text-2">
+                          Investment and portfolio insights powered by comprehensive market research
+                        </p>
+                      </div>
+                      <ul class="why-list">
+                        <li>
+                          Access high-conviction, SEBI-registered technical and fundamental research
+                          to capture sharp market movements.
+                        </li><li>
+                          Trade and invest with confidence using deep-dive macroeconomic reports and
+                          real-time data analytics.
+                        </li>
+                      </ul>
+                    </div>
+                  </div><div class="why-box-10" style="box-shadow:0 18px 40px -12px rgba(243,184,63,0.30);">
+                    <div class="why-box-11">
+                      <div class="why-box-12">
+                        <h3 class="why-subtitle" style="font-family:var(--font-sans)">
+                          II. A Relationship-Led Human Experience
+                        </h3>
+                        <p class="why-text-2">
+                          A dedicated relationship manager and personalised advice at every financial
+                          milestone
+                        </p>
+                      </div>
+                      <ul class="why-list">
+                        <li>
+                          Get matched with a dedicated RM aligned to your goals and risk profile,
+                          with portfolio reviews by call or in person.
+                        </li><li>
+                          Receive personalised, human guidance at every milestone — never
+                          algorithm-only recommendations.
+                        </li>
+                      </ul>
+                    </div>
+                  </div><div class="why-box-10" style="box-shadow:0 18px 40px -12px rgba(243,184,63,0.30);">
+                    <div class="why-box-11">
+                      <div class="why-box-12">
+                        <h3 class="why-subtitle" style="font-family:var(--font-sans)">
+                          III. Partner Network
+                        </h3>
+                        <p class="why-text-2">
+                          Institutional-grade products and a pan-India network, opened up to retail
+                          investors
+                        </p>
+                      </div>
+                      <ul class="why-list">
+                        <li>
+                          Access exclusive PMS and premium bond offerings usually reserved for
+                          institutions.
+                        </li><li>
+                          Tap a pan-India network of leading financial institutions through a single
+                          trusted partner.
+                        </li>
+                      </ul>
+                    </div>
+                  </div><div class="why-box-10" style="box-shadow:0 18px 40px -12px rgba(243,184,63,0.30);">
+                    <div class="why-box-11">
+                      <div class="why-box-12">
+                        <h3 class="why-subtitle" style="font-family:var(--font-sans)">
+                          IV. Gentle Reminders, Zero Stress
+                        </h3>
+                        <p class="why-text-2">
+                          Timely, relevant nudges that keep you on track without the noise
+                        </p>
+                      </div>
+                      <ul class="why-list">
+                        <li>
+                          Get instant entry and exit alerts and watchlist triggers — only when they
+                          actually matter.
+                        </li><li>
+                          Stay on top with smart rebalancing nudges and zero clutter — just the
+                          signals relevant to your portfolio.
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div class="differ-fade differ-fade-top" aria-hidden="true"></div>
+                <div class="differ-fade differ-fade-bottom" aria-hidden="true"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= STRATEGIC ADVISORY ================= -->
+    <section class="el-sec-2">
+      <div class="advisory-box">
+        <h2 class="why-title" style="font-family:var(--font-sans);color:#2e3914">
+          Strategic Advisory For Every Investor
+        </h2>
+        <p class="advisory-text">
+          First SIP or full portfolio rebalance — every move is backed by SEBI-registered research
+          and a dedicated advisor who knows your goals.
+        </p>
+        <div class="advisory-box-2">
+          <div class="advisory-card group advisory-box-3">
+            <!-- Content + icon slide up on hover (per 4-card video) -->
+            <div class="advisory-box-4">
+              <img src="/images/advisory/icon-1.png" alt="" class="advisory-img" />
+              <div class="advisory-box-5">
+                <h3 class="advisory-subtitle">Daily Expert Stock Picks</h3>
+                <p class="advisory-text-2">
+                  Get daily, SEBI-registered stock recommendations and market trends before you start
+                  your trading day.
+                </p>
+              </div>
+            </div>
+            <!-- Citrus pill CTA slides up from below -->
+            <a href="/research/" class="advisory-link">
+              Explore Now
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="advisory-box-6"><path d="M2 8h11M9 4l4 4-4 4"></path></svg>
+            </a>
+          </div><div class="advisory-card group advisory-box-3">
+            <!-- Content + icon slide up on hover (per 4-card video) -->
+            <div class="advisory-box-4">
+              <img src="/images/advisory/icon-2.png" alt="" class="advisory-img" />
+              <div class="advisory-box-5">
+                <h3 class="advisory-subtitle">Share Market Trading</h3>
+                <p class="advisory-text-2">
+                  Buy and sell shares seamlessly on the NSE and BSE with a secure platform.
+                </p>
+              </div>
+            </div>
+            <!-- Citrus pill CTA slides up from below -->
+            <a href="/products/equity/" class="advisory-link">
+              Explore Market
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="advisory-box-6"><path d="M2 8h11M9 4l4 4-4 4"></path></svg>
+            </a>
+          </div><div class="advisory-card group advisory-box-3">
+            <!-- Content + icon slide up on hover (per 4-card video) -->
+            <div class="advisory-box-4">
+              <img src="/images/advisory/icon-3.png" alt="" class="advisory-img" />
+              <div class="advisory-box-5">
+                <h3 class="advisory-subtitle">Today's Trading Ideas</h3>
+                <p class="advisory-text-2">Learn proven techniques from seasoned traders.</p>
+              </div>
+            </div>
+            <!-- Citrus pill CTA slides up from below -->
+            <a href="/research/technical/" class="advisory-link">
+              Discover Trading Ideas
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="advisory-box-6"><path d="M2 8h11M9 4l4 4-4 4"></path></svg>
+            </a>
+          </div><div class="advisory-card group advisory-box-3">
+            <!-- Content + icon slide up on hover (per 4-card video) -->
+            <div class="advisory-box-4">
+              <img src="/images/advisory/icon-4.png" alt="" class="advisory-img" />
+              <div class="advisory-box-5">
+                <h3 class="advisory-subtitle">Market Guidance</h3>
+                <p class="advisory-text-2">
+                  Stay aware and updated with real-time analysis and clear, human advice.
+                </p>
+              </div>
+            </div>
+            <!-- Citrus pill CTA slides up from below -->
+            <a href="/about/support/" class="advisory-link">
+              Connect With An Advisor
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="advisory-box-6"><path d="M2 8h11M9 4l4 4-4 4"></path></svg>
+            </a>
+          </div>
+        </div>
+        <!-- Nudge CTA (Figma: #FFF0D7 bar with illustration) -->
+        <div class="advisory-box-7">
+          <div class="advisory-box-8">
+            <img
+              src="/images/advisory/nudge-illustration.svg"
+              alt=""
+              width="170"
+              height="141"
+              class="advisory-img-2"
+            />
+          </div>
+          <div class="advisory-box-9">
+            <div>
+              <p class="advisory-text-3">
+                Confused About Where to Start? <span class="advisory-label"
+                  >We've got your back.</span
+                >
+              </p>
+              <p class="advisory-text-4">
+                Our specialists review your current savings and build a personalised wealth plan — in
+                a free 15-minute call.
+              </p>
+            </div>
+            <a href="/about/support/" class="advisory-link-2">Schedule a Call</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PRODUCTS (dark reveal grid) ================= -->
+    <section class="el-sec-3">
+      <div
+        class="product-box"
+        style="background:radial-gradient(ellipse 132% 312% at 117% -4%,#4F583B 0%,#3F4733 14%,#363A2C 25%,#2a2d23 38%,#1d1d1d 55%,#1d1d1d 100%);"
+      >
+        <div class="card-wrap product-box-2">
+          <div class="product-box-3">
+            <div>
+              <h2 class="why-title" style="font-family:var(--font-sans);color:#fff">
+                Trade, Invest or Borrow — <span class="why-label">All at One Place.</span>
+              </h2>
+              <p class="product-text">
+                From expert advice to instant, one-tap investments, everything you need to manage your
+                money is right here.
+              </p>
+            </div>
+            <a href="/products/" class="product-link">
+              View All Our Products →
+            </a>
+          </div>
+          <div class="product-box-4" id="products-grid">
+            <a
+              href="/products/equity/"
+              class="product-card-reveal group product-link-2"
+              data-row="1"
+              style="transition-delay:0ms"
+            >
+              <!-- Giant citrus circle shrinks into the 80px top-right circle on hover -->
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <!-- Content: small at rest, expands to full size on hover -->
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 55.5 50.5"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Frame 2147226018">
+                    <path
+                      id="Vector"
+                      d="M1.25 49.2498H51.1331"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M7.48457 49.25V30.6694M19.9553 49.25V18.2823M32.4261 49.25V24.4758M44.8969 49.25V5.89516"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_3"
+                      d="M35.5438 10.5403L44.8969 1.25L54.25 10.5403"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">Stocks / Shares</h3>
+                <p class="product-text-2">
+                  Buy and sell shares across NSE &amp; BSE with expert stock recommendations,
+                  real-time market data, and zero brokerage on delivery trades.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/mtf/"
+              class="product-card-reveal group product-link-2"
+              data-row="1"
+              style="transition-delay:90ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 46.5 51.5"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Frame 2147226014">
+                    <path
+                      id="Vector"
+                      d="M23.25 15.95C35.4003 15.95 45.25 12.6593 45.25 8.6C45.25 4.54071 35.4003 1.25 23.25 1.25C11.0997 1.25 1.25 4.54071 1.25 8.6C1.25 12.6593 11.0997 15.95 23.25 15.95Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M45.25 25.75C45.25 29.817 35.4722 33.1 23.25 33.1C11.0278 33.1 1.25 29.817 1.25 25.75"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_3"
+                      d="M1.25 8.6V42.9C1.25 46.967 11.0278 50.25 23.25 50.25C35.4722 50.25 45.25 46.967 45.25 42.9V8.6"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">
+                  Margin Trading Facility (MTF)
+                </h3>
+                <p class="product-text-2">
+                  Trade with leverage and increase your buying power with flexible margin options.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/derivative/"
+              class="product-card-reveal group product-link-2"
+              data-row="1"
+              style="transition-delay:180ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 56 48"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Icon">
+                    <path
+                      id="Vector"
+                      d="M2 6V38C2 39.0609 2.49167 40.0783 3.36683 40.8284C4.242 41.5786 5.42899 42 6.66667 42H44"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M39.334 18L27.6673 28L18.334 20L11.334 26"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">Derivatives</h3>
+                <p class="product-text-2">
+                  Trade Futures &amp; Options on NSE &amp; BSE. Hedge your portfolio or capitalise on
+                  short-term opportunities.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/mutual-funds/"
+              class="product-card-reveal group product-link-2"
+              data-row="1"
+              style="transition-delay:270ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 49.5006 49.5006"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Frame 2147226016">
+                    <path
+                      id="Vector"
+                      d="M45.9968 24.7482C47.2998 24.7482 48.3691 23.6883 48.2393 22.3922C47.6951 16.9724 45.2936 11.9075 41.4418 8.05626C37.5901 4.205 32.5252 1.80436 27.1058 1.2613C25.8075 1.13146 24.75 2.20088 24.75 3.504V22.3899C24.75 23.016 24.9987 23.6164 25.4414 24.0592C25.8841 24.5019 26.4845 24.7506 27.1105 24.7506L45.9968 24.7482Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M47.2708 33.9021C45.7468 37.4379 43.3631 40.5536 40.328 42.9768C37.293 45.4 33.6991 47.0569 29.8605 47.8028C26.0219 48.5486 22.0555 48.3606 18.3081 47.2552C14.5607 46.1498 11.1464 44.1607 8.36361 41.4617C5.58084 38.7628 3.51438 35.4362 2.34489 31.7727C1.1754 28.1093 0.938485 24.2205 1.65486 20.4465C2.37124 16.6725 4.0191 13.1281 6.45436 10.1232C8.88963 7.11827 12.0382 4.74434 15.6247 3.20894"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">Mutual Funds</h3>
+                <p class="product-text-2">
+                  Compare 3,000+ Mutual funds and invest in Direct Plans with 0% commission.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/lamf/"
+              class="product-card-reveal group product-link-2"
+              data-row="2"
+              style="transition-delay:0ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 46.5 46.5"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Frame 2147226013">
+                    <path
+                      id="Vector"
+                      d="M40.3611 1.25H6.13889C3.43883 1.25 1.25 3.43883 1.25 6.13889V40.3611C1.25 43.0612 3.43883 45.25 6.13889 45.25H40.3611C43.0612 45.25 45.25 43.0612 45.25 40.3611V6.13889C45.25 3.43883 43.0612 1.25 40.3611 1.25Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M1.25 15.9167H45.25"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_3"
+                      d="M15.9167 45.25V15.9167"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">
+                  Loan Against Mutual Funds (LAMF)
+                </h3>
+                <p class="product-text-2">
+                  Get instant loans against your mutual fund holdings at competitive interest rates.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/ipo/"
+              class="product-card-reveal group product-link-2"
+              data-row="2"
+              style="transition-delay:90ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 42.5 52.5"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Frame 2147226015">
+                    <path
+                      id="Vector"
+                      d="M28.75 1.25H6.25C4.92392 1.25 3.65215 1.77678 2.71447 2.71447C1.77678 3.65215 1.25 4.92392 1.25 6.25V46.25C1.25 47.5761 1.77678 48.8479 2.71447 49.7855C3.65215 50.7232 4.92392 51.25 6.25 51.25H36.25C37.5761 51.25 38.8479 50.7232 39.7855 49.7855C40.7232 48.8479 41.25 47.5761 41.25 46.25V13.75L28.75 1.25Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M26.8056 1.25V11.0985C26.8056 12.4045 27.3128 13.657 28.2158 14.5805C29.1187 15.5039 30.3434 16.0227 31.6204 16.0227H41.25"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_3"
+                      d="M16.8056 19.4318H11.25"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_4"
+                      d="M31.25 28.5227H11.25"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_5"
+                      d="M31.25 38.75H11.25"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">
+                  Initial Public Offering (IPO)
+                </h3>
+                <p class="product-text-2">
+                  Stay updated and apply for IPO across NSE &amp; BSE—follow companies as they debut on
+                  the stock market.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/etf/"
+              class="product-card-reveal group product-link-2"
+              data-row="2"
+              style="transition-delay:180ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 44.2917 44.2917"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="Frame 2147226017">
+                    <path
+                      id="Vector"
+                      d="M39.559 1.25H4.73264C2.80923 1.25 1.25 2.80923 1.25 4.73264V39.559C1.25 41.4824 2.80923 43.0417 4.73264 43.0417H39.559C41.4824 43.0417 43.0417 41.4824 43.0417 39.559V4.73264C43.0417 2.80923 41.4824 1.25 39.559 1.25Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"></path>
+                    <path
+                      id="Vector_2"
+                      d="M14.7715 14.771H29.5215M14.7715 22.146H29.5215M14.7715 29.521H29.5215"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">
+                  Exchange Traded Funds (ETF)
+                </h3>
+                <p class="product-text-2">
+                  Diversify your portfolio with ETFs tracking indices, sectors, and commodities.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a><a
+              href="/products/nps/"
+              class="product-card-reveal group product-link-2"
+              data-row="2"
+              style="transition-delay:270ms"
+            >
+              <div class="product-card-circle">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#202318"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="product-box-5"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7v10"></path>
+                </svg>
+              </div>
+              <div class="product-box-6">
+                <svg
+                  class="product-img"
+                  aria-hidden="true"
+                  overflow="visible"
+                  style="display: block;"
+                  viewBox="0 0 59 58"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="globe">
+                    <path
+                      id="Vector"
+                      d="M26.4994 53.1668C40.0764 53.1668 51.0827 42.347 51.0827 29.0002C51.0827 15.6533 40.0764 4.8335 26.4994 4.8335C12.9223 4.8335 1.91602 15.6533 1.91602 29.0002C1.91602 42.347 12.9223 53.1668 26.4994 53.1668Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_2"
+                      d="M1.91602 29H51.0827"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                    <path
+                      id="Vector_3"
+                      d="M26.4993 4.8335C32.6483 11.4512 36.1428 20.0392 36.3327 29.0002C36.1428 37.9611 32.6483 46.5491 26.4993 53.1668C20.3504 46.5491 16.8559 37.9611 16.666 29.0002C16.8559 20.0392 20.3504 11.4512 26.4993 4.8335Z"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </g>
+                </svg>
+                <h3 class="product-subtitle" style="font-family:var(--font-sans)">
+                  National Pension Scheme (NPS)
+                </h3>
+                <p class="product-text-2">
+                  Build a tax-efficient retirement corpus with government-backed National Pension
+                  Scheme.
+                </p>
+                <span class="product-label">View More</span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= STEPS ================= -->
+    <section class="el-sec-2">
+      <div class="steps-box">
+        <!-- Top row: text left + rocket right -->
+        <div class="steps-box-2">
+          <!-- Left: heading + subtitle + CTA -->
+          <div class="steps-box-3">
+            <div class="hero-box-9">
+              <h2 class="why-title" style="font-family:var(--font-sans);color:#2e3914">
+                How to Open your Demat Account?
+              </h2>
+              <p class="steps-text" style="font-family:var(--font-sans)">
+                Fully digital, paperless, and SEBI-compliant. Complete the below steps from your phone
+                or laptop — no branch visit needed.
+              </p>
+            </div>
+            <a href="/demat/" class="steps-link">
+              Open a Demat Account
+            </a>
+          </div>
+          <!-- Right: rocket illustration — flush to the right section edge -->
+          <div class="steps-box-4" style="margin-right: calc(-1 * clamp(1rem, 6vw, 8rem))">
+            <img
+              src="/images/how-soon-illustration.svg"
+              alt="Rocket launch illustration"
+              width="777"
+              height="340"
+              class="steps-img"
+            />
+          </div>
+        </div>
+        <!-- Steps row — Figma 185:3609: #FFF0D7 pills + dashed connector (#EBDEC6, 2px, 7-7) -->
+        <div class="steps-box-5">
+          <div
+            class="steps-box-6"
+            style="background-image:repeating-linear-gradient(90deg,#EBDEC6 0 7px,transparent 7px 14px);"
+          >
+          </div>
+          <div class="steps-box-7">
+            <div class="steps-box-8">
+              <div class="steps-box-9">
+                <img src="/images/step-icon-1.svg" alt="" class="steps-img-2" />
+              </div>
+              <div class="steps-box-10">
+                <p class="steps-text-2">Profile and Bank Setup</p>
+                <p class="steps-text-3">
+                  Enter your name, mobile, and PAN. Verify with OTP and link your bank account.
+                </p>
+              </div>
+            </div><div class="steps-box-8">
+              <div class="steps-box-9">
+                <img src="/images/step-icon-2.svg" alt="" class="steps-img-2" />
+              </div>
+              <div class="steps-box-10">
+                <p class="steps-text-2">Complete eKYC via Aadhaar</p>
+                <p class="steps-text-3">
+                  Upload your PAN and address proof — Aadhaar, Passport, or Voter ID.
+                </p>
+              </div>
+            </div><div class="steps-box-8">
+              <div class="steps-box-9">
+                <img src="/images/step-icon-3.svg" alt="" class="steps-img-2" />
+              </div>
+              <div class="steps-box-10">
+                <p class="steps-text-2">Upload Documents</p>
+                <p class="steps-text-3">
+                  Upload a cancelled cheque or bank statement. Add a 6-month statement to unlock
+                  F&amp;O.
+                </p>
+              </div>
+            </div><div class="steps-box-8">
+              <div class="steps-box-9">
+                <img src="/images/step-icon-4.svg" alt="" class="steps-img-2" />
+              </div>
+              <div class="steps-box-10">
+                <p class="steps-text-2">Video Verification &amp; Digital eSign</p>
+                <p class="steps-text-3">
+                  Record a quick face video, then e-Sign the form with a secure mobile OTP.
+                </p>
+              </div>
+            </div><div class="steps-box-8">
+              <div class="steps-box-9">
+                <img src="/images/step-icon-5.svg" alt="" class="steps-img-2" />
+              </div>
+              <div class="steps-box-10">
+                <p class="steps-text-2">Review &amp; Account Activation</p>
+                <p class="steps-text-3">
+                  Our team reviews your application. Login details arrive within 1–2 business days.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ANTARA ================= -->
+    <section class="el-sec-3">
+      <div
+        class="product-box"
+        style="background:radial-gradient(ellipse 132% 312% at 117% -4%,#4F583B 0%,#3B422C 12.5%,#282C1E 25%,#14160F 37.5%,#0A0B07 44%,#000 52%,#000 100%);"
+      >
+        <div class="antara-box"></div>
+        <div class="antara-box-2"></div>
+        <div class="card-wrap product-box-2">
+          <!-- Top: text left, QR card right (Figma 185:3710) -->
+          <div class="antara-box-3">
+            <div>
+              <h2 class="why-title" style="font-family:var(--font-sans);color:#fff">
+                Meet <span class="why-label">Antara:</span> Your Smart Investment App
+              </h2>
+              <p class="antara-text">
+                Track stocks, execute trades, monitor your investments, and get real-time expert
+                alerts — all from one app. Built for Indian investors who want professional-grade tools
+                without the complexity.
+              </p>
+            </div>
+            <!-- QR card — cream QR directly on the dark card -->
+            <div class="antara-box-4">
+              <div class="antara-box-5">
+                <img
+                  src="/images/antara-qr.jpeg"
+                  alt="Antara app QR code"
+                  class="antara-img"
+                  style="filter:invert(1) sepia(0.30) brightness(1.05);"
+                />
+                <p class="antara-text-2">Download Now on Android or iOS</p>
+              </div>
+            </div>
+          </div>
+          <!-- Bottom: full-width pricing stats bar -->
+          <div class="antara-box-6">
+            <div class="antara-box-7">
+              <span class="antara-label" style="font-family:var(--font-sans)">₹0</span>
+              <span class="antara-label-2">Account Opening Charges</span>
+              <span class="antara-label-3">For Trading and Demat Accounts</span>
+            </div><div class="antara-box-7">
+              <span class="antara-label" style="font-family:var(--font-sans)">₹0</span>
+              <span class="antara-label-2">Annual Maintenance Charges</span>
+              <span class="antara-label-3">For Trading and Demat Accounts</span>
+            </div><div class="antara-box-7">
+              <span class="antara-label" style="font-family:var(--font-sans)">0.5%</span>
+              <span class="antara-label-2">For Buy And Sell Transactions</span>
+              <span class="antara-label-3">For Trading and Demat Accounts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section class="el-sec-2">
+      <div class="advisory-box">
+        <div class="faq-box">
+          <!-- FAQ list -->
+          <div>
+            <h2 class="why-title" style="font-family:var(--font-sans);color:#2e3914">
+              Got <span class="faq-label">Questions?</span>
+            </h2>
+            <!-- Figma 185:3779 — separate #f8f4e8 bars, plus/minus icons, one open at a time -->
+            <div class="faq-box-2" id="faq-accord">
+              <details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2">What is a Demat Account?</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    A Demat Account holds your financial shares, mutual funds, and bonds safely in an
+                    electronic format. It is mandatory for trading in the Indian stock market.
+                  </p>
+                </div>
+              </details><details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2">What are the benefits of a Demat Account?</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    A Demat account completely eliminates the risk of theft, loss, or damage to
+                    physical paper certificates. It enables instant, one-click online buying and
+                    selling of shares, reduces paperwork, and ensures all your investments are visible
+                    in one secure place.
+                  </p>
+                </div>
+              </details><details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2"
+                    >What are the brokerage charges for options trading with Shriram Securities?</span
+                  >
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    Shriram Securities charges a flat ₹20 per executed order for options trading. Use
+                    our Brokerage Calculator to estimate total costs including STT, GST, and exchange
+                    charges.
+                  </p>
+                </div>
+              </details><details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2">Are there any charges associated with the Demat Account?</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    Account opening and Annual Maintenance Charges (AMC) are ₹0 for both Trading and
+                    Demat Accounts. Standard SEBI and exchange-mandated statutory charges (STT,
+                    exchange transaction charges, GST, SEBI fees) apply to all trades as per
+                    regulations.
+                  </p>
+                </div>
+              </details><details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2">What is Intraday brokerage and Option brokerage?</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    Intraday brokerage is the small fee charged when you buy and sell a stock on the
+                    exact same day. Option brokerage is a fixed flat fee (like our standard ₹20 per
+                    order) charged for trading in options contracts, regardless of how big or small the
+                    transaction volume is.
+                  </p>
+                </div>
+              </details><details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2">Can I have multiple Demat Accounts?</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    Yes, absolutely! Legally, you can open more than one Demat account in India,
+                    provided they are opened with different stockbrokers. However, you can only link
+                    one Demat account to your primary trading account at a time.
+                  </p>
+                </div>
+              </details><details class="group faq-box-3">
+                <summary class="faq-box-4">
+                  <span class="faq-label-2">Is a Demat Account mandatory for applying for an IPO?</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    class="faq-box-5"
+                  >
+                    <path d="M2 8h12"></path>
+                    <path d="M8 2v12" class="faq-box-6"></path>
+                  </svg>
+                </summary>
+                <div class="faq-box-7">
+                  <p class="faq-text">
+                    Yes. When a new company lists on the share market, its digital shares must be
+                    deposited directly into an electronic account. Therefore, you must have an active
+                    Demat account to apply for and receive shares in an IPO.
+                  </p>
+                </div>
+              </details>
+            </div>
+          </div>
+          <!-- Olive CTA card -->
+          <div class="faq-box-8">
+            <!-- Figma 185:3782 — olive #4f583b card, person outline top-left, bottom-aligned text -->
+            <div class="faq-box-9">
+              <img src="/images/advisor-avatar.png" alt="" width="140" height="140" class="faq-img" />
+              <h3 class="faq-subtitle" style="font-family:var(--font-sans)">Still Have Questions?</h3>
+              <p class="faq-text-2">
+                Book a free 15-minute discovery call with a friendly wealth expert. We will answer your
+                doubts, help you understand your risk comfort, and show you how a dedicated advisor can
+                fast-track your wealth creation.
+              </p>
+              <a href="/about/support/" class="faq-link">
+                Book a Discovery Call
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= FOOTER (page-local — genuinely divergent fork) ================= -->
+  <footer class="el-bar">
+    <!-- ── Main footer grid ── -->
+    <div class="foot-box">
+      <div class="foot-box-2">
+        <!-- Col 1: Brand + Contact -->
+        <div>
+          <address class="foot-box-3">
+            <div class="foot-box-4">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" class="foot-box-5">
+                <path d="M8 1.5a5 5 0 0 1 5 5c0 3.5-5 8-5 8S3 10 3 6.5a5 5 0 0 1 5-5z"></path>
+                <circle cx="8" cy="6.5" r="1.5"></circle>
+              </svg>
+              <span>Shriram House, No. 4, Burkit Road,<br />T.Nagar, Chennai – 600 017</span>
+            </div>
+            <div class="foot-box-6">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" class="foot-box-7">
+                <path d="M2 3.5h3l1.5 3.5-1.5 1a9 9 0 0 0 3.5 3.5l1-1.5 3.5 1.5v3C9 14.5 2 7.5 2 3.5z"></path>
+              </svg>
+              <a href="tel:18001031212" class="foot-link">1800 103 1212</a>
+            </div>
+            <div class="foot-box-6">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" class="foot-box-7">
+                <rect x="2" y="4" width="12" height="9" rx="1.5"></rect>
+                <path d="M2 5l6 4.5L14 5"></path>
+              </svg>
+              <a href="mailto:support@shriramsecurities.com" class="foot-link">support@shriramsecurities.com</a>
+            </div>
+          </address>
+          <div class="foot-box-8">
+            <a href="#" aria-label="Twitter/X" onclick="event.preventDefault()" class="foot-link-2">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
+                <path d="M1 1l14 14M1 15L15 1"></path>
+              </svg>
+            </a><a href="#" aria-label="Facebook" onclick="event.preventDefault()" class="foot-link-2">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
+                <path d="M10 1H8a3 3 0 0 0-3 3v2H3v3h2v6h3V9h2l.5-3H8V4c0-.6.4-1 1-1h1V1z"></path>
+              </svg>
+            </a><a href="#" aria-label="LinkedIn" onclick="event.preventDefault()" class="foot-link-2">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
+                <path d="M2 2h2v2H2V2zm0 4h2v8H2V6zM6 6h2v1.2C8.4 6.4 9.4 6 10 6a3 3 0 0 1 3 3v5h-2V9.5c0-1-.5-1.5-1.3-1.5S8.2 8.5 8 9.5V14H6V6z"></path>
+              </svg>
+            </a><a href="#" aria-label="YouTube" onclick="event.preventDefault()" class="foot-link-2">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
+                <path d="M14 4.5S13.8 3 13 2.2c-.8-.9-1.7-.9-2.1-.9C9.2 1.2 8 1.2 8 1.2S6.8 1.2 5.1 1.3C4.7 1.3 3.8 1.3 3 2.2 2.2 3 2 4.5 2 4.5S1.8 6.3 1.8 8.1v1.7c0 1.8.2 3.6.2 3.6s.2 1.5 1 2.3c.8.9 1.9.8 2.4.9 1.7.2 7.3.2 7.3.2s1.2 0 2.9-.1c.4 0 1.3-.1 2.1-1 .8-.8 1-2.3 1-2.3s.2-1.8.2-3.6V8.1c0-1.8-.2-3.6-.2-3.6zm-8.5 7V5.5l5 3.1-5 2.9z"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+        <!-- Col 2: Company / Resources / Legal (3 sub-cols) -->
+        <div class="foot-box-10">
+          <div>
+            <h3 class="foot-subtitle">Company</h3>
+            <ul class="foot-list">
+              <li><a href="/about/" class="foot-link-3">About Us</a></li><li><a href="/karnataka-bank/" class="foot-link-3">Karnataka Bank 3-in-1</a></li><li><a href="/about/become-a-partner/" class="foot-link-3">Become a Partner</a></li><li><a href="/demat/" class="foot-link-3">Open Demat Account</a></li><li><a href="/about/regulatory/" class="foot-link-3">Regulatory</a></li><li><a href="/about/antara-web-login/" class="foot-link-3">Antara Platform</a></li><li><a href="/about/sitemap/" class="foot-link-3">Sitemap</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="foot-subtitle">Research</h3>
+            <ul class="foot-list">
+              <li><a href="/research/" class="foot-link-3">Research Centre</a></li><li><a href="/research/technical/" class="foot-link-3">Technical Analysis</a></li><li><a href="/research/fundamental/" class="foot-link-3">Fundamental Research</a></li><li><a href="/research/mutual-funds/" class="foot-link-3">Mutual Fund Picks</a></li><li><a href="/calculators/sip/" class="foot-link-3">Calculators</a></li><li><a href="/support/" class="foot-link-3">Support</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="foot-subtitle">Legal</h3>
+            <ul class="foot-list">
+              <li><a href="/privacy/" class="foot-link-3">Privacy Policy</a></li><li><a href="/investor-charter/" class="foot-link-3">Investor Charter</a></li><li><a href="/about/regulatory/" class="foot-link-3">Risk Disclosures</a></li><li><a href="/support/grievance-redressal/" class="foot-link-3">Grievance Redressal</a></li><li><a href="https://scores.sebi.gov.in" class="foot-link-3" target="_blank" rel="noopener noreferrer">SEBI SCORES</a></li><li><a href="/support/" class="foot-link-3">Contact Us</a></li>
+            </ul>
+          </div>
+        </div>
+        <!-- Col 4: Products -->
+        <div>
+          <h3 class="foot-subtitle">Products</h3>
+          <div class="foot-box-11">
+            <a href="/products/equity/" class="foot-link-3">Equity</a><a href="/products/derivative/" class="foot-link-3">Derivative</a><a href="/products/commodities/" class="foot-link-3">Commodities</a><a href="/products/mtf/" class="foot-link-3">MTF</a><a href="/products/currency/" class="foot-link-3">Currency</a><a href="/products/mutual-funds/" class="foot-link-3">Mutual Funds</a><a href="/products/etf/" class="foot-link-3">ETF</a><a href="/products/bonds/" class="foot-link-3">Bonds</a><a href="/products/nps/" class="foot-link-3">NPS</a><a href="/products/nfo/" class="foot-link-3">NFO</a><a href="/products/ipo/" class="foot-link-3">IPO</a><a href="/products/fd/" class="foot-link-3">Fixed Deposit</a><a href="/products/global-investing/" class="foot-link-3">Global Investing</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ── Regulatory text ── -->
+    <div class="foot-box-12">
+      <div class="foot-box-13">
+        <p class="foot-text">Regulatory Information</p>
+        <p class="foot-text-2">
+          Shriram Securities Ltd., a member of NSE &amp; BSE. SEBI Registration Nos: NSE-CM:
+          INB231103833 | NSE-FO: INF231103833 | NSE-CDS: INE231103833 | BSE-CM: INB011103839 |
+          BSE-FO: INF011103839 | BSE-CDS: INE011103839 | CDSL DP: IN-DP-194-2016. AMFI ARN: 29483.
+          IRDAI Registration No. CA0165. SEBI Research Analyst: INH200009624.
+        </p>
+        <p class="foot-text-3">
+          <strong class="foot-strong">Attention Investors:</strong>
+          Prevent Unauthorised Transactions in your Trading / Demat account. Update your Mobile Number
+          and Email Id with your Stock Broker / Depository Participant. Receive information of your
+          transactions directly from NSE, BSE, CDSL on your email and mobile. KYC is one time exercise
+          while dealing in securities markets. Once KYC is done through a SEBI registered intermediary,
+          you need not undergo the same process again when you approach another intermediary. No need
+          to issue cheques by investors while subscribing to IPO. Just write the bank account number
+          and sign in the application form to authorise your bank to make payment in case of allotment.
+          <strong class="foot-strong">
+            Investments in securities market are subject to market risks. Read all the related
+            documents carefully before investing.
+          </strong>
+        </p>
+      </div>
+    </div>
+    <!-- ── Copyright bar ── -->
+    <div class="foot-box-14">
+      <div class="foot-box-15">
+        <span>© 2026 Shriram Securities Limited. All rights reserved.</span>
+        <div class="hero-box-11">
+          <a href="/about/" class="foot-link">Privacy</a>
+          <span aria-hidden="true">·</span>
+          <a href="/about/" class="foot-link">Terms</a>
+          <span aria-hidden="true">·</span>
+          <a href="/about/grievance-redressal/" class="foot-link">Grievance</a>
+          <span aria-hidden="true">·</span>
+          <a href="/about/sitemap/" class="foot-link">Sitemap</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</BaseLayout>
+
+<style>
+  /* =====================================================================
+     Homepage — page-local styles (the dissolved `home.css` fork).
+     Values reuse shared tokens where they map; homepage-unique literals are
+     kept EXACT for pixel parity and flagged Tier-2 where they break a rule.
+
+     DROPPED from home.css (owned elsewhere — homepage-port-spec §1/§5/§6):
+       Tailwind preflight/reset · all @property registrations (none were
+       load-bearing — every animated value is a plain transition/keyframe,
+       not an animated custom-prop) · the @layer theme token block ·
+       html scrollbar-hiding · the site nav/overlay/mobile-menu CSS
+       (.ds-nav / .nps-* / #nav-panel — shared in global.css) · the dead
+       @keyframes heroSilver1/heroSilver2/rise (defined, never referenced) ·
+       the fork's duplicate line-height 1.5 / font-family :root overrides
+       (global.css already enforces both).
+     ===================================================================== */
+
+  /* ---- Layout scaffolding (from the fork's compiled base) ---- */
+  .card-wrap {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: max(0px, calc(clamp(1rem, 6vw, 8rem) - 2rem)); /* fork gutter — Tier-2: unify with --pad */
+    padding-right: max(0px, calc(clamp(1rem, 6vw, 8rem) - 2rem));
+  }
+
+  /* The pinned "Why Shriram" fill keys off .header-hidden the shared nav sets.
+     Ported verbatim; a minimal scroll listener in the page <script> re-toggles
+     .header-hidden on <html> (homepage-port-spec Decision 1). */
+  @media (min-width: 1024px) {
+    .why-pin {
+      transition: top 0.3s ease-in-out, height 0.3s ease-in-out;
+    }
+    .why-fill {
+      height: calc(100vh - 144px) !important;
+      transition: height 0.3s ease-in-out;
+    }
+    :global(html.header-hidden) .why-pin {
+      top: 0 !important;
+      height: 100vh !important;
+    }
+    :global(html.header-hidden) .why-fill {
+      height: calc(100vh - 64px) !important;
+    }
+  }
+
+  /* Page root — carries the fork's cream body bg (#fffcf3) so the homepage keeps
+     its own surface without touching the global body background (Decision 3). */
+  .home {
+    background: var(--color-surface-page-home);
+  }
+
+  /* ---- HERO ---- */
+  .el-sec {
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 1s;
+  }
+  .hero-box {
+    position: absolute;
+    inset: 0;
+  }
+  .hero-box-2 {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+    padding-block: 56px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
+  }
+  .hero-box-3 {
+    width: 100%;
+  }
+  .hero-title {
+    font-size: clamp(32px, 5vw, 40px); /* fork's #main h1 override, folded in — parity */
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  .hero-label {
+    font-weight: 700;
+  }
+  .hero-text {
+    margin-top: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .hero-box-4 {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 8px;
+  }
+  .hero-box-5 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-label-2 {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .hero-label-3 {
+    background-color: #2e391466; /* Tier-2: rule-5 (alpha) — parity-preserved (dot over cream) */
+    border-radius: 50%;
+    flex-shrink: 0;
+    width: 4px;
+    height: 4px;
+    display: inline-block;
+  }
+  .hero-box-6 {
+    margin-top: 32px;
+  }
+  .hero-link {
+    display: inline-flex;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 4px;
+    background-color: #2e3914; /* --color-olive-900 */
+    padding-inline: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .hero-link:hover {
+      background-color: #1a2010; /* --color-olive-950 (#1b2010 absorbs #1a2010, Tier-1) */
+    }
+  }
+  .hero-box-7 {
+    display: none;
+    flex: 1;
+    justify-content: flex-end;
+  }
+  .hero-box-8 {
+    width: 100%;
+    max-width: 560px;
+    padding: 32px;
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+    background: #ffffffd9; /* Tier-2: rule-5 (alpha) — parity-preserved (glass over video) */
+    border: 1px solid #ffffff80; /* Tier-2: rule-5 (alpha) — parity-preserved (glass border) */
+    border-radius: 24px;
+    box-shadow: 0 8px 40px #00000014, inset 0 1px #fff9; /* translucency allowed (shadow) */
+  }
+  .hero-box-9 {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .hero-title-2 {
+    font-size: 32px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #4f583b; /* --color-olive-600 */
+  }
+  .hero-box-10 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 8px;
+  }
+  .hero-box-11 {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .hero-label-4 {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4f583b; /* --color-olive-600 */
+  }
+  .hero-box-12 {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .hero-box-13 {
+    display: flex;
+    height: 48px;
+    align-items: center;
+    gap: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc; /* --color-gray-300 */
+    background-color: #fff;
+    padding-block: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .hero-label-5 {
+    height: 18px; /* Tier-2: off-scale icon (parity) */
+    width: 18px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 999px; /* was 3.40282e38px — canonical pill radius, same render */
+  }
+  .hero-img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+  .hero-label-6 {
+    height: 24px;
+    width: 1px;
+    flex-shrink: 0;
+    background-color: #ddd; /* --color-gray-250 divider tone (#ddd = n400) */
+  }
+  .hero-box-14 {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .hero-label-7 {
+    font-size: 10px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #8a8a8a; /* --color-gray-450 */
+  }
+  .hero-box-15 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hero-label-8 {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #333; /* --color-charcoal-700 (fork n900 = #333) */
+  }
+  .hero-field {
+    min-width: 0;
+    flex: 1;
+    border-style: none;
+    background-color: transparent;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #333; /* fork n900 */
+    outline-style: none;
+  }
+  .hero-field::placeholder {
+    font-weight: 400;
+    color: #ccc; /* fork n500 */
+  }
+  .hero-text-2 {
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #333; /* fork n900 */
+  }
+  .hero-link-2 {
+    display: inline-flex;
+    height: 48px;
+    width: 220px;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    border-radius: 4px;
+    background-color: #f3b83f; /* --color-gold-400 */
+    font-size: 12px;
+    font-weight: 500;
+    color: #202318; /* --color-charcoal-825 (home gold-button ink) */
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .hero-link-2:hover {
+      background-color: #d4982a; /* --color-gold-600 */
+    }
+  }
+  .hero-text-3 {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333; /* fork n900 */
+  }
+  .hero-link-3 {
+    color: #2f7ef4; /* --color-blue-500 */
+  }
+  @media (hover: hover) {
+    .hero-link-3:hover {
+      text-decoration-line: underline;
+    }
+  }
+
+  /* ---- Section shells (fork sets the #fffcf3 bg on these — the .home wrapper
+     also carries it, so alternating sections stay seamless) ---- */
+  .el-sec-2 {
+    background-color: #fffcf3; /* --color-cream-100 (home body bg — ≠ site page bg) */
+  }
+  .el-sec-3 {
+    background-color: #fffcf3; /* --color-cream-100 */
+    padding-inline: 32px;
+    padding-block: 32px;
+  }
+
+  /* ---- WHY SHRIRAM (pinned scroll section) ---- */
+  .why-box {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    height: calc(100vh - 80px);
+    align-items: center;
+  }
+  .why-box-2 {
+    width: 100%;
+    padding-inline: 32px;
+    padding-block: 32px;
+  }
+  .why-box-3 {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+  }
+  .why-box-4 {
+    pointer-events: none;
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    opacity: 0.1; /* decorative dim — sanctioned opacity use */
+  }
+  .why-img {
+    height: 130%;
+    width: 100%;
+    object-fit: cover;
+    object-position: top;
+    will-change: transform;
+  }
+  .why-box-5 {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+  }
+  .why-box-6 {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    gap: 40px;
+    padding: 32px;
+  }
+  .why-box-7 {
+    align-self: center;
+    filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.45)); /* translucency allowed (shadow) */
+  }
+  .why-title {
+    font-size: 24px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  .why-label {
+    font-weight: 600;
+    color: #f3b83f; /* --color-gold-400 */
+  }
+  .why-text {
+    margin-top: 16px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #fff;
+  }
+  .why-box-8 {
+    position: relative;
+    width: 100%;
+  }
+  .why-box-9 {
+    display: flex;
+    height: 410px;
+    width: 100%;
+    flex-direction: column;
+    gap: 96px;
+    overflow: hidden;
+    scrollbar-width: none;
+  }
+  .why-box-9::-webkit-scrollbar {
+    display: none;
+  }
+  .why-box-10 {
+    display: flex;
+    height: 410px;
+    width: 100%;
+    flex-shrink: 0;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 24px;
+    border-bottom: 2px solid #f3b83f; /* --color-gold-400 */
+    padding-inline: 32px;
+    padding-block: 40px;
+  }
+  .why-box-11 {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 40px;
+    color: #f8f4e8; /* --color-cream-350 */
+  }
+  .why-box-12 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .why-subtitle {
+    font-size: 24px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  .why-text-2 {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  .why-list {
+    display: flex;
+    list-style-type: disc;
+    flex-direction: column;
+    gap: 16px;
+    padding-inline-start: 21px; /* off-grid — parity (Tier-2) */
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ---- STRATEGIC ADVISORY ---- */
+  .advisory-box {
+    padding-block: 64px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
+  }
+  .advisory-text {
+    margin-top: 16px;
+    max-width: 56rem; /* fork --container-4xl */
+    font-size: 16px;
+    color: #666; /* --color-gray-650 (home muted) */
+  }
+  .advisory-box-2 {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .advisory-box-2:hover .advisory-card {
+    opacity: 0.3; /* dim non-hovered — sanctioned opacity use */
+    transition: opacity 0.3s;
+  }
+  .advisory-box-2:hover .advisory-card:hover {
+    opacity: 1;
+  }
+  .advisory-box-3 {
+    position: relative;
+    display: flex;
+    height: 322px;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 24px;
+    background-color: #f8f4e8; /* --color-cream-350 */
+    padding-inline: 24px;
+    padding-block: 40px;
+  }
+  .advisory-box-4 {
+    display: flex;
+    flex-direction: column;
+    transition-property: transform, translate, scale, rotate;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.3s;
+  }
+  @media (hover: hover) {
+    .group:hover .advisory-box-4 {
+      transform: translateY(-28px); /* -7 * 4px */
+    }
+  }
+  .advisory-img {
+    height: 72px;
+    width: 72px;
+    object-fit: contain;
+  }
+  .advisory-box-5 {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .advisory-subtitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e3914; /* --color-olive-900 */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .advisory-text-2 {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4f583b; /* --color-olive-600 */
+  }
+  .advisory-link {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    height: 56px;
+    transform: translateY(64px);
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background-color: #f3b83f; /* --color-gold-400 */
+    font-size: 14px;
+    font-weight: 500;
+    color: #2e3914; /* --color-olive-900 */
+    opacity: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.3s;
+  }
+  @media (hover: hover) {
+    .group:hover .advisory-link {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .advisory-box-6 {
+    height: 16px;
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .advisory-box-7 {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    border-radius: 24px;
+    background-color: #fff0d7; /* --color-gold-100 */
+  }
+  .advisory-box-8 {
+    margin-left: 32px;
+    display: none;
+    height: 141px;
+    width: 170px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    padding-block: 8px;
+  }
+  .advisory-img-2 {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+  }
+  .advisory-box-9 {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-inline: 32px;
+    padding-block: 24px;
+  }
+  .advisory-text-3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333; /* fork n900 */
+  }
+  .advisory-label {
+    color: #f3b83f; /* --color-gold-400 (fork --color-brand) */
+  }
+  .advisory-text-4 {
+    margin-top: 8px;
+    max-width: 36rem; /* fork --container-xl */
+    font-size: 14px;
+    line-height: 1.5;
+    color: #666; /* --color-gray-650 (home muted) */
+  }
+  .advisory-link-2 {
+    flex-shrink: 0;
+    background-color: #f3b83f; /* --color-gold-400 (fork --color-brand) */
+    color: #202318; /* --color-charcoal-825 */
+    width: 220px;
+    height: 48px;
+    border-radius: 6px; /* home button radius — off-scale (Tier-2) */
+    cursor: pointer;
+    white-space: nowrap;
+    border: none;
+    justify-content: center;
+    align-items: center;
+    gap: 6px; /* off-grid — parity (Tier-2) */
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s, transform 0.15s;
+    display: inline-flex;
+  }
+  .advisory-link-2:hover {
+    background-color: #d4982a; /* --color-gold-600 (fork --color-brand-hover) */
+    transform: translateY(-1px);
+  }
+
+  /* ---- PRODUCTS (dark reveal grid) ---- */
+  .product-box {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+  }
+  .product-box-2 {
+    position: relative;
+    padding-block: 64px;
+  }
+  .product-box-3 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .product-text {
+    margin-top: 12px;
+    font-size: 16px;
+    color: #ffffff8c; /* Tier-2: rule-5 (alpha) — parity-preserved (over dark gradient) */
+  }
+  .product-link {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fdf4dc; /* --color-cream-450 (fork --color-brand-light) */
+  }
+  @media (hover: hover) {
+    .product-link:hover {
+      color: #fff;
+    }
+  }
+  .product-box-4 {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .product-box-5 {
+    height: 20px;
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .product-box-6 {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    will-change: transform;
+    backface-visibility: hidden;
+    transition: transform var(--pc-dur) var(--pc-ease);
+  }
+  .product-link-2:hover .product-box-6 {
+    transform: translateY(-10px);
+  }
+  .product-subtitle {
+    color: #fff;
+  }
+  .product-text-2 {
+    color: #ffffff80; /* Tier-2: rule-5 (alpha) — parity-preserved (over dark card) */
+  }
+  @media (hover: hover) {
+    .product-link-2:hover .product-text-2 {
+      color: #ffffffb3; /* Tier-2: rule-5 (alpha) — parity-preserved */
+    }
+  }
+
+  /* Products — Figma "Product Card v7" Smart-Animate (node 904:9490).
+     Idle: charcoal card. Hover: the charcoal overlay CONDENSES into the
+     top-right arrow point, revealing the olive card; a gold circle + arrow
+     scale in, the icon enlarges + brightens, content rises, "View More" fades
+     in. One 0.9s slow ease-out on every layer together. */
+  .product-link-2 {
+    --pc-dur: 0.9s;
+    --pc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --pc-delay: 0s;
+    position: relative;
+    display: flex;
+    height: 284px;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid #ffffff1a; /* Tier-2: rule-5 (alpha) — parity-preserved (card border on dark) */
+    padding: 32px;
+    background-color: #2e3914; /* --color-olive-900 (revealed base) */
+  }
+  .product-link-2:hover {
+    --pc-delay: 0.1s;
+    background-color: #2e3914; /* --color-olive-900 */
+  }
+  @media (hover: hover) {
+    .product-link-2:hover {
+      z-index: 10;
+    }
+  }
+  .product-link-2::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-color: #2b2c2b; /* charcoal overlay — page-local literal (Tier-2) */
+    clip-path: circle(150% at calc(100% - 60px) 60px);
+    transition: clip-path var(--pc-dur) var(--pc-ease);
+  }
+  .product-link-2:hover::before {
+    clip-path: circle(0% at calc(100% - 60px) 60px);
+  }
+  .product-link-2:hover .product-box-6 {
+    transform: translateY(-10px);
+  }
+  /* icon scales from its left edge — grows rightward, not from centre */
+  .product-img {
+    width: 44px; /* Tier-2: off-scale icon (parity) */
+    height: 44px;
+    flex-shrink: 0;
+    object-fit: contain;
+    color: #d7d7cd; /* page-local literal (Tier-2) */
+    transform-origin: left center;
+    transition: transform var(--pc-dur) var(--pc-ease), color var(--pc-dur) var(--pc-ease);
+  }
+  .product-img [stroke] {
+    stroke: currentColor;
+  }
+  .product-link-2:hover .product-img {
+    transform: scale(1.14);
+    color: #ffffff;
+  }
+  .product-subtitle,
+  .product-link-2:hover .product-subtitle {
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .product-text-2,
+  .product-link-2:hover .product-text-2 {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  /* View More: revealed via opacity+transform only (absolute, out of flow) so
+     the centred text never reflows/jitters as it appears. */
+  .product-label {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin-top: 0;
+    max-height: none;
+    overflow: visible;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fffc; /* Tier-2: rule-5 (alpha) — parity-preserved (#ffffffcc) */
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity var(--pc-dur) var(--pc-ease), transform var(--pc-dur) var(--pc-ease);
+  }
+  .product-link-2:hover .product-label {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: none;
+    margin-top: 0;
+  }
+  .product-card-circle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background-color: #f3b83f; /* --color-gold-400 */
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity var(--pc-dur) var(--pc-ease), transform var(--pc-dur) var(--pc-ease);
+  }
+  .product-link-2:hover .product-card-circle {
+    opacity: 1;
+    transform: scale(1);
+  }
+  /* arrow points right (→) while hidden, then rotates up to aim at the
+     top-right corner (↗) as it reveals */
+  .product-card-circle svg {
+    width: 26px; /* Tier-2: off-scale icon (parity) */
+    height: 26px;
+    color: #202318; /* --color-charcoal-825 */
+    stroke: #202318;
+    transform: rotate(45deg);
+    transition: transform var(--pc-dur) var(--pc-ease);
+  }
+  .product-link-2:hover .product-card-circle svg {
+    transform: rotate(0deg);
+  }
+  /* Figma trigger: Mouse enter · 100ms delay — hover-IN only (0s at rest) */
+  .product-link-2::before,
+  .product-box-6,
+  .product-img,
+  .product-card-circle,
+  .product-card-circle svg,
+  .product-label {
+    transition-delay: var(--pc-delay);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .product-link-2::before,
+    .product-box-6,
+    .product-img,
+    .product-card-circle,
+    .product-card-circle svg,
+    .product-label {
+      transition: none;
+    }
+  }
+
+  /* ---- STEPS ---- */
+  .steps-box {
+    padding-block: 64px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
+  }
+  .steps-box-2 {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 48px;
+  }
+  .steps-box-3 {
+    display: flex;
+    max-width: 600px;
+    flex-direction: column;
+    gap: 48px;
+  }
+  .steps-text {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #333; /* fork n900 */
+    letter-spacing: 0;
+  }
+  .steps-link {
+    display: flex;
+    height: 40px;
+    width: 220px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background-color: #f3b83f; /* --color-gold-400 (fork --color-brand) */
+    font-size: 12px;
+    font-weight: 500;
+    color: #202318; /* --color-charcoal-825 */
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .steps-link:hover {
+      background-color: #d4982a; /* --color-gold-600 (fork --color-brand-hover) */
+    }
+  }
+  .steps-box-4 {
+    display: none;
+    flex: 1;
+    align-items: center;
+  }
+  .steps-img {
+    height: auto;
+    max-height: 360px;
+    width: 100%;
+    object-fit: contain;
+    object-position: right;
+  }
+  .steps-box-5 {
+    position: relative;
+    margin-top: 64px;
+  }
+  .steps-box-6 {
+    position: absolute;
+    top: 31px; /* off-grid — parity (Tier-2) */
+    display: none;
+    height: 2px;
+  }
+  .steps-box-7 {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 48px;
+  }
+  .steps-box-8 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+  .steps-box-9 {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    height: 64px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    background-color: #fff0d7; /* --color-gold-100 */
+    padding-inline: 32px;
+  }
+  .steps-img-2 {
+    height: 26px; /* Tier-2: off-scale icon (parity) */
+    width: 26px;
+    object-fit: contain;
+  }
+  .steps-box-10 {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .steps-text-2 {
+    font-size: 20px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #2e3914; /* --color-olive-900 */
+  }
+  .steps-text-3 {
+    margin-inline: auto;
+    max-width: 234px; /* page-local literal */
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4f583b; /* --color-olive-600 */
+  }
+
+  /* ---- ANTARA ---- */
+  .antara-box {
+    pointer-events: none;
+    position: absolute;
+    top: -300px;
+    left: -15%;
+    height: 1100px;
+    width: 1100px;
+    border-radius: 999px; /* was 3.40282e38px */
+    background-color: #4f583b40; /* Tier-2: rule-5 (alpha) — parity-preserved (blur orb) */
+    filter: blur(64px);
+  }
+  .antara-box-2 {
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    right: -380px;
+    height: 1000px;
+    width: 1000px;
+    transform: translateY(-50%);
+    border-radius: 999px; /* was 3.40282e38px */
+    background-color: #4f583b26; /* Tier-2: rule-5 (alpha) — parity-preserved (blur orb) */
+    filter: blur(64px);
+  }
+  .antara-box-3 {
+    display: grid;
+    align-items: center;
+    gap: 48px;
+  }
+  .antara-text {
+    margin-top: 20px;
+    max-width: 730px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #ffffffd9; /* Tier-2: rule-5 (alpha) — parity-preserved (over dark gradient) */
+  }
+  .antara-box-4 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .antara-box-5 {
+    border-radius: 24px;
+    border: 1px solid #ffffff1a; /* Tier-2: rule-5 (alpha) — parity-preserved */
+    background-color: #0003; /* Tier-2: rule-5 (alpha) — parity-preserved (#00000033 over gradient) */
+    padding: 32px;
+    text-align: center;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .antara-img {
+    margin-inline: auto;
+    height: 208px; /* 52 * 4px */
+    width: 208px;
+    object-fit: contain;
+    mix-blend-mode: screen;
+  }
+  .antara-text-2 {
+    margin-top: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+  }
+  .antara-box-6 {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid #ffffff1a; /* Tier-2: rule-5 (alpha) — parity-preserved */
+    background-color: #ffffff08; /* Tier-2: rule-5 (alpha) — parity-preserved (3% white) */
+  }
+  .antara-box-6 > :not(:last-child) {
+    border-bottom: 1px solid #ffffff1a; /* Tier-2: rule-5 (alpha) — parity-preserved (divide-y) */
+  }
+  .antara-box-7 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-inline: 24px;
+    padding-block: 40px;
+    text-align: center;
+  }
+  .antara-label {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .antara-label-2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+  }
+  .antara-label-3 {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: #fff6; /* Tier-2: rule-5 (alpha) — parity-preserved (#ffffff66) */
+    text-transform: uppercase;
+  }
+
+  /* ---- FAQ (native <details> — mechanism kept verbatim) ---- */
+  #faq-accord details {
+    interpolate-size: allow-keywords;
+  }
+  #faq-accord details::details-content {
+    block-size: 0;
+    transition: block-size 0.3s ease-in-out, content-visibility 0.3s allow-discrete;
+    overflow: clip;
+  }
+  #faq-accord details[open]::details-content {
+    block-size: auto;
+  }
+  .faq-box {
+    display: grid;
+    gap: 48px;
+  }
+  .faq-label {
+    color: #4f583b; /* --color-olive-600 */
+  }
+  .faq-box-2 {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .faq-box-3 {
+    border-radius: 0;
+    background-color: #f8f4e8; /* --color-cream-350 */
+  }
+  .faq-box-3:first-child {
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+  }
+  .faq-box-3:last-child {
+    border-bottom-right-radius: 24px;
+    border-bottom-left-radius: 24px;
+  }
+  .faq-box-4 {
+    display: flex;
+    cursor: pointer;
+    list-style-type: none;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: 24px;
+    padding-block: 24px;
+    gap: 40px;
+  }
+  .faq-box-4::-webkit-details-marker {
+    display: none;
+  }
+  .faq-label-2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333; /* fork n900 */
+  }
+  .group[open] .faq-label-2 {
+    font-weight: 600;
+  }
+  .faq-box-5 {
+    height: 16px;
+    width: 16px;
+    flex-shrink: 0;
+    color: #333; /* fork n900 */
+  }
+  .faq-box-6 {
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  .group[open] .faq-box-6 {
+    opacity: 0;
+  }
+  .faq-box-7 {
+    padding-inline: 24px;
+    padding-bottom: 24px;
+  }
+  .faq-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #666; /* --color-gray-650 (home muted) */
+  }
+  .faq-box-8 {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+  }
+  .faq-box-9 {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    border-radius: 24px;
+    background-color: #4f583b; /* --color-olive-600 */
+    padding: 32px;
+    color: #fff;
+  }
+  .faq-img {
+    height: 140px;
+    width: 140px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  .faq-subtitle {
+    margin-top: auto;
+    padding-top: 40px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .faq-text-2 {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #fffc; /* Tier-2: rule-5 (alpha) — parity-preserved (#ffffffcc over olive) */
+  }
+  .faq-link {
+    margin-top: 24px;
+    display: inline-flex;
+    height: 48px;
+    width: 220px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background-color: #f3b83f; /* --color-gold-400 */
+    font-size: 14px;
+    font-weight: 600;
+    color: #2e3914; /* --color-olive-900 */
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .faq-link:hover {
+      background-color: #d4982a; /* --color-gold-600 */
+    }
+  }
+
+  /* =====================================================================
+     FOOTER — page-local (the divergent fork; suppressed shared footer).
+     ALPHA-WHITE FLATTEN TABLE — every #ffffffXX flattened to solid hex over
+     the #0a0b07 footer bg = rgb(10,11,7) (rule 5). result = α·255 + (1−α)·bg:
+       a6 (.651) -> #a9aaa8   59 (.349) -> #60605e   61 (.380) -> #676865
+       85 (.522) -> #8a8a88   4d (.302) -> #545552   40 (.251) -> #474845
+       1f (.122) -> #282925   80 (.502) -> #858583   12 (.071) -> #1b1c19
+       0d (.051) -> #161714   1a (.102) -> #232420   30% mix -> #545552
+     Box-shadows keep translucency (allowed).
+     ===================================================================== */
+  .el-bar {
+    background-color: #0a0b07; /* --color-charcoal-950 (--color-surface-footer-home) */
+    color: #a9aaa8; /* flattened from #ffffffa6 over footer bg (rule 5) */
+  }
+  .foot-box {
+    padding-block: 56px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
+  }
+  .foot-box-2 {
+    display: grid;
+    gap: 40px;
+  }
+  .foot-box-3 {
+    margin-top: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    font-style: normal;
+  }
+  .foot-box-3 > :not(:last-child) {
+    margin-bottom: 12px;
+  }
+  .foot-box-4 {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .foot-box-5 {
+    margin-top: 4px;
+    height: 16px;
+    width: 16px;
+    flex-shrink: 0;
+    color: #60605e; /* flattened from #ffffff59 over footer bg (rule 5) */
+  }
+  .foot-box-6 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .foot-box-7 {
+    height: 16px;
+    width: 16px;
+    flex-shrink: 0;
+    color: #60605e; /* flattened from #ffffff59 over footer bg (rule 5) */
+  }
+  .foot-link {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .foot-link:hover {
+      color: #fff;
+    }
+  }
+  .foot-box-8 {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .foot-link-2 {
+    display: grid;
+    height: 32px;
+    width: 32px;
+    place-items: center;
+    border-radius: 999px; /* was 3.40282e38px */
+    border: 1px solid #282925; /* flattened from #ffffff1f over footer bg (rule 5) */
+    color: #858583; /* flattened from #ffffff80 over footer bg (rule 5) */
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .foot-link-2:hover {
+      border-color: #545552; /* flattened from #ffffff4d (30% mix) over footer bg (rule 5) */
+      background-color: #232420; /* flattened from #ffffff1a (10% mix) over footer bg (rule 5) */
+      color: #fff;
+    }
+  }
+  .foot-box-9 {
+    height: 16px;
+    width: 16px;
+  }
+  .foot-box-10 {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 32px;
+  }
+  .foot-subtitle {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #545552; /* flattened from #ffffff4d over footer bg (rule 5) */
+    text-transform: uppercase;
+  }
+  .foot-list {
+    margin-top: 16px;
+  }
+  .foot-list > :not(:last-child) {
+    margin-bottom: 12px;
+  }
+  .foot-link-3 {
+    font-size: 14px;
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.15s;
+  }
+  @media (hover: hover) {
+    .foot-link-3:hover {
+      color: #fff;
+    }
+  }
+  .foot-box-11 {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    row-gap: 8px;
+  }
+  .foot-box-12 {
+    border-top: 1px solid #1b1c19; /* flattened from #ffffff12 over footer bg (rule 5) */
+  }
+  .foot-box-13 {
+    padding-block: 32px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
+  }
+  .foot-text {
+    margin-bottom: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #474845; /* flattened from #ffffff40 over footer bg (rule 5) */
+    text-transform: uppercase;
+  }
+  .foot-text-2 {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #676865; /* flattened from #ffffff61 over footer bg (rule 5) */
+  }
+  .foot-text-3 {
+    margin-top: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #676865; /* flattened from #ffffff61 over footer bg (rule 5) */
+  }
+  .foot-strong {
+    font-weight: 500;
+    color: #8a8a88; /* flattened from #ffffff85 over footer bg (rule 5) */
+  }
+  .foot-box-14 {
+    border-top: 1px solid #161714; /* flattened from #ffffff0d over footer bg (rule 5) */
+  }
+  .foot-box-15 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 16px;
+    font-size: 12px;
+    color: #545552; /* flattened from #ffffff4d over footer bg (rule 5) */
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
+  }
+
+  /* =====================================================================
+     RESPONSIVE — ported verbatim from home.css (Tailwind min-width variants
+     mapped to their px boundaries: 40rem=640px, 64rem=1024px, 80rem=1280px).
+     ===================================================================== */
+  @media (min-width: 640px) {
+    .hero-box-2 {
+      padding-block: 80px;
+    }
+    .why-title {
+      font-size: 32px;
+    }
+    .advisory-box-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .advisory-box-7 {
+      flex-direction: row;
+    }
+    .advisory-box-8 {
+      display: flex;
+    }
+    .product-box-3 {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .steps-box-6 {
+      right: 10%;
+      left: 10%;
+      display: block;
+    }
+    .steps-box-7 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .antara-box-6 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .antara-box-6 > :not(:last-child) {
+      border-bottom: 0;
+      border-inline-end: 1px solid #ffffff1a; /* Tier-2: rule-5 (alpha) — parity-preserved (divide-x) */
+    }
+    .foot-box-10 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .foot-box-15 {
+      flex-direction: row;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .el-sec {
+      min-height: max(560px, 100vh - 80px);
+    }
+    .hero-box-2 {
+      min-height: max(560px, 100vh - 80px);
+      align-items: center;
+      gap: 48px;
+      padding-block: 0;
+    }
+    .hero-box-3 {
+      max-width: 44%;
+      flex-shrink: 0;
+    }
+    .hero-box-7 {
+      display: flex;
+      padding-right: 4%;
+    }
+    .hero-text {
+      font-size: 18px;
+    }
+    .why-box-3 {
+      height: min(923px, 100vh - 144px);
+    }
+    .why-box-4 {
+      width: 64%;
+    }
+    .why-box-6 {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding-inline: 40px;
+      padding-block: 0;
+    }
+    .why-box-7 {
+      min-width: 0;
+      flex: 1;
+    }
+    .why-title {
+      font-size: 40px;
+    }
+    .why-text {
+      font-size: 16px;
+    }
+    .why-box-8 {
+      height: 100%;
+      width: min(48%, 560px);
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+    .why-box-9 {
+      height: 100%;
+    }
+    /* vertical centring of the first/last card in the rail (fork lines 9) */
+    #differ-scroll {
+      padding-top: max(0px, min(923px, 100vh - 144px) / 2 - 205px);
+      padding-bottom: max(0px, min(923px, 100vh - 144px) / 2 - 205px);
+    }
+    .why-box-10 {
+      padding-inline: 56px;
+      padding-block: 88px;
+    }
+    .why-subtitle {
+      font-size: 32px;
+    }
+    .why-text-2 {
+      font-size: 16px;
+    }
+    .advisory-box {
+      padding-block: 80px;
+    }
+    .advisory-box-2 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .product-box {
+      display: flex;
+      min-height: min(923px, 100vh - 96px);
+      flex-direction: column;
+      justify-content: center;
+    }
+    .product-box-2 {
+      padding-block: 80px;
+    }
+    .product-box-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .steps-box {
+      padding-block: 96px;
+    }
+    .steps-box-4 {
+      display: flex;
+    }
+    .steps-box-5 {
+      margin-top: 80px;
+    }
+    .antara-box-3 {
+      grid-template-columns: 1fr auto;
+      gap: 80px;
+    }
+    .antara-text {
+      font-size: 16px;
+    }
+    .antara-box-4 {
+      justify-self: flex-end;
+    }
+    .antara-label {
+      font-size: 32px;
+    }
+    .faq-box {
+      grid-template-columns: 1fr 360px;
+    }
+    .foot-box {
+      padding-block: 64px;
+    }
+    .foot-box-2 {
+      grid-template-columns: 300px 1fr 1fr 1fr;
+    }
+    .foot-box-10 {
+      grid-column: span 2 / span 2;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .hero-box-3 {
+      max-width: 690px;
+    }
+    .hero-box-8 {
+      padding: 40px;
+    }
+    .why-box-6 {
+      gap: 88px;
+      padding-inline: 112px;
+    }
+    .why-box-7 {
+      max-width: 648px;
+    }
+    .why-text {
+      font-size: 18px;
+    }
+    .why-box-8 {
+      width: 580px;
+    }
+    .steps-box {
+      padding-block: 144px;
+    }
+    .steps-box-5 {
+      margin-top: 128px;
+    }
+  }
+</style>
+
+<script>
+  /* Homepage-unique behaviour (homepage-port-spec Decision 6). Ported verbatim
+     from the legacy inline module + head scripts. DROPPED: the nav hamburger /
+     mega-overlay open/close scripts (shared now via Header.astro / MegaNav.astro).
+
+     RE-ADDED (Decision 1): a minimal scroll listener toggling .header-hidden on
+     <html> — the pinned "Why Shriram" fill effect keys off that class. This is
+     NOT a nav re-implementation; the shared Header owns nav auto-hide, but its
+     class toggles on the nav element, not <html>, so the fill needs this. */
+  (function () {
+    var last = window.pageYOffset || 0,
+      threshold = 80,
+      delta = 6;
+    window.addEventListener(
+      'scroll',
+      function () {
+        var y = window.pageYOffset || 0;
+        if (Math.abs(y - last) < delta) return;
+        var hide = y > last && y > threshold;
+        document.documentElement.classList.toggle('header-hidden', hide);
+        last = y <= 0 ? 0 : y;
+      },
+      { passive: true }
+    );
+  })();
+
+  /* Hero "Get Started" — AES-GCM-encrypt the mobile number into the signup URL;
+     falls back to the plain signup URL on any failure. Verbatim from legacy. */
+  const g = document.getElementById('hero-mobile') as HTMLInputElement | null,
+    h = document.getElementById('hero-get-started') as HTMLAnchorElement | null;
+  if (g && h) {
+    const e = 'https://signup.way2wealth.com/way2wealth/individual_new',
+      t = 'ShriramSFS2026Way2WealthAESKey01',
+      n = e,
+      l = (window.crypto && window.crypto.subtle) || null,
+      v = (c: ArrayBuffer) =>
+        btoa(String.fromCharCode(...new Uint8Array(c)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, ''),
+      S = async (c: Record<string, unknown>) => {
+        const a = new TextEncoder(),
+          d = await l!.importKey('raw', a.encode(t), 'AES-GCM', !1, ['encrypt']),
+          s = crypto.getRandomValues(new Uint8Array(12)),
+          u = await l!.encrypt({ name: 'AES-GCM', iv: s, tagLength: 128 }, d, a.encode(JSON.stringify(c))),
+          y = new Uint8Array(s.length + u.byteLength);
+        return y.set(s, 0), y.set(new Uint8Array(u), s.length), v(y.buffer);
+      };
+    h.addEventListener('click', async (c) => {
+      c.preventDefault();
+      const a = (g.value || '').replace(/\D/g, '').slice(-10);
+      if (a.length !== 10 || !l) {
+        window.location.href = n;
+        return;
+      }
+      try {
+        const d = await S({ mobile_number: a });
+        window.location.href = e + '?enc_details=' + d + '&utm_source=' + encodeURIComponent('sfs');
+      } catch {
+        window.location.href = n;
+      }
+    });
+  }
+
+  /* Hero video — fade the wash + start playback once the video can play.
+     Verbatim from legacy. */
+  const r = document.getElementById('hero-video') as HTMLVideoElement | null,
+    w = document.querySelector('.hero-wave') as HTMLElement | null;
+  if (r) {
+    const e = () => {
+        r.style.opacity = '0.2';
+        w && (w.style.opacity = '0');
+      },
+      t = () => {
+        r.play().catch(() => {});
+      };
+    r.readyState >= 3
+      ? (e(), t())
+      : (r.addEventListener('canplay', () => { e(); t(); }, { once: true }),
+        r.addEventListener('loadeddata', () => { e(); t(); }, { once: true }),
+        setTimeout(() => { e(); t(); }, 1500));
+  }
+
+  /* "Why Shriram" scroll-pin — map page scroll through the tall wrapper onto the
+     card rail's scrollTop, and drift the collage upward. Verbatim from legacy. */
+  const f = document.getElementById('differ-pin-wrap'),
+    i = document.getElementById('differ-scroll'),
+    m = document.getElementById('differ-collage') as HTMLElement | null;
+  if (f && i) {
+    const e = () => {
+      const tRect = f.getBoundingClientRect(),
+        o = f.offsetHeight - window.innerHeight;
+      if (o <= 0) return;
+      const n = Math.min(1, Math.max(0, -tRect.top / o));
+      i.scrollTop = n * (i.scrollHeight - i.clientHeight);
+      m && (m.style.transform = `translateY(${(-n * 23).toFixed(2)}%)`);
+    };
+    window.addEventListener('scroll', e, { passive: true });
+    window.addEventListener('resize', e, { passive: true });
+    e();
+  }
+
+  /* Product-card reveal-on-scroll — add .revealed as each card enters, then
+     clear its stagger delay. Verbatim from legacy. */
+  const p = document.querySelectorAll('.product-card-reveal');
+  if (p.length) {
+    const e = new IntersectionObserver(
+      (t) => {
+        t.forEach((o) => {
+          if (o.isIntersecting) {
+            const n = o.target as HTMLElement;
+            n.classList.add('revealed');
+            e.unobserve(n);
+            setTimeout(() => {
+              n.style.transitionDelay = '0ms';
+            }, 950);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    p.forEach((t) => e.observe(t));
+  }
+
+  /* FAQ — single-open <details> accordion. Verbatim from legacy. */
+  const E = document.getElementById('faq-accord');
+  E?.querySelectorAll('details').forEach((el) => {
+    el.addEventListener('toggle', () => {
+      el.open &&
+        E.querySelectorAll('details').forEach((tt) => {
+          tt !== el && tt.removeAttribute('open');
+        });
+    });
+  });
+</script>
