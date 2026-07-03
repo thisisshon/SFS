@@ -1470,6 +1470,9 @@ const seo = {
      its own surface without touching the global body background (Decision 3). */
   .home {
     background: var(--color-surface-page-home);
+    /* fork base ink = #333 (home.css --color-ink/n900), NOT the site's #1c1c16.
+       Set it here so inheriting text (e.g. .hero-title) matches legacy exactly. */
+    color: var(--color-charcoal-700);
   }
 
   /* ---- HERO ---- */
