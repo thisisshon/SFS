@@ -7,7 +7,9 @@ import tailwindcss from '@tailwindcss/vite';
 // Static output, directory-format URLs (/products/equity/ → products/equity/index.html),
 // sitemap generated automatically from the page tree.
 export default defineConfig({
-  site: 'https://www.shriramfinancialservices.com',
+  // UAT/draft deploy (GitHub Pages user site). For production, switch back to
+  // the real domain: 'https://www.shriramfinancialservices.com'.
+  site: 'https://thisisshon.github.io',
   trailingSlash: 'ignore',
   build: {
     format: 'directory',
