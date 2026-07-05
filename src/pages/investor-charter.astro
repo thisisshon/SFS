@@ -57,13 +57,13 @@ const CHARTERS = ['Research Analyst', 'PMS', 'Stock Brokers', 'DP NSDL', 'DP CDS
       </p>
     </div>
 
-    <div class="charter-list">
+    <div class="doc-grid">
       {
         CHARTERS.map((name) => (
-          <article class="ch-card">
-            <span class="nm">{name}</span>
+          <article class="doc-card">
+            <h3 class="nm">{name}</h3>
             <span class="upd">PDF<span class="sep">·</span>Updated Jun 2026</span>
-            <div class="ch-links">
+            <div class="doc-links">
               <a class="doc-dl" href="#" aria-label={`View Investor Charter — ${name}`}>View</a>
               <a class="doc-dl" href="#" download aria-label={`Download Investor Charter — ${name}`}>
                 Download
@@ -98,61 +98,10 @@ const CHARTERS = ['Research Analyst', 'PMS', 'Stock Brokers', 'DP NSDL', 'DP CDS
     scroll-margin-top: 96px;
   }
 
-  /* charter document cards — mirror the Support Downloads .doc-card:
-     name → meta → underlined blue link; border darkens on hover. 3-col grid.
-     (Shared-extraction candidate with support/downloads — Tier-2.) */
-  .charter-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    align-items: stretch;
+  /* charter documents use the shared .doc-grid / .doc-card component (global.css).
+     Only the top margin below the intro copy is page-specific. */
+  .doc-grid {
     margin-top: 32px;
-  }
-  .ch-card {
-    background: var(--color-surface-card);
-    border: 1px solid var(--color-border-card);
-    border-radius: 20px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: border-color 0.22s ease;
-  }
-  .ch-card:hover {
-    border-color: var(--color-sage-450); /* #8d8e84 (Tier-1: absorbed by sage-450) */
-  }
-  .ch-card .nm {
-    font-weight: 500;
-    font-size: 16px;
-    color: var(--color-text-primary);
-    flex: 1 0 auto;
-  }
-  .ch-card .upd {
-    font-weight: 400;
-    font-size: 14px;
-    color: var(--color-text-muted);
-  }
-  .ch-card .upd .sep {
-    margin: 0 8px;
-  }
-  .ch-links {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-  .doc-dl {
-    display: inline-flex;
-    align-items: center;
-    color: var(--color-link);
-    font-weight: 500;
-    font-size: 14px;
-    white-space: nowrap;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    transition: color 0.2s ease;
-  }
-  .doc-dl:hover {
-    color: var(--color-link-hover); /* #1c5fc4 */
   }
 
   /* important disclosure block */
@@ -182,15 +131,7 @@ const CHARTERS = ['Research Analyst', 'PMS', 'Stock Brokers', 'DP NSDL', 'DP CDS
     color: var(--color-text-primary);
   }
 
-  @media (max-width: 1024px) {
-    .charter-list {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
   @media (max-width: 640px) {
-    .charter-list {
-      grid-template-columns: 1fr;
-    }
     .disc-note {
       flex-direction: column;
     }

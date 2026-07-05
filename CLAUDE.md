@@ -126,6 +126,16 @@ off against each other:
     - **`global.css`** (and/or components) — implement it.
     - **`CLAUDE.md`** (this file) — reflect it in the rules if project-wide.
 
+12. **Headings are LEFT-aligned — `products/equity.astro` is the reference.** The hero H1, every
+    section `.sec-title` and every `.sub-title` (with their `.sec-lead`/`.sub-lead`) sit
+    flush-left. Never centre a heading block: a section header is a `<div class="stack"
+    style="gap:16px">` holding the title + lead, with **no** `align-items:center` / `text-align:
+    center` and **no** `max-width` cap on the lead (the section reads left-to-right, full-measure).
+    Vertical centring (`justify-content:center` on the `.section stack`) is fine — that's the
+    main axis. The **only** centred text is the self-contained promotional bands — the shared
+    `.cta-box` and dark CTA/"access" bands — which are centred by their own component design, as
+    on equity. Do not centre ordinary content headings anywhere.
+
 ---
 
 ## ▶️ Running / preview
@@ -164,12 +174,14 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 | `/about/` | `pages/about.astro` | About Us (stat hero, MVV, timeline). |
 | `/demat/` | `pages/demat.astro` | Open a Demat Account (two-column hero + lead-capture form, phone-flag field decoration). |
 | `/become-a-partner/` | `pages/become-a-partner.astro` | Become a Partner (Apply form, eligibility checker, portfolio tabs). |
-| `/research/` | `pages/research.astro` | Research Centre. |
+| `/research/` | `pages/research/index.astro` | Research Centre (V4 landing: hub hero, All-In-One desk grid, three research streams via shared `.appr` cards, Why-Shriram feature grid, dark access band, alerts/commentary columns, FAQ). |
+| `/research/technical/` | `pages/research/technical.astro` | Technical Research (gated daily note, research-report grid). |
 | `/privacy/` | `pages/privacy.astro` | Privacy Policy (the pilot port — reference example). |
-| `/investor-charter/` | `pages/investor-charter.astro` | Investor Charter (document cards). |
+| `/investor-charter/` | `pages/investor-charter.astro` | Investor Charter (shared `.doc-card` view/download grid). |
+| `/mandatory-member-details/` | `pages/mandatory-member-details.astro` | Mandatory Member Details (SEBI member disclosures; same shared `.doc-card` grid as Investor Charter). |
 | `/products/` | `pages/products/index.astro` | Product Suite (breadcrumb hero, `.pgroup`/`.pcard` grids, orbit band). |
 | `/products/equity/` | `pages/products/equity.astro` | Equity product page. |
-| `/calculators/` | `pages/calculators/index.astro` | Calculators hub. |
+| `/calculators/` | `pages/calculators/index.astro` | Calculators hub (uses `.calc-hero` — a **sanctioned** wide chip-rail hero variant, not the shared `.hero`; the calculator *detail* pages use `.hero`). |
 | `/calculators/sip/` | `pages/calculators/sip.astro` | SIP Calculator (inline calculator script). |
 | `/support/` | `pages/support/index.astro` | Contact/Support hub (tabbed: Customer Care / Branch Locator / Downloads). |
 | `/support/grievance-redressal/` | `pages/support/grievance-redressal.astro` | Grievance Redressal. |

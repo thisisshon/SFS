@@ -57,11 +57,6 @@ const seo = {
   <!-- ================= HERO ================= -->
   <section class="hero" id="sec-hero" data-section="hero">
     <div class="hero-inner">
-      <nav class="crumb" aria-label="Breadcrumb">
-        <a href="/">Home</a>
-        <svg class="sep" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        <span class="cur">Product Suite</span>
-      </nav>
       <h1>Our Complete <span class="g">Product Suite</span></h1>
       <p class="lead">Trade, invest or borrow across our comprehensive list of product offerings — all from one connected account.</p>
       <div class="cta"><a class="btn-gold" href="/demat/">Open Demat Account</a></div>
@@ -277,33 +272,6 @@ const seo = {
 <style>
   /* ===== products — page-specific only (product-card component lives in global.css §6) ===== */
 
-  /* Hero breadcrumb */
-  .crumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .crumb a {
-    font-weight: 400;
-    font-size: 14px;
-    color: var(--color-sage-100); /* #c9cac7 (Tier-1: absorbed by sage-100) */
-    text-decoration: none;
-  }
-  .crumb a:hover {
-    color: #fff;
-  }
-  .crumb .sep {
-    width: 16px;
-    height: 16px;
-    color: var(--color-sage-450); /* #8d9088 (breadcrumb sep) */
-  }
-  .crumb .cur {
-    font-weight: 400;
-    font-size: 14px;
-    color: var(--color-gold-400);
-  }
-
   /* ===== Orbit feature section (dark) — "Six Financial Stages, One Orbit" ===== */
   /* Own single-use gradient — page-local LITERAL, Tier-2 candidate. */
   .orbit {
@@ -476,7 +444,7 @@ const seo = {
   .gateway-tx h2 {
     font-weight: 500;
     font-size: 32px;
-    color: #fff;
+    color: var(--color-white);
     line-height: 1.5;
   }
   .gateway-tx p {

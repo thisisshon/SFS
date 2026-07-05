@@ -7,9 +7,9 @@
  *   - Chrome (nav + mega-overlay) comes from BaseLayout (Header/MegaNav); the
  *     fork's `.ds-nav` / `.ds-mobile-menu` / `#nav-panel` markup + CSS + wiring
  *     scripts are dropped (byte-identical to shared — homepage-port-spec §1).
- *   - Footer is genuinely different from the shared one, so it stays page-local
- *     via footer="custom"; its alpha-whites are flattened to solid hex over the
- *     #0a0b07 footer bg (rule 5 — see the flatten table in the <style>).
+ *   - Footer now uses the shared <Footer /> from BaseLayout (default footer="site"),
+ *     unified with the rest of the site; the page-local divergent footer fork
+ *     (markup + CSS + alpha-white flatten table) has been removed.
  *   - Body/section bg keeps the fork's #fffcf3 (--color-surface-page-home) on a
  *     `.home` wrapper; the global body bg is untouched.
  *   - "Inter" font references become var(--font-sans) (Outfit) — rule 3.
@@ -69,7 +69,7 @@ const seo = {
 };
 ---
 
-<BaseLayout seo={seo} footer="custom">
+<BaseLayout seo={seo}>
   <div class="home">
     <!-- ================= HERO ================= -->
     <section class="el-sec">
@@ -99,7 +99,7 @@ const seo = {
           <h1 class="hero-title" style="font-family:var(--font-sans)">
             We help you level up.<br />
             <span
-              ><span class="hero-label" style="color:#4d6710">Expert-Driven</span> strategies; now yours.</span
+              ><span class="hero-label" style="color:var(--color-olive-500)">Expert-Driven</span> strategies; now yours.</span
             >
           </h1>
           <p class="hero-text">
@@ -209,7 +209,7 @@ const seo = {
             <div class="why-box-6">
               <!-- Left: heading + subtitle (Figma: 648px col, 40px/18px type, 16px gap) -->
               <div class="why-box-7">
-                <h2 class="why-title" style="font-family:var(--font-sans);color:#fff">
+                <h2 class="why-title" style="font-family:var(--font-sans);color:var(--color-white)">
                   Why Shriram Financial <span class="why-label">Services?</span>
                 </h2>
                 <p class="why-text">
@@ -317,7 +317,7 @@ const seo = {
     <!-- ================= STRATEGIC ADVISORY ================= -->
     <section class="el-sec-2">
       <div class="advisory-box">
-        <h2 class="why-title" style="font-family:var(--font-sans);color:#2e3914">
+        <h2 class="why-title" style="font-family:var(--font-sans);color:var(--color-olive-900)">
           Strategic Advisory For Every Investor
         </h2>
         <p class="advisory-text">
@@ -456,7 +456,7 @@ const seo = {
         <div class="card-wrap product-box-2">
           <div class="product-box-3">
             <div>
-              <h2 class="why-title" style="font-family:var(--font-sans);color:#fff">
+              <h2 class="why-title" style="font-family:var(--font-sans);color:var(--color-white)">
                 Trade, Invest or Borrow — <span class="why-label">All at One Place.</span>
               </h2>
               <p class="product-text">
@@ -962,7 +962,7 @@ const seo = {
           <!-- Left: heading + subtitle + CTA -->
           <div class="steps-box-3">
             <div class="hero-box-9">
-              <h2 class="why-title" style="font-family:var(--font-sans);color:#2e3914">
+              <h2 class="why-title" style="font-family:var(--font-sans);color:var(--color-olive-900)">
                 How to Open your Demat Account?
               </h2>
               <p class="steps-text" style="font-family:var(--font-sans)">
@@ -1062,7 +1062,7 @@ const seo = {
           <!-- Top: text left, QR card right (Figma 185:3710) -->
           <div class="antara-box-3">
             <div>
-              <h2 class="why-title" style="font-family:var(--font-sans);color:#fff">
+              <h2 class="why-title" style="font-family:var(--font-sans);color:var(--color-white)">
                 Meet <span class="why-label">Antara:</span> Your Smart Investment App
               </h2>
               <p class="antara-text">
@@ -1110,7 +1110,7 @@ const seo = {
         <div class="faq-box">
           <!-- FAQ list -->
           <div>
-            <h2 class="why-title" style="font-family:var(--font-sans);color:#2e3914">
+            <h2 class="why-title" style="font-family:var(--font-sans);color:var(--color-olive-900)">
               Got <span class="faq-label">Questions?</span>
             </h2>
             <!-- Figma 185:3779 — separate #f8f4e8 bars, plus/minus icons, one open at a time -->
@@ -1297,127 +1297,6 @@ const seo = {
     </section>
   </div>
 
-  <!-- ================= FOOTER (page-local — genuinely divergent fork) ================= -->
-  <footer class="el-bar">
-    <!-- ── Main footer grid ── -->
-    <div class="foot-box">
-      <div class="foot-box-2">
-        <!-- Col 1: Brand + Contact -->
-        <div>
-          <address class="foot-box-3">
-            <div class="foot-box-4">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" class="foot-box-5">
-                <path d="M8 1.5a5 5 0 0 1 5 5c0 3.5-5 8-5 8S3 10 3 6.5a5 5 0 0 1 5-5z"></path>
-                <circle cx="8" cy="6.5" r="1.5"></circle>
-              </svg>
-              <span>Shriram House, No. 4, Burkit Road,<br />T.Nagar, Chennai – 600 017</span>
-            </div>
-            <div class="foot-box-6">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" class="foot-box-7">
-                <path d="M2 3.5h3l1.5 3.5-1.5 1a9 9 0 0 0 3.5 3.5l1-1.5 3.5 1.5v3C9 14.5 2 7.5 2 3.5z"></path>
-              </svg>
-              <a href="tel:18001031212" class="foot-link">1800 103 1212</a>
-            </div>
-            <div class="foot-box-6">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" class="foot-box-7">
-                <rect x="2" y="4" width="12" height="9" rx="1.5"></rect>
-                <path d="M2 5l6 4.5L14 5"></path>
-              </svg>
-              <a href="mailto:support@shriramsecurities.com" class="foot-link">support@shriramsecurities.com</a>
-            </div>
-          </address>
-          <div class="foot-box-8">
-            <a href="#" aria-label="Twitter/X" onclick="event.preventDefault()" class="foot-link-2">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
-                <path d="M1 1l14 14M1 15L15 1"></path>
-              </svg>
-            </a><a href="#" aria-label="Facebook" onclick="event.preventDefault()" class="foot-link-2">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
-                <path d="M10 1H8a3 3 0 0 0-3 3v2H3v3h2v6h3V9h2l.5-3H8V4c0-.6.4-1 1-1h1V1z"></path>
-              </svg>
-            </a><a href="#" aria-label="LinkedIn" onclick="event.preventDefault()" class="foot-link-2">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
-                <path d="M2 2h2v2H2V2zm0 4h2v8H2V6zM6 6h2v1.2C8.4 6.4 9.4 6 10 6a3 3 0 0 1 3 3v5h-2V9.5c0-1-.5-1.5-1.3-1.5S8.2 8.5 8 9.5V14H6V6z"></path>
-              </svg>
-            </a><a href="#" aria-label="YouTube" onclick="event.preventDefault()" class="foot-link-2">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="foot-box-9">
-                <path d="M14 4.5S13.8 3 13 2.2c-.8-.9-1.7-.9-2.1-.9C9.2 1.2 8 1.2 8 1.2S6.8 1.2 5.1 1.3C4.7 1.3 3.8 1.3 3 2.2 2.2 3 2 4.5 2 4.5S1.8 6.3 1.8 8.1v1.7c0 1.8.2 3.6.2 3.6s.2 1.5 1 2.3c.8.9 1.9.8 2.4.9 1.7.2 7.3.2 7.3.2s1.2 0 2.9-.1c.4 0 1.3-.1 2.1-1 .8-.8 1-2.3 1-2.3s.2-1.8.2-3.6V8.1c0-1.8-.2-3.6-.2-3.6zm-8.5 7V5.5l5 3.1-5 2.9z"></path>
-              </svg>
-            </a>
-          </div>
-        </div>
-        <!-- Col 2: Company / Resources / Legal (3 sub-cols) -->
-        <div class="foot-box-10">
-          <div>
-            <h3 class="foot-subtitle">Company</h3>
-            <ul class="foot-list">
-              <li><a href="/about/" class="foot-link-3">About Us</a></li><li><a href="/karnataka-bank/" class="foot-link-3">Karnataka Bank 3-in-1</a></li><li><a href="/about/become-a-partner/" class="foot-link-3">Become a Partner</a></li><li><a href="/demat/" class="foot-link-3">Open Demat Account</a></li><li><a href="/about/regulatory/" class="foot-link-3">Regulatory</a></li><li><a href="/about/antara-web-login/" class="foot-link-3">Antara Platform</a></li><li><a href="/about/sitemap/" class="foot-link-3">Sitemap</a></li>
-            </ul>
-          </div>
-          <div>
-            <h3 class="foot-subtitle">Research</h3>
-            <ul class="foot-list">
-              <li><a href="/research/" class="foot-link-3">Research Centre</a></li><li><a href="/research/technical/" class="foot-link-3">Technical Analysis</a></li><li><a href="/research/fundamental/" class="foot-link-3">Fundamental Research</a></li><li><a href="/research/mutual-funds/" class="foot-link-3">Mutual Fund Picks</a></li><li><a href="/calculators/sip/" class="foot-link-3">Calculators</a></li><li><a href="/support/" class="foot-link-3">Support</a></li>
-            </ul>
-          </div>
-          <div>
-            <h3 class="foot-subtitle">Legal</h3>
-            <ul class="foot-list">
-              <li><a href="/privacy/" class="foot-link-3">Privacy Policy</a></li><li><a href="/investor-charter/" class="foot-link-3">Investor Charter</a></li><li><a href="/about/regulatory/" class="foot-link-3">Risk Disclosures</a></li><li><a href="/support/grievance-redressal/" class="foot-link-3">Grievance Redressal</a></li><li><a href="https://scores.sebi.gov.in" class="foot-link-3" target="_blank" rel="noopener noreferrer">SEBI SCORES</a></li><li><a href="/support/" class="foot-link-3">Contact Us</a></li>
-            </ul>
-          </div>
-        </div>
-        <!-- Col 4: Products -->
-        <div>
-          <h3 class="foot-subtitle">Products</h3>
-          <div class="foot-box-11">
-            <a href="/products/equity/" class="foot-link-3">Equity</a><a href="/products/derivative/" class="foot-link-3">Derivative</a><a href="/products/commodities/" class="foot-link-3">Commodities</a><a href="/products/mtf/" class="foot-link-3">MTF</a><a href="/products/currency/" class="foot-link-3">Currency</a><a href="/products/mutual-funds/" class="foot-link-3">Mutual Funds</a><a href="/products/etf/" class="foot-link-3">ETF</a><a href="/products/bonds/" class="foot-link-3">Bonds</a><a href="/products/nps/" class="foot-link-3">NPS</a><a href="/products/nfo/" class="foot-link-3">NFO</a><a href="/products/ipo/" class="foot-link-3">IPO</a><a href="/products/fd/" class="foot-link-3">Fixed Deposit</a><a href="/products/global-investing/" class="foot-link-3">Global Investing</a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- ── Regulatory text ── -->
-    <div class="foot-box-12">
-      <div class="foot-box-13">
-        <p class="foot-text">Regulatory Information</p>
-        <p class="foot-text-2">
-          Shriram Securities Ltd., a member of NSE &amp; BSE. SEBI Registration Nos: NSE-CM:
-          INB231103833 | NSE-FO: INF231103833 | NSE-CDS: INE231103833 | BSE-CM: INB011103839 |
-          BSE-FO: INF011103839 | BSE-CDS: INE011103839 | CDSL DP: IN-DP-194-2016. AMFI ARN: 29483.
-          IRDAI Registration No. CA0165. SEBI Research Analyst: INH200009624.
-        </p>
-        <p class="foot-text-3">
-          <strong class="foot-strong">Attention Investors:</strong>
-          Prevent Unauthorised Transactions in your Trading / Demat account. Update your Mobile Number
-          and Email Id with your Stock Broker / Depository Participant. Receive information of your
-          transactions directly from NSE, BSE, CDSL on your email and mobile. KYC is one time exercise
-          while dealing in securities markets. Once KYC is done through a SEBI registered intermediary,
-          you need not undergo the same process again when you approach another intermediary. No need
-          to issue cheques by investors while subscribing to IPO. Just write the bank account number
-          and sign in the application form to authorise your bank to make payment in case of allotment.
-          <strong class="foot-strong">
-            Investments in securities market are subject to market risks. Read all the related
-            documents carefully before investing.
-          </strong>
-        </p>
-      </div>
-    </div>
-    <!-- ── Copyright bar ── -->
-    <div class="foot-box-14">
-      <div class="foot-box-15">
-        <span>© 2026 Shriram Securities Limited. All rights reserved.</span>
-        <div class="hero-box-11">
-          <a href="/about/" class="foot-link">Privacy</a>
-          <span aria-hidden="true">·</span>
-          <a href="/about/" class="foot-link">Terms</a>
-          <span aria-hidden="true">·</span>
-          <a href="/about/grievance-redressal/" class="foot-link">Grievance</a>
-          <span aria-hidden="true">·</span>
-          <a href="/about/sitemap/" class="foot-link">Sitemap</a>
-        </div>
-      </div>
-    </div>
-  </footer>
 </BaseLayout>
 
 <style>
@@ -1563,7 +1442,7 @@ const seo = {
     padding-inline: 24px;
     font-size: 14px;
     font-weight: 500;
-    color: #fff;
+    color: var(--color-white);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 0.15s;
@@ -1630,7 +1509,7 @@ const seo = {
     gap: 12px;
     border-radius: 8px;
     border: 1px solid #ccc; /* --color-gray-300 */
-    background-color: #fff;
+    background-color: var(--color-white);
     padding-block: 12px;
     padding-left: 16px;
     padding-right: 16px;
@@ -1810,7 +1689,7 @@ const seo = {
     margin-top: 16px;
     font-size: 16px;
     line-height: 1.5;
-    color: #fff;
+    color: var(--color-white);
   }
   .why-box-8 {
     position: relative;
@@ -2080,7 +1959,7 @@ const seo = {
   }
   @media (hover: hover) {
     .product-link:hover {
-      color: #fff;
+      color: var(--color-white);
     }
   }
   .product-box-4 {
@@ -2109,7 +1988,7 @@ const seo = {
     transform: translateY(-10px);
   }
   .product-subtitle {
-    color: #fff;
+    color: var(--color-white);
   }
   .product-text-2 {
     color: #ffffff80; /* Tier-2: rule-5 (alpha) — parity-preserved (over dark card) */
@@ -2178,7 +2057,7 @@ const seo = {
   }
   .product-link-2:hover .product-img {
     transform: scale(1.14);
-    color: #ffffff;
+    color: var(--color-white);
   }
   .product-subtitle,
   .product-link-2:hover .product-subtitle {
@@ -2451,7 +2330,7 @@ const seo = {
     margin-top: 20px;
     font-size: 14px;
     font-weight: 500;
-    color: #fff;
+    color: var(--color-white);
   }
   .antara-box-6 {
     margin-top: 64px;
@@ -2476,12 +2355,12 @@ const seo = {
   .antara-label {
     font-size: 32px;
     font-weight: 700;
-    color: #fff;
+    color: var(--color-white);
   }
   .antara-label-2 {
     font-size: 16px;
     font-weight: 500;
-    color: #fff;
+    color: var(--color-white);
   }
   .antara-label-3 {
     font-size: 12px;
@@ -2583,7 +2462,7 @@ const seo = {
     border-radius: 24px;
     background-color: #4f583b; /* --color-olive-600 */
     padding: 32px;
-    color: #fff;
+    color: var(--color-white);
   }
   .faq-img {
     height: 140px;
@@ -2626,192 +2505,6 @@ const seo = {
   }
 
   /* =====================================================================
-     FOOTER — page-local (the divergent fork; suppressed shared footer).
-     ALPHA-WHITE FLATTEN TABLE — every #ffffffXX flattened to solid hex over
-     the #0a0b07 footer bg = rgb(10,11,7) (rule 5). result = α·255 + (1−α)·bg:
-       a6 (.651) -> #a9aaa8   59 (.349) -> #60605e   61 (.380) -> #676865
-       85 (.522) -> #8a8a88   4d (.302) -> #545552   40 (.251) -> #474845
-       1f (.122) -> #282925   80 (.502) -> #858583   12 (.071) -> #1b1c19
-       0d (.051) -> #161714   1a (.102) -> #232420   30% mix -> #545552
-     Box-shadows keep translucency (allowed).
-     ===================================================================== */
-  .el-bar {
-    background-color: #0a0b07; /* --color-charcoal-950 (--color-surface-footer-home) */
-    color: #a9aaa8; /* flattened from #ffffffa6 over footer bg (rule 5) */
-  }
-  .foot-box {
-    padding-block: 56px;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1rem, 6vw, 8rem);
-    padding-right: clamp(1rem, 6vw, 8rem);
-  }
-  .foot-box-2 {
-    display: grid;
-    gap: 40px;
-  }
-  .foot-box-3 {
-    margin-top: 0;
-    font-size: 14px;
-    line-height: 1.5;
-    font-style: normal;
-  }
-  .foot-box-3 > :not(:last-child) {
-    margin-bottom: 12px;
-  }
-  .foot-box-4 {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  .foot-box-5 {
-    margin-top: 4px;
-    height: 16px;
-    width: 16px;
-    flex-shrink: 0;
-    color: #60605e; /* flattened from #ffffff59 over footer bg (rule 5) */
-  }
-  .foot-box-6 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .foot-box-7 {
-    height: 16px;
-    width: 16px;
-    flex-shrink: 0;
-    color: #60605e; /* flattened from #ffffff59 over footer bg (rule 5) */
-  }
-  .foot-link {
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
-  @media (hover: hover) {
-    .foot-link:hover {
-      color: #fff;
-    }
-  }
-  .foot-box-8 {
-    margin-top: 24px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .foot-link-2 {
-    display: grid;
-    height: 32px;
-    width: 32px;
-    place-items: center;
-    border-radius: 999px; /* was 3.40282e38px */
-    border: 1px solid #282925; /* flattened from #ffffff1f over footer bg (rule 5) */
-    color: #858583; /* flattened from #ffffff80 over footer bg (rule 5) */
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
-  @media (hover: hover) {
-    .foot-link-2:hover {
-      border-color: #545552; /* flattened from #ffffff4d (30% mix) over footer bg (rule 5) */
-      background-color: #232420; /* flattened from #ffffff1a (10% mix) over footer bg (rule 5) */
-      color: #fff;
-    }
-  }
-  .foot-box-9 {
-    height: 16px;
-    width: 16px;
-  }
-  .foot-box-10 {
-    display: grid;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-    gap: 32px;
-  }
-  .foot-subtitle {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: #545552; /* flattened from #ffffff4d over footer bg (rule 5) */
-    text-transform: uppercase;
-  }
-  .foot-list {
-    margin-top: 16px;
-  }
-  .foot-list > :not(:last-child) {
-    margin-bottom: 12px;
-  }
-  .foot-link-3 {
-    font-size: 14px;
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
-  @media (hover: hover) {
-    .foot-link-3:hover {
-      color: #fff;
-    }
-  }
-  .foot-box-11 {
-    margin-top: 16px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px;
-    row-gap: 8px;
-  }
-  .foot-box-12 {
-    border-top: 1px solid #1b1c19; /* flattened from #ffffff12 over footer bg (rule 5) */
-  }
-  .foot-box-13 {
-    padding-block: 32px;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1rem, 6vw, 8rem);
-    padding-right: clamp(1rem, 6vw, 8rem);
-  }
-  .foot-text {
-    margin-bottom: 8px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: #474845; /* flattened from #ffffff40 over footer bg (rule 5) */
-    text-transform: uppercase;
-  }
-  .foot-text-2 {
-    font-size: 12px;
-    line-height: 1.5;
-    color: #676865; /* flattened from #ffffff61 over footer bg (rule 5) */
-  }
-  .foot-text-3 {
-    margin-top: 12px;
-    font-size: 12px;
-    line-height: 1.5;
-    color: #676865; /* flattened from #ffffff61 over footer bg (rule 5) */
-  }
-  .foot-strong {
-    font-weight: 500;
-    color: #8a8a88; /* flattened from #ffffff85 over footer bg (rule 5) */
-  }
-  .foot-box-14 {
-    border-top: 1px solid #161714; /* flattened from #ffffff0d over footer bg (rule 5) */
-  }
-  .foot-box-15 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding-block: 16px;
-    font-size: 12px;
-    color: #545552; /* flattened from #ffffff4d over footer bg (rule 5) */
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1rem, 6vw, 8rem);
-    padding-right: clamp(1rem, 6vw, 8rem);
-  }
-
-  /* =====================================================================
      RESPONSIVE — ported verbatim from home.css (Tailwind min-width variants
      mapped to their px boundaries: 40rem=640px, 64rem=1024px, 80rem=1280px).
      ===================================================================== */
@@ -2850,12 +2543,6 @@ const seo = {
     .antara-box-6 > :not(:last-child) {
       border-bottom: 0;
       border-inline-end: 1px solid #ffffff1a; /* Tier-2: rule-5 (alpha) — parity-preserved (divide-x) */
-    }
-    .foot-box-10 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .foot-box-15 {
-      flex-direction: row;
     }
   }
 
@@ -2970,16 +2657,6 @@ const seo = {
     }
     .faq-box {
       grid-template-columns: 1fr 360px;
-    }
-    .foot-box {
-      padding-block: 64px;
-    }
-    .foot-box-2 {
-      grid-template-columns: 300px 1fr 1fr 1fr;
-    }
-    .foot-box-10 {
-      grid-column: span 2 / span 2;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 

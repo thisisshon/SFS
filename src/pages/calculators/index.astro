@@ -95,7 +95,12 @@ const CALCS = [
 
 <style>
   /* ================= Calculators page ================= */
-  /* on-brand dark hero (matches the Equity hero gradient) */
+  /* Calculators-HUB hero — an intentional, sanctioned variant of the shared
+     .hero (rule 7), ported verbatim from legacy calculators/index.html for
+     pixel parity: wider H1 (780px vs the shared 600px), its own radial
+     gradient, taller min-height and a chip rail. NOT a substitute for .hero —
+     the calculator DETAIL pages (e.g. /calculators/sip/) use the shared .hero.
+     Off-grid/single-use values below are flagged Tier-2 in-line. */
   .calc-hero {
     background: radial-gradient(125% 210% at 100% -8%, var(--color-olive-600) 0%, var(--color-olive-800) 50%, var(--color-charcoal-850) 100%);
     min-height: clamp(440px, 29vw, 552px);

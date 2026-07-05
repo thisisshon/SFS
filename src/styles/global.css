@@ -131,10 +131,12 @@
   --color-white: #ffffff;
   --color-blue-500: #2f7ef4; /* login link / verify (17×) */
   --color-blue-600: #1c5fc4; /* link hover (charter/support) */
+  --color-blue-50: #eef4ff;  /* light-blue functional tint — gated/locked report affordances */
   --color-green-500: #009d58; /* check ticks / verified (legacy --green) */
   --color-green-600: #067a45; /* form success state */
   --color-green-100: #dbf0e2; /* success tint bg. Absorbs #daead7 (Tier 1) */
   --color-red-500: #ff3236; /* field error (legacy --field-error) */
+  --color-red-100: #ffe3e3; /* danger tint bg — mirrors green-100 (status pills) */
 
   /* ---------- Type scale ----------
      Legacy off-scale values 15px/19px stay literal at their use sites
@@ -204,6 +206,7 @@
   --color-surface-section-tint: var(--color-cream-400);
   --color-surface-footer: var(--color-charcoal-900);
   --color-surface-dark-card: var(--color-olive-950);
+  --color-surface-info-tint: var(--color-blue-50); /* light-blue tint for gated/locked report affordances */
   /* Home-fork surfaces — kept for pixel parity, Tier-2 unification pending */
   --color-surface-page-home: var(--color-cream-100);
   --color-surface-footer-home: var(--color-charcoal-950);
@@ -238,6 +241,7 @@
   --color-success-strong: var(--color-green-600);
   --color-success-tint: var(--color-green-100);
   --color-danger: var(--color-red-500);
+  --color-danger-tint: var(--color-red-100);
 
   /* Input field (.hf-*) — the one form-field component (rule 8) */
   --color-field-border: var(--color-gray-300);
@@ -386,6 +390,32 @@
   .card-h { font-weight: 500; font-size: 20px; color: var(--color-text-primary); }
   .card-p { font-weight: 400; font-size: 16px; color: var(--color-text-muted); }
 
+  /* ===== document card (shared "view / download" card) =====
+     One canonical card for document/download listings: a name, an optional meta
+     line, and one or two underlined action links. Used by /investor-charter/ and
+     /mandatory-member-details/; /support/ Downloads carries a page-local copy with
+     its own filter states. Consolidates the former page-local .ch-card dupe (rule 2). */
+  .doc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: stretch; }
+  .doc-card {
+    background: var(--color-surface-card); border: 1px solid var(--color-border-card);
+    border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
+    transition: border-color 0.22s ease;
+  }
+  .doc-card:hover { border-color: var(--color-sage-450); } /* #8d8e84 (Tier-1) */
+  .doc-card .nm { font-weight: 500; font-size: 16px; color: var(--color-text-primary); flex: 1 0 auto; }
+  .doc-card .upd { font-weight: 400; font-size: 14px; color: var(--color-text-muted); }
+  .doc-card .upd .sep { margin: 0 8px; }
+  .doc-links { display: flex; align-items: center; gap: 20px; }
+  .doc-dl {
+    display: inline-flex; align-items: center; color: var(--color-link);
+    font-weight: 500; font-size: 14px; white-space: nowrap;
+    text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s ease;
+  }
+  .doc-dl:hover { color: var(--color-link-hover); } /* #1c5fc4 */
+
+  @media (max-width: 1024px) { .doc-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) { .doc-grid { grid-template-columns: 1fr; } }
+
   /* ===== NAV ===== */
   .nav {
     height: 80px; display: flex; align-items: center; justify-content: space-between;
@@ -466,13 +496,21 @@
   .check-card .ch-title { font-weight: 500; font-size: 20px; color: var(--color-text-primary); }
   .check-list { display: flex; flex-direction: column; gap: 24px; }
   .check-row { display: flex; gap: 16px; align-items: flex-start; }
-  .check-row .ck { color: var(--color-success); font-weight: 700; font-size: 16px; width: 12px; flex: none; }
+  /* Icon column matches legacy .ck box for pixel parity (styles.css:212 —
+     12px wide, flex:none, no top margin). The legacy ✓ glyph is swapped for a
+     real check <svg> (rule 4); sized 16px but its viewBox underfills so the
+     rendered mark ≈ the old glyph, and the 12px box keeps the row layout exact. */
+  .check-row .ck { color: var(--color-success); width: 12px; flex: none; line-height: 1.5; }
+  .check-row .ck svg { display: block; width: 16px; height: 16px; }
   .check-row .tx { flex: 1 0 0; min-width: 0; font-weight: 400; font-size: 16px; color: var(--color-text-tertiary); }
   .check-sep { height: 1px; background: var(--color-border-hairline); width: 100%; }
 
   /* ===== tables ===== */
-  .table { background: var(--color-surface-card); border-radius: 24px; overflow: hidden; display: grid; }
-  .table.bordered { border: 1px solid var(--color-border-card); }
+  /* Comparison/data table. NOT named `.table` — that is a Tailwind v4 utility
+     (`display:table`) which, being in the later @layer utilities, would shadow
+     this component's `display:grid` wherever the markup uses class="table". */
+  .product-page_table { background: var(--color-surface-card); border-radius: 24px; overflow: hidden; display: grid; }
+  .product-page_table.bordered { border: 1px solid var(--color-border-card); }
   .t4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .t3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cell { padding: 16px 24px; display: flex; align-items: center; justify-content: center; text-align: center; }
@@ -492,14 +530,15 @@
   }
   /* Card Hover Animation 1 — subtle colour shift + arrow nudge, no lift/shadow */
   .appr:hover { background: var(--color-olive-925); border-color: var(--color-olive-700); }
-  .appr .explore span:last-child { transition: transform 0.25s ease; }
+  .appr .explore span:last-child { transition: transform 0.25s ease; display: inline-flex; }
+  .appr .explore span:last-child svg { display: block; width: 16px; height: 16px; }
   .appr:hover .explore span:last-child { transform: translateX(8px); }
   .appr-main { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 32px; }
   .appr .idx { font-weight: 400; font-size: 14px; color: var(--color-sage-450); letter-spacing: 1px; }
   .appr-tt { display: flex; flex-direction: column; gap: 16px; }
   .appr h4 { font-weight: 500; font-size: 24px; color: var(--color-white); }
   .appr p { font-weight: 400; font-size: 16px; color: var(--color-text-on-dark-body); max-width: 448px; }
-  .appr .explore { display: flex; gap: 8px; align-items: flex-start; color: var(--color-gold-400); font-weight: 600; font-size: 16px; white-space: nowrap; flex: none; }
+  .appr .explore { display: flex; gap: 8px; align-items: center; color: var(--color-gold-400); font-weight: 600; font-size: 16px; white-space: nowrap; flex: none; }
 
   /* ===== risks ===== */
   .risks { display: flex; gap: 24px; align-items: stretch; }
@@ -574,6 +613,21 @@
     font-weight: 500; font-size: 12px; white-space: nowrap;
   }
   .btn-ghost:hover { background: var(--color-charcoal-650); }
+
+  /* ===== outline button for dark / gradient bands =====
+     White outline + fill shows through, so it reads as an outline on any dark
+     surface — including a gradient, where no single solid hex can match (the
+     sanctioned exception to "solid hex only", rule 5). Hover inverts to a solid
+     white fill. Works on <a> and <button> (appearance reset). */
+  .btn-outline {
+    background: transparent; border: 1px solid var(--color-white); color: var(--color-white);
+    height: 40px; min-width: var(--cta-w); border-radius: 4px; padding: 8px 24px;
+    -webkit-appearance: none; appearance: none; cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 500; font-size: 12px; white-space: nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .btn-outline:hover { background: var(--color-white); color: var(--color-text-heading-dark); }
 
   /* ===== final CTA ===== */
   .cta-sec { padding: var(--section-y) var(--pad); }

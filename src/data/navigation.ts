@@ -212,6 +212,7 @@ export const footerColumns: FooterColumn[] = [
       { label: 'Grievance Redressal', href: '/support/grievance-redressal/' },
       { label: 'SEBI SCORES', href: 'https://scores.sebi.gov.in' },
       { label: 'Contact Us', href: '/support/' },
+      { label: 'Mandatory Member Details', href: '/mandatory-member-details/' },
     ],
   },
   {
@@ -220,8 +221,9 @@ export const footerColumns: FooterColumn[] = [
       { label: 'Equity', href: '/products/equity/' },
       { label: 'Derivatives', href: '#' },
       { label: 'Commodities', href: '#' },
-      { label: 'Currency', href: '#' },
+      { label: 'Currency', href: '/products/currency/' },
       { label: 'Mutual Funds', href: '#' },
+      { label: 'ETFs', href: '/products/etf/' },
       { label: 'IPO', href: '#' },
       { label: 'NPS', href: '#' },
       { label: 'Bonds', href: '#' },
