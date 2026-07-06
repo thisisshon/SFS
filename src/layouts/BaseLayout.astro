@@ -97,7 +97,7 @@ const title = fullTitle(seo.title);
         const SELECTOR = [
           '.hero-inner > *', '.calc-hero > *',
           '.section > *', '.faq-cols', '.cta-box',
-          'footer .foot-top > *', 'footer .foot-bottom',
+          'footer .foot-main > *', 'footer .foot-bottom',
         ].join(',');
 
         const blocks = Array.from(document.querySelectorAll<HTMLElement>(SELECTOR)).filter(

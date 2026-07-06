@@ -1024,11 +1024,22 @@ const seo = {
     .elig-check .btn-gold {
       width: 100%;
     }
+    /* Three nowrap tabs don't fit ~375px wide — let the rail scroll
+       horizontally in its own container so no tab is clipped/unreachable
+       (the page body itself never scrolls sideways). */
     .port-tabs {
       gap: 20px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .port-tabs::-webkit-scrollbar {
+      display: none;
     }
     .port-tab {
       font-size: 16px;
+      flex: none;
     }
     .stat-num {
       font-size: clamp(28px, 7vw, 40px);

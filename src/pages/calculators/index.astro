@@ -5,6 +5,7 @@
  * legacy calculators/index.html.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { calculators, calcHref } from '../../data/calculators';
 
 const seo = {
   title: 'Calculators — Shriram Financial Services',
@@ -16,29 +17,8 @@ const seo = {
 // Hero trust chips.
 const CHIPS = ['100% Free', 'Instant Results', 'No Sign-up Required', 'Accurate Projections'];
 
-// Calculator cards (title → description). The Demat CTA tile is rendered separately.
-const CALCS = [
-  {
-    title: 'SIP Calculator',
-    desc: 'Project the future value of your monthly SIP investments.',
-  },
-  {
-    title: 'Lumpsum Calculator',
-    desc: 'See how a one-time investment grows over your chosen horizon.',
-  },
-  {
-    title: 'SWP Calculator',
-    desc: 'Plan steady withdrawals while the rest of your corpus stays invested.',
-  },
-  {
-    title: 'Fixed Deposit Calculator',
-    desc: 'Estimate maturity value and interest earned on your deposit.',
-  },
-  {
-    title: 'NPS Calculator',
-    desc: 'Forecast your retirement corpus and expected monthly pension.',
-  },
-];
+// Calculator cards come from the single source of truth (src/data/calculators.ts).
+const CALCS = calculators;
 ---
 
 <BaseLayout seo={seo}>
@@ -75,7 +55,7 @@ const CALCS = [
     <div class="calc-grid">
       {
         CALCS.map((c) => (
-          <a class="calc-card" href="#">
+          <a class="calc-card" href={calcHref(c.slug)}>
             <span class="cc-title">{c.title}</span>
             <span class="cc-desc">{c.desc}</span>
             <span class="cc-cta">Calculate Now <span class="arr">&rarr;</span></span>
