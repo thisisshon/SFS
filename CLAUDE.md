@@ -175,7 +175,7 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 
 | URL | Source | Page |
 |---|---|---|
-| `/` | `pages/index.astro` | Homepage (video hero + glass Demat card, pinned "Why Shriram", advisory cards, dark product grid, steps, Antara band, `<details>` FAQ, **its own footer** — the one page whose footer legitimately diverges; `footer="custom"`). |
+| `/` | `pages/index.astro` | Homepage (video hero + glass Demat card, pinned "Why Shriram", advisory cards, dark product grid, steps, Antara band, `<details>` FAQ). The legacy homepage footer fork is retired — the V4 dark footer (brand/contact + 5 link columns + compliance bands, from `navigation.ts`) is unified sitewide. |
 | `/about/` | `pages/about.astro` | About Us (stat hero, MVV, timeline). |
 | `/demat/` | `pages/demat.astro` | Open a Demat Account (two-column hero + lead-capture form, phone-flag field decoration). |
 | `/become-a-partner/` | `pages/become-a-partner.astro` | Become a Partner (Apply form, eligibility checker, portfolio tabs). |
