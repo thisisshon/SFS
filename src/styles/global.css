@@ -1195,6 +1195,22 @@
   .foot-bottom { flex-direction: column; align-items: flex-start; }
 }
 
+/* ===== Compact hero — calculator detail pages (rule 7 variant) =====
+   The standardised hero centres breadcrumb + content inside a tall 440–552px
+   band via auto-margins (see .hero:has(.crumbs)). Calculator pages carry only
+   H1 + lead + CTA, so the band should HUG that content instead: drop the tall
+   min-height and the auto-margin distribution, then pad the band evenly. Kept
+   UNLAYERED and placed after the mobile hero rules so it beats BOTH the layered
+   desktop rule and the unlayered mobile `min-height:560px` override. Values on
+   the 8px grid (rule 6). Applies to every calculator: single source of truth. */
+.hero-compact:has(.crumbs) { min-height: 0; justify-content: flex-start; }
+.hero-compact:has(.crumbs) .crumbs { margin-block: 0; padding-top: 32px; }
+.hero-compact:has(.crumbs) .hero-inner { margin-bottom: 0; padding: 24px 0 48px; }
+@media (max-width: 768px) {
+  .hero-compact:has(.crumbs) .crumbs { padding-top: 24px; }
+  .hero-compact:has(.crumbs) .hero-inner { padding: 24px 0 40px; }
+}
+
 /* Small phones */
 @media (max-width: 560px) {
   .cat-grid { grid-template-columns: 1fr; }
