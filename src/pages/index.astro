@@ -1797,19 +1797,13 @@ const seo = {
       margin-inline: 0;
       padding-inline: 0;
       overflow: visible;
-      gap: 16px;
+      gap: 24px; /* +8px breathing room between the stacked cards */
     }
     .why-box-10 {
-      height: auto;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      background-color: #363a2c; /* solid olive-dark (gradient stop) — normal card, no frost */
-    }
-    .why-box-10::before {
-      display: none; /* drop the frosted-glass grain texture */
+      height: auto; /* frosted glass (backdrop-filter blur + grain) retained from base */
     }
     .differ-fade {
-      display: none; /* drop the progressive-blur edge bands */
+      display: none; /* drop the progressive-blur edge bands (scroll-reveal only) */
     }
   }
 
@@ -1977,7 +1971,7 @@ const seo = {
   .product-box-4 {
     margin-top: 40px;
     display: grid;
-    grid-template-columns: 1fr; /* phones: 1 col (2 at ≥640, 4 at ≥1280) — avoids ~80px cramped cards */
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* mweb: 2-col grid (4 at ≥1280) */
     gap: 16px;
   }
   /* Scroll reveal — the section header + each card fade/rise in as the grid
@@ -2024,8 +2018,10 @@ const seo = {
     margin-top: 40px;
     transition: margin-top var(--pc-dur) var(--pc-ease);
   }
-  .product-link-2:hover .product-copy {
-    margin-top: 32px; /* 8px tighter to the icon on hover */
+  @media (hover: hover) {
+    .product-link-2:hover .product-copy {
+      margin-top: 32px; /* 8px tighter to the icon on hover */
+    }
   }
   .product-subtitle {
     color: var(--color-white);
@@ -2057,12 +2053,10 @@ const seo = {
     padding: 32px;
     background-color: #2e3914; /* --color-olive-900 (revealed base) */
   }
-  .product-link-2:hover {
-    --pc-delay: 0.1s;
-    background-color: #2e3914; /* --color-olive-900 */
-  }
   @media (hover: hover) {
     .product-link-2:hover {
+      --pc-delay: 0.1s;
+      background-color: #2e3914; /* --color-olive-900 */
       z-index: 10;
     }
   }
@@ -2075,8 +2069,10 @@ const seo = {
     clip-path: circle(150% at calc(100% - 60px) 60px);
     transition: clip-path var(--pc-dur) var(--pc-ease);
   }
-  .product-link-2:hover::before {
-    clip-path: circle(0% at calc(100% - 60px) 60px);
+  @media (hover: hover) {
+    .product-link-2:hover::before {
+      clip-path: circle(0% at calc(100% - 60px) 60px);
+    }
   }
   /* icon scales from its left edge — grows rightward, not from centre */
   .product-img {
@@ -2092,12 +2088,14 @@ const seo = {
     stroke: currentColor;
     transition: stroke-width var(--pc-dur) var(--pc-ease);
   }
-  .product-link-2:hover .product-img {
-    transform: scale(1.2); /* 40px → 48px */
-    color: var(--color-white);
-  }
-  .product-link-2:hover .product-img [stroke] {
-    stroke-width: 3; /* 2.5 + 0.5 on hover */
+  @media (hover: hover) {
+    .product-link-2:hover .product-img {
+      transform: scale(1.2); /* 40px → 48px */
+      color: var(--color-white);
+    }
+    .product-link-2:hover .product-img [stroke] {
+      stroke-width: 3; /* 2.5 + 0.5 on hover */
+    }
   }
   .product-subtitle {
     font-size: 16px;
@@ -2125,11 +2123,13 @@ const seo = {
     transition: opacity var(--pc-dur) var(--pc-ease), transform var(--pc-dur) var(--pc-ease),
       max-height var(--pc-dur) var(--pc-ease), margin-top var(--pc-dur) var(--pc-ease);
   }
-  .product-link-2:hover .product-label {
-    margin-top: 40px;
-    max-height: 24px;
-    opacity: 1;
-    transform: translateY(0);
+  @media (hover: hover) {
+    .product-link-2:hover .product-label {
+      margin-top: 40px;
+      max-height: 24px;
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .product-card-circle {
     position: absolute;
@@ -2148,9 +2148,11 @@ const seo = {
     transform: scale(0.375); /* 24px at rest → 64px on hover */
     transition: opacity var(--pc-dur) var(--pc-ease), transform var(--pc-dur) var(--pc-ease);
   }
-  .product-link-2:hover .product-card-circle {
-    opacity: 1;
-    transform: scale(1);
+  @media (hover: hover) {
+    .product-link-2:hover .product-card-circle {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   /* arrow points right (→) while hidden, then rotates up to aim at the
      top-right corner (↗) as it reveals */
@@ -2162,8 +2164,10 @@ const seo = {
     transform: rotate(45deg);
     transition: transform var(--pc-dur) var(--pc-ease);
   }
-  .product-link-2:hover .product-card-circle svg {
-    transform: rotate(0deg);
+  @media (hover: hover) {
+    .product-link-2:hover .product-card-circle svg {
+      transform: rotate(0deg);
+    }
   }
   /* Figma trigger: Mouse enter · 100ms delay — hover-IN only (0s at rest) */
   .product-link-2::before,
