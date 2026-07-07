@@ -127,15 +127,15 @@ const seo = {
             <!-- Title + badges (gap-[16px] per Figma) -->
             <div class="hero-box-9">
               <h2 class="hero-title-2">
-                Open a Demat Account
+                Open a Demat Account<span class="hero-dm-mweb"> Today</span>
               </h2>
               <div class="hero-box-10">
                 <div class="hero-box-11">
                   <span class="hero-label-4">100% Paperless</span>
                 </div><div class="hero-box-11">
                   <span class="hero-label-3"></span>
-                  <span class="hero-label-4">Open Within Minutes</span>
-                </div><div class="hero-box-11">
+                  <span class="hero-label-4"><span class="hero-dm-desk">Open </span>Within Minutes</span>
+                </div><div class="hero-box-11 hero-dm-desk-badge">
                   <span class="hero-label-3"></span>
                   <span class="hero-label-4">SEBI Regulated</span>
                 </div>
@@ -1443,6 +1443,11 @@ const seo = {
     font-weight: 500;
     color: #4f583b; /* --color-olive-600 */
   }
+  /* Demat card copy toggles — mweb shows shorter wording (Figma 1119:13439);
+     desktop keeps the original heading/badges unchanged. */
+  .hero-dm-mweb {
+    display: none;
+  }
   .hero-box-10 {
     display: flex;
     flex-wrap: wrap;
@@ -1946,27 +1951,39 @@ const seo = {
     transform: translateY(-1px);
   }
   }
-  /* ── mweb (≤1023px) — Strategic Advisory becomes a 2×2 grid of VERTICAL cards
-     (icon-top → title → copy), per Figma 1102:9682. Desktop (≥1024px) keeps its
-     horizontal icon-left cards untouched. Card text already matches Figma (16px
-     bold uppercase #2e3914 / 16px #4f583b), so only the layout changes here. ── */
+  /* ── mweb (≤1023px) — Strategic Advisory: single-column stack; each card puts a
+     40px icon + uppercase title on one row with a full-width description below
+     (Figma 1119:13399). .advisory-box-5 dissolves so its title/desc become grid
+     rows. Desktop (≥1024px) keeps its horizontal icon-left cards untouched. ── */
   @media (max-width: 1023px) {
     .advisory-box-2 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 24px 16px;
+      grid-template-columns: 1fr;
+      gap: 24px;
     }
     .advisory-box-3 {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 24px;
-      padding: 48px 24px;
-    }
-    .advisory-img {
-      height: 72px;
-      width: 72px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      column-gap: 12px;
+      row-gap: 8px;
+      align-items: center;
+      padding: 32px;
     }
     .advisory-box-5 {
-      gap: 16px;
+      display: contents;
+    }
+    .advisory-img {
+      grid-column: 1;
+      grid-row: 1;
+      height: 40px;
+      width: 40px;
+    }
+    .advisory-subtitle {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .advisory-text-2 {
+      grid-column: 1 / -1;
+      grid-row: 2;
     }
   }
 
@@ -2232,9 +2249,10 @@ const seo = {
       opacity: 1;
       transform: none;
     }
-    /* Dark grey card container: 16px sides / 24px top+bottom internal padding. */
+    /* Dark section container (Products + Antara): 48px top+bottom internal
+       padding on mweb (sides set to 24px below). Desktop unchanged. */
     .product-box-2 {
-      padding: 24px 16px;
+      padding: 48px 16px;
     }
     @media (min-width: 1024px) and (hover: hover) {
       /* Remove the hover animation entirely on mweb — hold every layer at its
@@ -3085,13 +3103,10 @@ const seo = {
     }
 
     /* ── mweb type + spacing to match Figma 1102:9582 exactly ── */
-    /* Section headings are 32px on mweb (Why / Advisory / Products / Antara)… */
+    /* Section headings are 32px on mweb (Why / Advisory / Products / How Soon /
+       Antara). */
     .why-title {
       font-size: 32px;
-    }
-    /* …except "How Soon Can I Start?" which is 24px. */
-    .steps-box-3 .why-title {
-      font-size: 24px;
     }
     /* Hero trust badges 12px (Figma 1111:11447). */
     .hero-label-2 {
@@ -3100,6 +3115,15 @@ const seo = {
     /* Demat card heading 20px, one line (Figma 1111:11463). */
     .hero-title-2 {
       font-size: 20px;
+    }
+    /* Demat card mweb copy (Figma 1119:13439): "…Today" heading, "Within
+       Minutes" (not "Open Within Minutes"), and no "SEBI Regulated" badge. */
+    .hero-dm-mweb {
+      display: inline;
+    }
+    .hero-dm-desk,
+    .hero-dm-desk-badge {
+      display: none;
     }
     /* Why-Shriram card titles 20px (Figma 1111:11538). */
     .why-subtitle {
