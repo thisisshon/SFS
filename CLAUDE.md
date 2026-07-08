@@ -141,10 +141,12 @@ off against each other:
     `.cta-box` and dark CTA/"access" bands - which are centred by their own component design, as
     on equity. Do not centre ordinary content headings anywhere.
 
-13. **The FAQ section header is always "General Questions".** Every page's FAQ block
-    (`<h2 class="faq-title">…</h2>` above `FaqAccordion`) reads exactly **General Questions** -
-    never "FAQs - <Topic>", "Frequently Asked Questions" or any variant. Apply on every new page
-    build and fix any divergent header you encounter, unless a specific page is told otherwise.
+13. **The FAQ section header is always "Got Questions?".** Every page's FAQ block
+    (`<h2 class="faq-title">…</h2>` above `FaqAccordion`) reads exactly **Got Questions?** -
+    never "FAQs - <Topic>", "Frequently Asked Questions", "General Questions" or any other variant.
+    Apply on every new page build and fix any divergent header you encounter, unless a specific
+    page is told otherwise. *(Superseded 2026-07-08: the header was previously "General Questions";
+    the whole site was switched to "Got Questions?" to match the compliance content.)*
 
 14. **🟢 Interactive controls meet a 48px mobile tap target.** Every tappable control (icon
     button, icon-only link, hamburger, social link) must present a **≥44px** touch area on
@@ -190,7 +192,7 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 
 ## 📄 Pages
 
-**43 pages total.** URLs are **flat/top-level** - product and calculator detail pages live directly at `src/pages/<slug>.astro` (root), NOT nested under `products/`/`calculators/`. The `products/` and `calculators/` folders keep only their **hub** `index.astro`. Detail pages are **template-driven** (`equity.astro` is the reference for product pages). Every FAQ block reads exactly **General Questions** (rule 13). Every `<title>` is normalised by `fullTitle()` to `<Page Title> | Shriram Financial Services` - page `seo.title` values carry **no** brand suffix. All heroes use the shared `.hero` except the `/calculators/` hub (documented `.calc-hero` variant) and the calculator **detail** pages (the `.hero.hero-compact` hug variant - see rule 7).
+**44 pages total.** URLs are **flat/top-level** - product and calculator detail pages live directly at `src/pages/<slug>.astro` (root), NOT nested under `products/`/`calculators/`. The `products/` and `calculators/` folders keep only their **hub** `index.astro`. Detail pages are **template-driven** (`equity.astro` is the reference for product pages). Every FAQ block reads exactly **Got Questions?** (rule 13). Every `<title>` is normalised by `fullTitle()` to `<Page Title> | Shriram Financial Services` - page `seo.title` values carry **no** brand suffix. All heroes use the shared `.hero` except the `/calculators/` hub (documented `.calc-hero` variant) and the calculator **detail** pages (the `.hero.hero-compact` hug variant - see rule 7).
 
 **Core & company**
 | URL | Source | Page |
@@ -200,6 +202,7 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 | `/open-demat-account/` | `pages/open-demat-account.astro` | Open a Demat Account (two-column hero + lead-capture form, phone-flag decoration). |
 | `/become-a-partner/` | `pages/become-a-partner.astro` | Become a Partner (Apply form, eligibility checker, portfolio tabs). |
 | `/karnataka-bank-customers/` | `pages/karnataka-bank-customers.astro` | Karnataka Bank 3-in-1 (co-brand hero lockup + lead-capture form). |
+| `/antara/` | `pages/antara.astro` | Explore Antara (Shriram X platform - standardised hero, feature/cat grids, `.gate` locked card, FAQ). |
 | `/sitemap/` | `pages/sitemap.astro` | HTML sitemap (link index, built from `navigation.ts`). |
 
 **Products** - flat at `pages/<slug>.astro` (template-driven; `equity` is the reference). Hub at `pages/products/index.astro`.
@@ -261,7 +264,7 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 |---|---|---|
 | `/design-system/` (+ `current/`, `proposed/`) | `pages/design-system/` | Design-system docs (noindex). |
 
-> **Skipped:** `/antara/` (Shriram X platform) was intentionally not built; the homepage "Explore Shriram X" / login links and the footer "Explore Antara" are inert `#` placeholders awaiting that page.
+> **Note:** `/antara/` (Shriram X platform) is now built (2026-07-08). The homepage "Explore Antara" hero link and the footer "Explore Antara" entry in `navigation.ts` point at it; the homepage login links remain inert `#` placeholders.
 
 **Adding a new page:** create `src/pages/<path>.astro`, import `BaseLayout`, pass a `seo` object,
 and build from the shared component classes + tokens in `global.css`. Copy an existing page of a
