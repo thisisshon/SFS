@@ -9,6 +9,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumb from '../components/site/Breadcrumb.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import StepFlow from '../components/sections/StepFlow.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
 // Got Questions? - the first 6 FAQs from the compliance doc (display cap; the
@@ -206,32 +207,15 @@ const seo = {
       <h2 class="sec-title">How to Start Trading with Commodities?</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">To start trading with commodities, follow these 5 easy steps to open your account, activate the commodity segment, and begin trading on regulated exchanges.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Open Account Online</h4><p>Fill in your basic details through “Open an account” link. No paperwork or branch visit required.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Complete KYC</h4><p>Upload PAN, Aadhaar, and a cancelled cheque. Video-based in-person verification (IPV) is done instantly.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Activate MCX</h4><p>Request commodity segment activation from your client dashboard.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Add Funds</h4><p>Transfer money via UPI, NEFT, or net banking.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Place First Trade</h4><p>Search for a commodity contract, check margin requirements, and place a buy or sell futures order.</p></div>
-      </div>
-    </div>
+    <StepFlow
+      steps={[
+        { icon: 'account', title: 'Open Account Online', desc: 'Fill in your basic details through the “Open an account” link. No paperwork or branch visit required.' },
+        { icon: 'kyc', title: 'Complete KYC', desc: 'Upload PAN, Aadhaar, and a cancelled cheque. Video-based in-person verification (IPV) is done instantly.' },
+        { icon: 'activate', title: 'Activate MCX', desc: 'Request commodity segment activation from your client dashboard.' },
+        { icon: 'fund', title: 'Add Funds', desc: 'Transfer money via UPI, NEFT, or net banking.' },
+        { icon: 'trade', title: 'Place First Trade', desc: 'Search for a commodity contract, check margin requirements, and place a buy or sell futures order.' },
+      ]}
+    />
     <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
