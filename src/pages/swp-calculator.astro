@@ -562,20 +562,11 @@ const seo = {
     (document.getElementById('sr-summary') as HTMLElement).textContent =
       'A ₹' + fmt.format(corpus) + ' corpus with ₹' + fmt.format(monthly) + ' monthly withdrawals lasts ' + durText + ', withdrawing ' + rupee(r.withdrawn) + ' in total.';
 
-    updateUrl(corpus, monthly, ratePct);
     amtR.setAttribute('aria-valuetext', '₹' + fmt.format(corpus));
     wdR.setAttribute('aria-valuetext', '₹' + fmt.format(monthly));
     rateR.setAttribute('aria-valuetext', ratePct + ' percent');
   }
 
-  function updateUrl(corpus: number, monthly: number, ratePct: number) {
-    const q = '?amt=' + corpus + '&wd=' + monthly + '&rate=' + ratePct;
-    try {
-      history.replaceState(null, '', q);
-    } catch (e) {
-      /* ignore */
-    }
-  }
 
   function pairNumberAndSlider(numEl: HTMLInputElement, slEl: HTMLInputElement, group: boolean) {
     slEl.addEventListener('input', function () {

@@ -595,7 +595,6 @@ const seo = {
     (document.getElementById('sr-summary') as HTMLElement).textContent =
       'By age ' + retAge + ' your corpus is ' + rupee(corpus) + ', giving a ' + rupee(lump) + ' tax-free lump sum and about ' + perMonth(pension) + ' pension.';
 
-    updateUrl(curAge, retAge, monthly, ratePct, annPct, annRatePct);
     ageR.setAttribute('aria-valuetext', curAge + ' years');
     rageR.setAttribute('aria-valuetext', retAge + ' years');
     amtR.setAttribute('aria-valuetext', '₹' + fmt.format(monthly));
@@ -604,14 +603,6 @@ const seo = {
     arateR.setAttribute('aria-valuetext', annRatePct + ' percent');
   }
 
-  function updateUrl(curAge: number, retAge: number, monthly: number, ratePct: number, annPct: number, annRatePct: number) {
-    const q = '?age=' + curAge + '&rage=' + retAge + '&amt=' + monthly + '&rate=' + ratePct + '&ann=' + annPct + '&arate=' + annRatePct;
-    try {
-      history.replaceState(null, '', q);
-    } catch (e) {
-      /* ignore */
-    }
-  }
 
   function pairNumberAndSlider(numEl: HTMLInputElement, slEl: HTMLInputElement, group: boolean) {
     // decimals to show for this field, inferred from the slider step (e.g. 0.5 → 1)
