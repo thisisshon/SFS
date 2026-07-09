@@ -1,17 +1,17 @@
 ---
 /**
- * Design System - hub · /design-system/
+ * Design System - hub · /designsystem
  * Internal tooling docs (noindex). The export artifact for the Figma round-trip.
  * Two documentation pages: the honest as-built inventory ("current") and the
  * consolidated, live-token system ("proposed" - the Figma artifact).
  */
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 
 const seo = {
   title: 'Design System - Documentation Hub',
   description:
     'Internal design-system documentation for Shriram Financial Services: the honest as-built style inventory of the legacy site, and the consolidated token system rendered live from styles.css for the Figma round-trip.',
-  path: '/design-system/',
+  path: '/designsystem',
   noindex: true,
 };
 ---
@@ -46,7 +46,7 @@ const seo = {
     </div>
 
     <div class="ds-cards">
-      <a class="ds-card" href="/design-system/current/">
+      <a class="ds-card" href="/designsystem/current">
         <span class="ds-card-tag">Doc 1 · the “before”</span>
         <h3>What is used</h3>
         <p>
@@ -60,7 +60,7 @@ const seo = {
         </span>
       </a>
 
-      <a class="ds-card ds-card--primary" href="/design-system/proposed/">
+      <a class="ds-card ds-card--primary" href="/designsystem/proposed">
         <span class="ds-card-tag">Doc 2 · the Figma artifact</span>
         <h3>What is suggested</h3>
         <p>

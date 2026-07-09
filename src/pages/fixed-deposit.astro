@@ -1,6 +1,6 @@
 ---
 /**
- * FD - /fixed-deposit/
+ * FD - /fixed-deposit
  * Long-form Fixed Deposit product page. Content is the compliance-approved
  * doc (FD_Product Page, 3rd July) rendered verbatim with the shared
  * design-system components in global.css (hero, .section/.sec-title, .card,
@@ -44,17 +44,17 @@ const FAQS = [
 const site = Astro.site!.href;
 
 const seo = {
-  title: 'Fixed Deposit - Up to 8.5% *p.a.',
+  title: 'Fixed Deposit - Up to 8.05%* p.a.',
   description:
     'Secure guaranteed returns of up to 8.05%* p.a. with fixed deposits from trusted partner institutions, offered by Shriram Financial Services.',
-  path: '/fixed-deposit/',
+  path: '/fixed-deposit',
   jsonLd: [
     faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a }))),
     breadcrumbSchema(
       [
         { name: 'Home', path: '/' },
-        { name: 'Products', path: '/products/' },
-        { name: 'Fixed Deposit', path: '/fixed-deposit/' },
+        { name: 'Products', path: '/products' },
+        { name: 'Fixed Deposit', path: '/fixed-deposit' },
       ],
       site
     ),
@@ -66,11 +66,11 @@ const seo = {
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
   <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products/' }, { name: 'Fixed Deposit' }]} />
+    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Fixed Deposit' }]} />
     <div class="hero-inner" data-enter>
-      <h1>Fixed Deposit in India - Earn Up to 7.80%* p.a. with Shriram Unnati <span class="g">Fixed Deposit</span></h1>
+      <h1>Fixed Deposit in India - Earn Up to 8.05%* p.a. with Shriram Unnati <span class="g">Fixed Deposit</span></h1>
       <p class="lead">Enjoy the stability of guaranteed returns, flexible tenures (12 to 60 months), and a 100% digital investment experience. Choose Fixed Deposits designed to help you achieve your financial goals.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account/">Open FD</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open FD</a></div>
     </div>
   </section>
 
@@ -78,7 +78,7 @@ const seo = {
   <section class="section stack sec-light" id="sec-highlights" data-section="highlights" style="gap:56px;justify-content:center" data-enter="2">
     <div class="cat-grid" data-reveal-row>
       <div class="cat"><h4>Highest Safety</h4><p>FAAA / MAA+ Rated</p></div>
-      <div class="cat"><h4>Guaranteed Returns</h4><p>Up to 7.80%* p.a.</p></div>
+      <div class="cat"><h4>Guaranteed Returns</h4><p>Up to 8.05%* p.a.</p></div>
       <div class="cat"><h4>Senior Citizen Benefit</h4><p>Additional 0.50%* p.a.</p></div>
       <div class="cat"><h4>Open FD Online</h4><p>100% Digital Process</p></div>
     </div>
@@ -93,7 +93,7 @@ const seo = {
     <div class="stack" style="gap:32px">
       <div class="stack" style="gap:16px">
         <h3 class="sub-title">Example</h3>
-        <p class="sub-lead">Suppose you invest ₹1,00,000 in an FD at 7.80% per annum for 3 years under the cumulative scheme. Interest is compounded monthly and added to your principal.</p>
+        <p class="sub-lead">Suppose you invest ₹1,00,000 in an FD at 8.05% per annum for 3 years under the cumulative scheme. Interest is compounded monthly and added to your principal.</p>
         <p class="sub-lead">At the end of 3 years, your investment will grow, providing higher returns than a standard savings account.</p>
       </div>
     </div>
@@ -183,7 +183,7 @@ const seo = {
       <h2 class="sec-title">Fixed Deposit Calculator</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Understanding how your FD interest is calculated helps you make smarter choices about tenure and scheme type.</p>
     </div>
-    <a class="btn-gold" href="/fd-calculator/" style="align-self:center">Open FD Account</a>
+    <a class="btn-gold" href="/fd-calculator" style="align-self:center">Open FD Account</a>
   </section>
 
   <!-- ===== Benefits and Features ===== -->
@@ -262,7 +262,7 @@ const seo = {
         <div class="st-body"><h4>Make Payment and Receive Confirmation</h4><p>Fund your FD through Net Banking, UPI, NEFT, or RTGS. Once the payment is successful, your Fixed Deposit is created instantly and the FD receipt is shared digitally for your records.</p></div>
       </div>
     </div>
-    <a class="btn-gold" href="/open-demat-account/" style="align-self:center">Open FD</a>
+    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open FD</a>
   </section>
 
   <!-- ===== General Questions ===== -->
@@ -279,7 +279,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us/">Book A Discovery Call</a>
+          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

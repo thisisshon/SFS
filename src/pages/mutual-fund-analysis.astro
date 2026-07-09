@@ -1,6 +1,6 @@
 ---
 /**
- * Mutual Fund Research - /mutual-fund-analysis/
+ * Mutual Fund Research - /mutual-fund-analysis
  * Research-Centre content page on Shriram's Mutual Fund Research offering.
  * Body copy is the compliance-approved document, verbatim. Built entirely
  * from the shared design system: standardised olive hero (rule 7), shared
@@ -55,7 +55,7 @@ const seo = {
   title: 'Mutual Fund Research & Picks',
   description:
     'Discover mutual fund research and expert fund picks to build a well-diversified portfolio with Shriram Financial Services.',
-  path: '/mutual-fund-analysis/',
+  path: '/mutual-fund-analysis',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -63,11 +63,11 @@ const seo = {
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO (standardised, rule 7) ================= -->
   <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub/' }, { name: 'Mutual Fund Research' }]} />
+    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Mutual Fund Research' }]} />
     <div class="hero-inner" data-enter>
       <h1>Mutual Fund Research</h1>
       <p class="lead">Picking a fund shouldn’t take longer than picking the stock it’s invested in.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account/">Open Demat Account</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
     </div>
   </section>
 
@@ -101,7 +101,7 @@ const seo = {
       </div>
       <div class="cta">
         <a class="btn-gold" href="#">Login</a>
-        <a class="btn-outline" href="/open-demat-account/">Open Investment Account</a>
+        <a class="btn-outline" href="/open-demat-account">Open Investment Account</a>
       </div>
     </div>
   </section>
@@ -122,7 +122,7 @@ const seo = {
         <p class="ct-sub">Open your demat account and get free, unlimited access to every fund review, category comparison and portfolio check-in we publish.</p>
       </div>
       <div class="cta">
-        <a class="btn-gold" href="/open-demat-account/">Open Account</a>
+        <a class="btn-gold" href="/open-demat-account">Open Account</a>
         <a class="btn-outline" href="#">Login to Existing Account</a>
       </div>
     </div>
@@ -142,7 +142,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show which funds fit your goals - and what a research-led, direct-plan portfolio would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us/">Book A Discovery Call</a>
+          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

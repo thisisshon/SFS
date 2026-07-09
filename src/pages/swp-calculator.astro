@@ -1,6 +1,6 @@
 ---
 /**
- * SWP Calculator - /swp-calculator/
+ * SWP Calculator - /swp-calculator
  * Systematic Withdrawal Plan: simulates a lumpsum that grows while you draw a
  * fixed amount each month, month by month (so depletion is handled exactly).
  * Built on the shared calculator UI in global.css; page carries content + maths.
@@ -44,7 +44,7 @@ const seo = {
   title: 'SWP Calculator - Withdrawal',
   description:
     'Plan your regular mutual fund withdrawals and estimate your remaining corpus with the free SWP calculator from Shriram Financial Services.',
-  path: '/swp-calculator/',
+  path: '/swp-calculator',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -52,7 +52,7 @@ const seo = {
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
   <section class="hero hero-compact" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators/' }, { name: 'SWP Calculator' }]} />
+    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators' }, { name: 'SWP Calculator' }]} />
     <div class="hero-inner" data-enter>
       <h1>SWP Calculator – Plan Your <span class="g">Monthly Withdrawals Instantly</span></h1>
       <p class="lead">Find out how much you can withdraw while keeping your investments growing with Shriram Financial Services.</p>
@@ -136,7 +136,7 @@ const seo = {
 
         <div class="ready-bar">
           <p class="ready-text">Put your plan into action - <b>open a free Demat account</b></p>
-          <a class="ready-btn" href="/open-demat-account/">Open Demat Account</a>
+          <a class="ready-btn" href="/open-demat-account">Open Demat Account</a>
         </div>
       </div>
     </div>
@@ -411,28 +411,28 @@ const seo = {
   <section class="section stack sec-light" id="sec-explore" data-section="explore" style="gap:40px">
     <h2 class="sec-title">Related Calculators</h2>
     <div class="explore-grid" data-reveal-row>
-      <a class="xcard" href="/sip-calculator/">
+      <a class="xcard" href="/sip-calculator">
         <span class="xc-title">SIP Calculator</span>
         <span class="xc-desc">Plan monthly investments.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/lumpsum-calculator/">
+      <a class="xcard" href="/lumpsum-calculator">
         <span class="xc-title">Lumpsum Calculator</span>
         <span class="xc-desc">Estimate one-time investment growth.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/nps-calculator/">
+      <a class="xcard" href="/nps-calculator">
         <span class="xc-title">NPS Calculator</span>
         <span class="xc-desc">Plan retirement savings.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/fd-calculator/">
+      <a class="xcard" href="/fd-calculator">
         <span class="xc-title">FD Calculator</span>
         <span class="xc-desc">Check fixed deposit maturity value.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
     </div>
-    <a class="btn-gold" href="/calculators/" style="align-self:center">Explore All Calculators</a>
+    <a class="btn-gold" href="/calculators" style="align-self:center">Explore All Calculators</a>
   </section>
 
   <!-- ===== Final CTA ===== -->
@@ -451,7 +451,7 @@ const seo = {
         <div class="check-row"><span class="ck" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5 8 14l7.5-7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><p class="tx">Zero commission platform</p></div>
       </div>
     </div>
-    <div class="cta" style="align-self:flex-start"><a class="btn-gold" href="/open-demat-account/">Start SWP Now</a></div>
+    <div class="cta" style="align-self:flex-start"><a class="btn-gold" href="/open-demat-account">Start SWP Now</a></div>
   </section>
 </BaseLayout>
 

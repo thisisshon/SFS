@@ -1,15 +1,15 @@
 ---
 /**
- * Regulatory Documents - /regulatory-documents/
+ * Regulatory Documents - /regulatorydocuments
  * Hub page indexing the company's regulatory / compliance documents. The two
  * live sub-pages (Investor Charter, Mandatory Member Details) plus the standard
  * SEBI / exchange disclosure documents render as the shared view/download
  * .doc-card (.doc-grid / .doc-card, global.css) - the same card used by
- * /regulatory-documents/regulatory-documents/investor-charter/. DATA-DRIVEN (DOCS below) so the
+ * /regulatorydocuments/investor-charter. DATA-DRIVEN (DOCS below) so the
  * template scales to any number of documents (rule 1). No component forks (rule 2).
  */
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { organizationSchema } from '../../lib/seo';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { organizationSchema } from '../lib/seo';
 
 // Hub cards → one shared .doc-card each. The two live sub-pages use their real
 // URLs; the remaining disclosures link to '#' until the real PDFs are wired in.
@@ -17,13 +17,13 @@ const DOCS = [
   {
     name: 'Investor Charter',
     meta: 'Effective Apr 2025',
-    href: '/regulatory-documents/investor-charter/',
+    href: '/regulatorydocuments/investor-charter',
     download: false,
   },
   {
     name: 'Mandatory Member Details',
     meta: 'Updated Jul 2026',
-    href: '/regulatory-documents/mandatory-member-details/',
+    href: '/regulatorydocuments/mandatory-member-details',
     download: false,
   },
   {
@@ -69,7 +69,7 @@ const seo = {
   title: 'Regulatory Info & Compliance',
   description:
     'View SEBI registration numbers, exchange memberships and compliance disclosures for Shriram Financial Services.',
-  path: '/regulatory-documents/',
+  path: '/regulatorydocuments',
   jsonLd: [organizationSchema(site)],
 };
 ---
@@ -146,7 +146,7 @@ const seo = {
     scroll-margin-top: 96px;
   }
 
-  /* shared .doc-grid, spaced below the section intro (matches /regulatory-documents/investor-charter/). */
+  /* shared .doc-grid, spaced below the section intro (matches /regulatorydocuments/investor-charter). */
   .doc-grid {
     margin-top: 32px;
   }
