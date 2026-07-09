@@ -168,11 +168,12 @@ off against each other:
   `./dist/`. Preview build: `npm run preview`.
 - Clean, **extensionless, no-trailing-slash** URLs everywhere (`build.format: 'file'` +
   `trailingSlash: 'never'`): a page at `src/pages/equity.astro` serves at `/equity`.
-  **Slugs carry no hyphens** - multi-word names are concatenated (`Mutual Funds` →
-  `/mutualfunds`, `Open a Demat Account` → `/opendemataccount`). Hub pages are flat
-  files (`products.astro`, not `products/index.astro`) so GitHub Pages does not 301
-  them to a trailing slash; nested children live in a de-hyphenated folder
-  (`regulatorydocuments/investorcharter`). The legacy reference site
+  **Slug convention:** leaf pages use **hyphens between words** (`Mutual Funds` →
+  `/mutual-funds`, `Open a Demat Account` → `/open-demat-account`), but **folder
+  segments carry no hyphens** (`/regulatorydocuments/investor-charter`,
+  `/designsystem/current`). Hub pages are flat files (`products.astro`, not
+  `products/index.astro`) so GitHub Pages does not 301 them to a trailing slash;
+  the only folders are `regulatorydocuments/` and `designsystem/`. The legacy reference site
   (`../Project 1`) can run alongside for pixel comparison (`python3 ../Project\ 1/serve.py`,
   port 4178, or the `static` launch config).
 
@@ -197,16 +198,16 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 
 ## 📄 Pages
 
-**44 pages total.** URLs are **flat/top-level, extensionless, no-hyphen, no-trailing-slash** - product and calculator detail pages live directly at `src/pages/<slug>.astro` (root; the `<slug>` has no hyphens), NOT nested under `products/`/`calculators/`. The product and calculator **hubs are flat files** (`products.astro`, `calculators.astro`). Detail pages are **template-driven** (`equity.astro` is the reference for product pages). Every FAQ block reads exactly **Got Questions?** (rule 13). Every `<title>` is normalised by `fullTitle()` to `<Page Title> | Shriram Financial Services` - page `seo.title` values carry **no** brand suffix. All heroes use the shared `.hero` except the `/calculators` hub (documented `.calc-hero` variant) and the calculator **detail** pages (the `.hero.hero-compact` hug variant - see rule 7). *(URL scheme updated 2026-07-09: slugs de-hyphenated + trailing slashes dropped; `build.format: 'file'`, `trailingSlash: 'never'`.)*
+**44 pages total.** URLs are **flat/top-level, extensionless, no-trailing-slash** - product and calculator detail pages live directly at `src/pages/<slug>.astro` (root), NOT nested under `products/`/`calculators/`. **Leaf slugs use hyphens between words; folder segments do not** (only `regulatorydocuments/` and `designsystem/` are folders). The product and calculator **hubs are flat files** (`products.astro`, `calculators.astro`). Detail pages are **template-driven** (`equity.astro` is the reference for product pages). Every FAQ block reads exactly **Got Questions?** (rule 13). Every `<title>` is normalised by `fullTitle()` to `<Page Title> | Shriram Financial Services` - page `seo.title` values carry **no** brand suffix. All heroes use the shared `.hero` except the `/calculators` hub (documented `.calc-hero` variant) and the calculator **detail** pages (the `.hero.hero-compact` hug variant - see rule 7). *(URL scheme updated 2026-07-09: trailing slashes dropped + `build.format: 'file'`; leaf slugs keep word hyphens, folder segments (`regulatorydocuments`, `designsystem`) are hyphen-free.)*
 
 **Core & company**
 | URL | Source | Page |
 |---|---|---|
 | `/` | `pages/index.astro` | Homepage (video hero + glass Demat card, pinned "Why Shriram", advisory cards, dark product grid, steps, `<details>` FAQ). Unified shared `Footer`. |
-| `/aboutus` | `pages/aboutus.astro` | About Us (stat hero, MVV, timeline). |
-| `/opendemataccount` | `pages/opendemataccount.astro` | Open a Demat Account (two-column hero + lead-capture form, phone-flag decoration). |
-| `/becomeapartner` | `pages/becomeapartner.astro` | Become a Partner (Apply form, eligibility checker, portfolio tabs). |
-| `/karnatakabankcustomers` | `pages/karnatakabankcustomers.astro` | Karnataka Bank 3-in-1 (co-brand hero lockup + lead-capture form). |
+| `/about-us` | `pages/about-us.astro` | About Us (stat hero, MVV, timeline). |
+| `/open-demat-account` | `pages/open-demat-account.astro` | Open a Demat Account (two-column hero + lead-capture form, phone-flag decoration). |
+| `/become-a-partner` | `pages/become-a-partner.astro` | Become a Partner (Apply form, eligibility checker, portfolio tabs). |
+| `/karnataka-bank-customers` | `pages/karnataka-bank-customers.astro` | Karnataka Bank 3-in-1 (co-brand hero lockup + lead-capture form). |
 | `/antara` | `pages/antara.astro` | Explore Antara (Shriram X platform - standardised hero, feature/cat grids, `.gate` locked card, FAQ). |
 | `/sitemap` | `pages/sitemap.astro` | HTML sitemap (link index, built from `navigation.ts`). |
 
@@ -219,50 +220,50 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 | `/mtf` | Margin Trading Facility (MTF). |
 | `/commodities` | Commodity Trading (MCX/NCDEX). |
 | `/currency` | Currency Trading. |
-| `/mutualfunds` | Mutual Funds. |
+| `/mutual-funds` | Mutual Funds. |
 | `/etf` | ETFs. |
 | `/ipo` | IPO. |
 | `/nfo` | New Fund Offers (NFO). |
 | `/nps` | National Pension System (NPS). |
 | `/bonds` | Bonds. |
-| `/fixeddeposit` | Fixed Deposit (FD). |
-| `/loanagainstmutualfund` | Loan Against Mutual Funds (LAMF). |
-| `/loanagainstshares` | Loan Against Securities (LAS). |
-| `/globalinvesting` | Global Investing (US stocks & ETFs). |
+| `/fixed-deposit` | Fixed Deposit (FD). |
+| `/loan-against-mutual-fund` | Loan Against Mutual Funds (LAMF). |
+| `/loan-against-shares` | Loan Against Securities (LAS). |
+| `/global-investing` | Global Investing (US stocks & ETFs). |
 
 **Research** - flat at `pages/<slug>.astro`
 | URL | Source | Page |
 |---|---|---|
-| `/researchhub` | `pages/researchhub.astro` | Research Centre (hub hero, `.appr` cards, feature grid, dark access band, FAQ). |
-| `/technicalanalysis` | `pages/technicalanalysis.astro` | Technical Research (gated daily note, research-report grid). |
-| `/fundamentalanalysis` | `pages/fundamentalanalysis.astro` | Fundamental Research (process, coverage, FAQ). |
-| `/mutualfundanalysis` | `pages/mutualfundanalysis.astro` | Mutual Fund Research (ratings, model portfolios, FAQ). |
+| `/research-hub` | `pages/research-hub.astro` | Research Centre (hub hero, `.appr` cards, feature grid, dark access band, FAQ). |
+| `/technical-analysis` | `pages/technical-analysis.astro` | Technical Research (gated daily note, research-report grid). |
+| `/fundamental-analysis` | `pages/fundamental-analysis.astro` | Fundamental Research (process, coverage, FAQ). |
+| `/mutual-fund-analysis` | `pages/mutual-fund-analysis.astro` | Mutual Fund Research (ratings, model portfolios, FAQ). |
 
 **Calculators** - detail pages flat at `pages/<slug>calculator.astro` (`calcHref` in `data/calculators.ts` → `/<slug>calculator`). Hub at `pages/calculators.astro` (kept **isolated** for future calculators; `.calc-hero`).
 | URL | Page |
 |---|---|
 | `/calculators` | Calculators hub (**sanctioned** `.calc-hero`; isolated, not in primary nav flow). |
-| `/sipcalculator` | SIP Calculator. |
-| `/lumpsumcalculator` | Lumpsum Calculator. |
-| `/swpcalculator` | SWP Calculator. |
-| `/npscalculator` | NPS Calculator. |
-| `/fdcalculator` | Fixed Deposit Calculator. |
+| `/sip-calculator` | SIP Calculator. |
+| `/lumpsum-calculator` | Lumpsum Calculator. |
+| `/swp-calculator` | SWP Calculator. |
+| `/nps-calculator` | NPS Calculator. |
+| `/fd-calculator` | Fixed Deposit Calculator. |
 
 **Support**
 | URL | Source | Page |
 |---|---|---|
-| `/contactus` | `pages/contactus.astro` | Contact/Support hub (tabbed: Customer Care / Branch Locator / Downloads). |
-| `/grievanceredressal` | `pages/grievanceredressal.astro` | Grievance Redressal. |
+| `/contact-us` | `pages/contact-us.astro` | Contact/Support hub (tabbed: Customer Care / Branch Locator / Downloads). |
+| `/grievance-redressal` | `pages/grievance-redressal.astro` | Grievance Redressal. |
 
 **Legal & compliance** - regulatory docs nested under the `regulatorydocuments/` hub.
 | URL | Source | Page |
 |---|---|---|
-| `/privacypolicy` | `pages/privacypolicy.astro` | Privacy Policy. |
-| `/termsandconditions` | `pages/termsandconditions.astro` | Terms & Conditions (legal long-form). |
-| `/termsofusepurse` | `pages/termsofusepurse.astro` | Terms of Use - Purse mobile app. |
+| `/privacy-policy` | `pages/privacy-policy.astro` | Privacy Policy. |
+| `/terms-and-conditions` | `pages/terms-and-conditions.astro` | Terms & Conditions (legal long-form). |
+| `/terms-of-use-purse` | `pages/terms-of-use-purse.astro` | Terms of Use - Purse mobile app. |
 | `/regulatorydocuments` | `pages/regulatorydocuments.astro` | Regulatory Documents hub (`.doc-card` grid → the two docs below + SEBI/exchange disclosures). |
-| `/regulatorydocuments/investorcharter` | `pages/regulatorydocuments/investorcharter.astro` | Investor Charter (shared `.doc-card` view/download grid). |
-| `/regulatorydocuments/mandatorymemberdetails` | `pages/regulatorydocuments/mandatorymemberdetails.astro` | Mandatory Member Details (SEBI disclosures). |
+| `/regulatorydocuments/investor-charter` | `pages/regulatorydocuments/investor-charter.astro` | Investor Charter (shared `.doc-card` view/download grid). |
+| `/regulatorydocuments/mandatory-member-details` | `pages/regulatorydocuments/mandatory-member-details.astro` | Mandatory Member Details (SEBI disclosures). |
 
 **Design system** (noindex - the Figma artifact)
 | URL | Source | Page |

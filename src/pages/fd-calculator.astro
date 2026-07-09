@@ -1,10 +1,10 @@
 ---
 /**
- * Fixed Deposit Calculator - /fdcalculator
+ * Fixed Deposit Calculator - /fd-calculator
  * Estimates FD maturity value and interest earned, with a selectable
  * compounding frequency. Built on the shared calculator UI in global.css;
  * page carries only content + its maths. (The FD *product* page lives at
- * /fixeddeposit - this is the calculator tool.)
+ * /fixed-deposit - this is the calculator tool.)
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumb from '../components/site/Breadcrumb.astro';
@@ -45,7 +45,7 @@ const seo = {
   title: 'Fixed Deposit Calculator',
   description:
     'Calculate your fixed deposit maturity amount and interest earned instantly with the free FD calculator from Shriram Financial Services.',
-  path: '/fdcalculator',
+  path: '/fd-calculator',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -57,7 +57,7 @@ const seo = {
     <div class="hero-inner" data-enter>
       <h1>FD Calculator – Calculate Fixed Deposit Interest &amp; <span class="g">Maturity Amount Instantly</span></h1>
       <p class="lead">Estimate your FD returns in seconds and plan your savings with confidence.</p>
-      <div class="cta"><a class="btn-gold" href="/opendemataccount">Open FD Online Now</a><a class="btn-ghost" href="/fixeddeposit">Compare FD Rates</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open FD Online Now</a><a class="btn-ghost" href="/fixed-deposit">Compare FD Rates</a></div>
     </div>
   </section>
 
@@ -82,9 +82,9 @@ const seo = {
           <div class="field">
             <div class="field-top">
               <label for="rate">Interest Rate (% p.a.)</label>
-              <div class="field-val"><input id="rate" type="text" inputmode="decimal" value="7.5" aria-label="Annual interest rate in percent" /><span class="sfx">%</span></div>
+              <div class="field-val"><input id="rate" type="text" inputmode="decimal" value="8.05" aria-label="Annual interest rate in percent" /><span class="sfx">%</span></div>
             </div>
-            <input class="slider" id="rateR" type="range" min="1" max="15" step="0.1" value="7.5" aria-label="Annual interest rate in percent" />
+            <input class="slider" id="rateR" type="range" min="1" max="15" step="0.05" value="8.05" aria-label="Annual interest rate in percent" />
             <div class="slider-scale"><span>1%</span><span>15%</span></div>
           </div>
 
@@ -131,7 +131,7 @@ const seo = {
 
         <div class="ready-bar">
           <p class="ready-text">Put your plan into action - <b>open a free Demat account</b></p>
-          <a class="ready-btn" href="/opendemataccount">Open Demat Account</a>
+          <a class="ready-btn" href="/open-demat-account">Open Demat Account</a>
         </div>
       </div>
     </div>
@@ -312,22 +312,22 @@ const seo = {
   <section class="section stack sec-tint" id="sec-explore" data-section="explore" style="gap:40px">
     <h2 class="sec-title">Related Calculators</h2>
     <div class="explore-grid" data-reveal-row>
-      <a class="xcard" href="/swpcalculator">
+      <a class="xcard" href="/swp-calculator">
         <span class="xc-title">SWP Calculator</span>
         <span class="xc-desc">Check long-term savings under PPF.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/sipcalculator">
+      <a class="xcard" href="/sip-calculator">
         <span class="xc-title">SIP Calculator</span>
         <span class="xc-desc">Estimate long-term mutual fund SIP growth.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/lumpsumcalculator">
+      <a class="xcard" href="/lumpsum-calculator">
         <span class="xc-title">Lumpsum Calculator</span>
         <span class="xc-desc">Estimate growth from one-time investments.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/npscalculator">
+      <a class="xcard" href="/nps-calculator">
         <span class="xc-title">NPS Calculator</span>
         <span class="xc-desc">Plan retirement savings and pension corpus.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>

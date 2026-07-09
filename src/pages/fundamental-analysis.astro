@@ -1,6 +1,6 @@
 ---
 /**
- * Fundamental Research - /fundamentalanalysis
+ * Fundamental Research - /fundamental-analysis
  * Research sub-page (root route → BaseLayout / component imports at ../ depth).
  * Body content is the compliance-approved "Fundamental Research Page Content"
  * doc, implemented word-for-word in the shared design system: the standardised
@@ -55,7 +55,7 @@ const seo = {
   title: 'Fundamental Research Reports',
   description:
     'Access in-depth company analysis, financial modelling and valuation reports to assess a stock\'s true worth with Shriram Financial Services.',
-  path: '/fundamentalanalysis',
+  path: '/fundamental-analysis',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -63,11 +63,11 @@ const seo = {
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO (standardised, rule 7) ================= -->
   <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Centre', href: '/researchhub' }, { name: 'Fundamental Research' }]} />
+    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Fundamental Research' }]} />
     <div class="hero-inner" data-enter>
       <h1>Fundamental <span class="g">Research</span></h1>
       <p class="lead">We look past the candle and into the company — earnings, debt, margins, and what management is actually telling shareholders.</p>
-      <div class="cta"><a class="btn-gold" href="/opendemataccount">Open Demat Account</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
     </div>
   </section>
 
@@ -100,7 +100,7 @@ const seo = {
         ))}
       </div>
     </div>
-    <div style="display:flex"><a class="btn-gold" href="/opendemataccount">Open Demat Account</a></div>
+    <div style="display:flex"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
   </section>
 
   <!-- ================= TODAY'S FUNDAMENTAL NOTE - gated ================= -->
@@ -113,7 +113,7 @@ const seo = {
       <p>Log in to read the full report and analyst rating, or open a demat account to get started.</p>
       <div class="gate-cta">
         <a class="btn-ghost" href="#">Login</a>
-        <a class="btn-gold" href="/opendemataccount">Open Demat Account</a>
+        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
       </div>
     </div>
   </section>
@@ -133,7 +133,7 @@ const seo = {
         <p>Open your Demat account and get free, unlimited access to every fundamental report, analyst rating and model portfolio we publish.</p>
       </div>
       <div class="unlock-cta">
-        <a class="btn-gold" href="/opendemataccount">Open Demat Account</a>
+        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
         <a class="btn-outline" href="#">Login to Existing Account</a>
       </div>
     </div>
@@ -156,7 +156,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let’s get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contactus">Book A Discovery Call</a>
+          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

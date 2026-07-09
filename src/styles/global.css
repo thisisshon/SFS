@@ -393,8 +393,8 @@
   /* ===== document card (shared "view / download" card) =====
      One canonical card for document/download listings: a name, an optional meta
      line, and one or two underlined action links. Used by
-     /regulatorydocuments/investorcharter, /regulatorydocuments/mandatorymemberdetails
-     and /contactus (Downloads) - all via the shared filter toolbar below.
+     /regulatorydocuments/investor-charter, /regulatorydocuments/mandatory-member-details
+     and /contact-us (Downloads) - all via the shared filter toolbar below.
      Consolidates the former page-local .ch-card dupe (rule 2). */
   .doc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: stretch; }
   .doc-card {
@@ -427,7 +427,7 @@
   }
 
   /* Document filter toolbar - search field + category chips + grouped grids +
-     empty state. Shared by /regulatorydocuments/investorcharter and /contactus
+     empty state. Shared by /regulatorydocuments/investor-charter and /contact-us
      (Downloads); the per-page script toggles `.hide` on cards/groups and `.show` on the empty note. */
   .doc-group { display: flex; flex-direction: column; }
   .doc-cat {

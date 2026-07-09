@@ -1,6 +1,6 @@
 ---
 /**
- * Research Centre - /researchhub
+ * Research Centre - /research-hub
  *
  * Body content is the compliance-approved "Research Hub - Webpage Content" doc,
  * implemented word-for-word in the shared design system: the standardised olive
@@ -26,17 +26,17 @@ const DESK = [
 // SECTION 4 - "Explore Our Research Types", three research streams (doc verbatim).
 const TYPES = [
   {
-    kicker: 'Technical Research', title: 'Charts, Levels & Trade Setups', href: '/technicalanalysis',
+    kicker: 'Technical Research', title: 'Charts, Levels & Trade Setups', href: '/technical-analysis',
     body: 'Our technical analysts read market structure, not headlines. Each report identifies high-probability trade setups using price action, volume patterns, and momentum — with defined entry levels, targets, and stop losses. Published daily for indices and high-volume stocks.',
     tags: ['Intraday calls', 'Swing trades', 'Index outlook', 'Option levels', 'Daily & weekly'],
   },
   {
-    kicker: 'Fundamental Research', title: 'Business Analysis & Stock Ideas', href: '/fundamentalanalysis',
+    kicker: 'Fundamental Research', title: 'Business Analysis & Stock Ideas', href: '/fundamental-analysis',
     body: 'Our fundamental team looks past the quarterly noise to assess what a business is genuinely worth. Reports cover earnings quality, management track record, sector positioning, and valuation — giving you a long-term conviction, not just a short-term signal.',
     tags: ['Stock ideas', 'Sector notes', 'Quarterly results', 'Company profiles', 'Target price'],
   },
   {
-    kicker: 'Mutual Fund Research', title: 'Scheme Analysis & Portfolio Guidance', href: '/mutualfundanalysis',
+    kicker: 'Mutual Fund Research', title: 'Scheme Analysis & Portfolio Guidance', href: '/mutual-fund-analysis',
     body: "Choosing a mutual fund should not depend on a distributor's incentive. Our analysts evaluate fund performance against peers and benchmarks, assess portfolio overlap, and track consistency of returns — so you invest in funds that suit your goal, not just the top-ranked list.",
     tags: ['Fund reviews', 'Category comparisons', 'SIP recommendations', 'NFO analysis', 'Portfolio overlap'],
   },
@@ -101,7 +101,7 @@ const seo = {
   title: 'Stock Market Research Centre',
   description:
     'Access technical, fundamental and mutual fund research to make informed investing decisions with SEBI-registered Shriram Financial Services.',
-  path: '/researchhub',
+  path: '/research-hub',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -130,7 +130,7 @@ const seo = {
     <div class="hero-inner" data-enter>
       <h1>Shriram Financial Services <span class="g">Research Hub</span></h1>
       <p class="lead">Institutional-grade financial research — produced daily by certified analysts. Access the full reports by logging in or opening your demat account.</p>
-      <div class="cta"><a class="btn-gold" href="/opendemataccount">Open Demat Account</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
       <div class="hero-feats">
         <div class="feats">
           <div class="feat"><span class="tk" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5 8 14l7.5-7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="lb">&nbsp;100+ Reports published monthly</span></div>
@@ -192,7 +192,7 @@ const seo = {
         </a>
       ))}
     </div>
-    <div style="display:flex"><a class="btn-gold" href="/opendemataccount">Open Demat Account</a></div>
+    <div style="display:flex"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
   </section>
 
   <!-- ================= SECTION 5 - WHY SHRIRAM FINANCIAL SERVICES RESEARCH? ================= -->
@@ -222,7 +222,7 @@ const seo = {
       <h2>Access Full Research Reports</h2>
       <p>Report titles and overviews are public. To read the complete analysis, download PDFs, and receive daily alerts, login or open your free demat account.</p>
       <div class="access-cta">
-        <a class="btn-gold" href="/opendemataccount">Open Demat Account</a>
+        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
         <a class="btn-outline" href="#">Existing Client Login</a>
       </div>
     </div>
@@ -259,7 +259,7 @@ const seo = {
       <h3>To get access to this feature now:</h3>
       <div class="ga-cta">
         <a class="btn-gold" href="#">Login Now</a>
-        <a class="btn-outline" href="/opendemataccount">Open Demat Account</a>
+        <a class="btn-outline" href="/open-demat-account">Open Demat Account</a>
       </div>
     </div>
   </section>
@@ -278,7 +278,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contactus">Book A Discovery Call</a>
+          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

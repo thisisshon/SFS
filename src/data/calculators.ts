@@ -57,7 +57,7 @@ export const calculators: CalcMeta[] = [
 ];
 
 /** Build the canonical URL for a calculator slug (no hyphen, no trailing slash). */
-export const calcHref = (slug: string): string => `/${slug}calculator`;
+export const calcHref = (slug: string): string => `/${slug}-calculator`;
 
 /** Every calculator except `slug` - feeds a detail page's "Explore More" rail. */
 export const otherCalculators = (slug: string): CalcMeta[] =>

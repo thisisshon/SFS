@@ -1,6 +1,6 @@
 ---
 /**
- * Technical Research - /technicalanalysis
+ * Technical Research - /technical-analysis
  * Body content is the compliance-approved "Technical Research Page Content"
  * doc, implemented word-for-word in the shared design system: the standardised
  * olive hero (rule 7), shared section / check-list / table / FAQ / CTA
@@ -95,7 +95,7 @@ const seo = {
   title: 'Technical Stock Research',
   description:
     'Get technical research, chart patterns and trading ideas to time your entries and exits with Shriram Financial Services.',
-  path: '/technicalanalysis',
+  path: '/technical-analysis',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -103,11 +103,11 @@ const seo = {
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= SECTION 1 - HERO (standardised, rule 7) ================= -->
   <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Centre', href: '/researchhub' }, { name: 'Technical Research' }]} />
+    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Technical Research' }]} />
     <div class="hero-inner" data-enter>
       <h1>Technical <span class="g">Research</span></h1>
       <p class="lead">Where price is the only fundamental that matters today.</p>
-      <div class="cta"><a class="btn-gold" href="/opendemataccount">Open Demat Account</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
     </div>
   </section>
 
@@ -154,7 +154,7 @@ const seo = {
       <p>Log in to read live levels and trade ideas, or open a Shriram demat account to get started.</p>
       <div class="gate-cta">
         <a class="btn-ghost" href="#">Login</a>
-        <a class="btn-gold" href="/opendemataccount">Open Demat Account</a>
+        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
       </div>
     </div>
   </section>
@@ -201,7 +201,7 @@ const seo = {
           </div>
 
           {r.locked && (
-            <a class="rcard-action" href="/opendemataccount">
+            <a class="rcard-action" href="/open-demat-account">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
               <span>Open Demat to Unlock Full Report</span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -222,7 +222,7 @@ const seo = {
         <p>Open your Shriram demat account and get free, unlimited access to all research PDFs, pivot tables, analyst webinars, and model portfolios — all produced by SEBI-registered analysts.</p>
       </div>
       <div class="unlock-cta">
-        <a class="btn-gold" href="/opendemataccount">Open Demat Account</a>
+        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
         <a class="btn-outline" href="#">Login to Existing Account</a>
       </div>
     </div>
@@ -246,7 +246,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contactus">Book A Discovery Call</a>
+          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

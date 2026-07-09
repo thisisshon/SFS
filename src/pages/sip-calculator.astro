@@ -1,6 +1,6 @@
 ---
 /**
- * SIP Calculator - /sipcalculator
+ * SIP Calculator - /sip-calculator
  * Interactive SIP future-value calculator. Pixel parity with legacy
  * calculators/sip/index.html. Nested page → links are root-absolute,
  * shared imports use ../../ depth.
@@ -44,7 +44,7 @@ const seo = {
   title: 'SIP Calculator Online',
   description:
     'Use the free SIP calculator from Shriram Financial Services to estimate your mutual fund returns based on amount, tenure and expected rate.',
-  path: '/sipcalculator',
+  path: '/sip-calculator',
   jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
@@ -56,7 +56,7 @@ const seo = {
     <div class="hero-inner" data-enter>
       <h1>SIP Calculator – Estimate Your <span class="g">Mutual Fund Returns Instantly</span></h1>
       <p class="lead">A SIP Calculator estimates the maturity value of your monthly mutual fund investments using compound interest.</p>
-      <div class="cta"><a class="btn-gold" href="/opendemataccount">Start SIP Now</a><a class="btn-ghost" href="/mutualfunds">Invest in Mutual Funds</a></div>
+      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start SIP Now</a><a class="btn-ghost" href="/mutual-funds">Invest in Mutual Funds</a></div>
       <div class="hero-feats">
         <div class="feats">
           <div class="feat"><span class="tk" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5 8 14l7.5-7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lb">&nbsp;Trusted by Trader Across India</span></div>
@@ -153,7 +153,7 @@ const seo = {
         <!-- ready CTA - sits in the results column, under the results card -->
         <div class="ready-bar">
           <p class="ready-text">Start a <b id="cta-amt">₹10,000/month SIP</b> and build your future</p>
-          <a class="ready-btn" href="/opendemataccount">Open Demat Account</a>
+          <a class="ready-btn" href="/open-demat-account">Open Demat Account</a>
         </div>
       </div>
     </div>
@@ -240,7 +240,7 @@ const seo = {
       <div class="cell tb"><p class="k">₹25,000</p></div><div class="cell tb"><p class="v">25 years</p></div><div class="cell tb"><p class="v">12% p.a.</p></div><div class="cell tb"><p class="v">₹75,00,000</p></div><div class="cell tb"><p class="v">₹4,74,40,877</p></div>
     </div></div>
     <p class="sec-lead">Disclaimer: These values are illustrative. Mutual fund returns are market-linked and not guaranteed.</p>
-    <a class="btn-gold" href="/opendemataccount" style="align-self:center">Start Your SIP</a>
+    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Your SIP</a>
   </section>
 
   <!-- ===== How to Use the SIP Calculator ===== -->
@@ -472,7 +472,7 @@ const seo = {
       <div class="faq-left">
         <h2 class="faq-title">Got Questions?</h2>
         <FaqAccordion faqs={FAQS} />
-        <a class="btn-gold" href="/contactus" style="align-self:flex-start;margin-top:24px">Still have questions? Chat with us</a>
+        <a class="btn-gold" href="/contact-us" style="align-self:flex-start;margin-top:24px">Still have questions? Chat with us</a>
       </div>
       <div class="faq-side">
         <div class="usr"><img src="/assets/user.svg" alt="" /></div>
@@ -491,27 +491,27 @@ const seo = {
   <section class="section stack sec-tint" id="sec-explore" data-section="explore" style="gap:40px">
     <h2 class="sec-title">Related Calculators</h2>
     <div class="explore-grid" data-reveal-row>
-      <a class="xcard" href="/lumpsumcalculator">
+      <a class="xcard" href="/lumpsum-calculator">
         <span class="xc-title">Lumpsum Calculator</span>
         <span class="xc-desc">Estimate returns on one-time mutual fund investments.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/swpcalculator">
+      <a class="xcard" href="/swp-calculator">
         <span class="xc-title">SWP Calculator</span>
         <span class="xc-desc">Plan systematic withdrawals from mutual funds.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/sipcalculator">
+      <a class="xcard" href="/sip-calculator">
         <span class="xc-title">Step-Up SIP Calculator</span>
         <span class="xc-desc">Calculate SIP returns with annual increments.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/npscalculator">
+      <a class="xcard" href="/nps-calculator">
         <span class="xc-title">NPS Calculator</span>
         <span class="xc-desc">Estimate retirement corpus from NPS contributions.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
-      <a class="xcard" href="/fdcalculator">
+      <a class="xcard" href="/fd-calculator">
         <span class="xc-title">FD Calculator</span>
         <span class="xc-desc">Calculate maturity value of fixed deposits.</span>
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
@@ -536,7 +536,7 @@ const seo = {
       </div>
     </div>
     <p class="sec-lead">SEBI Registration Number: [Add SEBI Reg No.]</p>
-    <div class="cta" style="align-self:flex-start"><a class="btn-gold" href="/opendemataccount">Start SIP Now</a><a class="btn-ghost" href="/contactus">Talk to an Expert</a></div>
+    <div class="cta" style="align-self:flex-start"><a class="btn-gold" href="/open-demat-account">Start SIP Now</a><a class="btn-ghost" href="/contact-us">Talk to an Expert</a></div>
   </section>
 </BaseLayout>
 
