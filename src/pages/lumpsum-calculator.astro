@@ -475,20 +475,11 @@ const seo = {
     (document.getElementById('sr-summary') as HTMLElement).textContent =
       'Projected total value ' + rupee(fv) + ' from ' + rupee(invested) + ' invested over ' + years + ' years.';
 
-    updateUrl(amount, years, ratePct);
     amtR.setAttribute('aria-valuetext', '₹' + fmt.format(amount));
     durR.setAttribute('aria-valuetext', years + ' years');
     rateR.setAttribute('aria-valuetext', ratePct + ' percent');
   }
 
-  function updateUrl(amount: number, years: number, ratePct: number) {
-    const q = '?amt=' + amount + '&dur=' + years + '&rate=' + ratePct;
-    try {
-      history.replaceState(null, '', q);
-    } catch (e) {
-      /* ignore */
-    }
-  }
 
   function pairNumberAndSlider(numEl: HTMLInputElement, slEl: HTMLInputElement, group: boolean) {
     slEl.addEventListener('input', function () {

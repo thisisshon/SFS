@@ -659,23 +659,11 @@ const seo = {
       years +
       ' years.';
 
-    updateUrl(amount, years, ratePct, stepPct);
-
     /* slider aria-valuetext mirrors the visible value */
     amtR.setAttribute('aria-valuetext', '₹' + fmt.format(amount));
     durR.setAttribute('aria-valuetext', years + ' years');
     rateR.setAttribute('aria-valuetext', ratePct + ' percent');
     stepR.setAttribute('aria-valuetext', stepPct + ' percent');
-  }
-
-  function updateUrl(amount: number, years: number, ratePct: number, stepPct: number) {
-    const q =
-      '?amt=' + amount + '&dur=' + years + '&rate=' + ratePct + '&step=' + stepPct + '&freq=' + freq;
-    try {
-      history.replaceState(null, '', q);
-    } catch (e) {
-      /* ignore (e.g. file://) */
-    }
   }
 
   /* ----- input <-> slider wiring ----- */

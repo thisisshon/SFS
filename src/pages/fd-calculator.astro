@@ -418,20 +418,11 @@ const seo = {
     (document.getElementById('sr-summary') as HTMLElement).textContent =
       'Maturity value ' + rupee(fv) + ' on ' + rupee(invested) + ' deposited for ' + years + ' years.';
 
-    updateUrl(amount, ratePct, years);
     amtR.setAttribute('aria-valuetext', '₹' + fmt.format(amount));
     rateR.setAttribute('aria-valuetext', ratePct + ' percent');
     durR.setAttribute('aria-valuetext', years + ' years');
   }
 
-  function updateUrl(amount: number, ratePct: number, years: number) {
-    const q = '?amt=' + amount + '&rate=' + ratePct + '&dur=' + years + '&freq=' + freq;
-    try {
-      history.replaceState(null, '', q);
-    } catch (e) {
-      /* ignore */
-    }
-  }
 
   function pairNumberAndSlider(numEl: HTMLInputElement, slEl: HTMLInputElement, group: boolean) {
     slEl.addEventListener('input', function () {
