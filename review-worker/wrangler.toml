@@ -14,5 +14,9 @@ ALLOW_ORIGIN = "https://thisisshon.github.io"
 binding = "COMMENTS"
 id = "324f355edd5e4c71b29d3e5e7424d9f5"
 
+# Workers AI - generates the developer-ready change prompt for each entry.
+[ai]
+binding = "AI"
+
 # The passcode is a secret, NOT stored here. Set it once with:
 #   wrangler secret put REVIEW_PASS

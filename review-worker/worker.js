@@ -21,7 +21,7 @@
  *   POST /resolve             set a comment's status        -> the updated record
  */
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = env.ALLOW_ORIGIN || '*';
     const cors = {
       'Access-Control-Allow-Origin': origin,
@@ -62,6 +62,7 @@ export default {
           name: String(b.name || 'anonymous').slice(0, 80),
           comment: comment.slice(0, 4000),
           changeTo: b.changeTo ? String(b.changeTo).slice(0, 4000) : '', // Content: suggested new copy
+          aiPrompt: '', // filled in the background (Workers AI) within seconds of submit
           page: {
             path,
             url: (b.page && b.page.url) || '',
@@ -73,6 +74,8 @@ export default {
         const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
         arr.push(rec);
         await kv.put(keyFor(path), JSON.stringify(arr));
+        // Generate the AI change-prompt in the background so it's ready in seconds.
+        if (!rec.parentId) ctx.waitUntil(genPrompt(env, kv, keyFor, rec));
         return json(rec, 201, cors);
       }
 
@@ -136,4 +139,57 @@ function json(obj, status, cors) {
     status,
     headers: { 'Content-Type': 'application/json', ...cors },
   });
+}
+
+// Deterministic prompt - always available even if the AI call fails.
+function fallbackPrompt(rec) {
+  const a = rec.anchor || {};
+  const where = a.snippet ? `the “${a.snippet}” ${a.tag || 'element'}` : (a.tag || 'the element');
+  let s = `On page ${rec.page.path}, in ${where}: ${rec.comment}`;
+  if (rec.changeTo) s += `\n\nChange the content to exactly (preserve casing/punctuation): “${rec.changeTo}”`;
+  return s;
+}
+
+// Generate a developer-ready change instruction via Workers AI, then persist it
+// onto the record. Runs in the background (ctx.waitUntil) so submit stays fast.
+async function genPrompt(env, kv, keyFor, rec) {
+  let prompt = '';
+  try {
+    if (env.AI) {
+      const a = rec.anchor || {};
+      const facts = {
+        page: rec.page.path,
+        element: a.tag || 'unknown',
+        section_or_text: a.snippet || '',
+        css_selector: a.selector || '',
+        team: rec.team || '',
+        reviewer: rec.name || '',
+        reviewer_note: rec.comment || '',
+        exact_new_content: rec.changeTo || '',
+      };
+      const system =
+        'You convert a website content-review note into ONE precise, developer-ready change instruction. ' +
+        'Include: the exact page path, the specific section/element, the current text if given, and the exact ' +
+        'new content. Preserve casing, spacing and punctuation of any provided replacement copy VERBATIM and put ' +
+        'it in quotes. Keep it to 2-4 sentences. Output ONLY the instruction - no preamble, no options, no markdown headers.';
+      const out = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: JSON.stringify(facts) },
+        ],
+        max_tokens: 300,
+      });
+      prompt = String((out && (out.response || out.result || out.text)) || '').trim();
+    }
+  } catch (e) {
+    prompt = '';
+  }
+  if (!prompt) prompt = fallbackPrompt(rec);
+  // persist onto the record (read-modify-write of the page array)
+  try {
+    const key = keyFor(rec.page.path);
+    const arr = JSON.parse((await kv.get(key)) || '[]');
+    const r = arr.find((x) => x.id === rec.id);
+    if (r) { r.aiPrompt = prompt.slice(0, 4000); await kv.put(key, JSON.stringify(arr)); }
+  } catch (e) { /* leave aiPrompt empty; dashboard shows "generating" */ }
 }

@@ -29,23 +29,38 @@ const seo = {
         context on the live page; resolve items here as you action them.</p>
     </div>
 
-    <div class="rvd-bar">
-      <div class="rvd-counts" id="rvd-counts"></div>
-      <button id="rvd-refresh" class="rvd-btn">Refresh</button>
+    <div class="rvd-shell">
+      <aside class="rvd-side">
+        <button class="rvd-nav is-active" data-view="dash">Dashboard View</button>
+        <button class="rvd-nav" data-view="entries">All Entries</button>
+      </aside>
+
+      <div class="rvd-content">
+        <!-- Dashboard View: all current info -->
+        <div id="rvd-view-dash">
+          <div class="rvd-bar">
+            <div class="rvd-counts" id="rvd-counts"></div>
+            <button id="rvd-refresh" class="rvd-btn">Refresh</button>
+          </div>
+          <div class="rvd-tabs" id="rvd-tabs" role="tablist">
+            <button class="rvd-tab is-active" data-tab="all">All</button>
+            <button class="rvd-tab" data-tab="open">Open Changes</button>
+            <button class="rvd-tab" data-tab="closed">Closed Changes</button>
+            <button class="rvd-tab" data-tab="page">By Page</button>
+            <button class="rvd-tab" data-tab="log">Master Log</button>
+          </div>
+          <div class="rvd-teamchips" id="rvd-teamchips"></div>
+          <div id="rvd-list"></div>
+        </div>
+
+        <!-- All Entries: tabular log (one row per change) with AI prompts -->
+        <div id="rvd-view-entries" hidden>
+          <div id="rvd-entries"></div>
+        </div>
+
+        <p id="rvd-empty" class="rvd-empty" hidden>No comments yet.</p>
+      </div>
     </div>
-
-    <div class="rvd-tabs" id="rvd-tabs" role="tablist">
-      <button class="rvd-tab is-active" data-tab="all">All</button>
-      <button class="rvd-tab" data-tab="open">Open Changes</button>
-      <button class="rvd-tab" data-tab="closed">Closed Changes</button>
-      <button class="rvd-tab" data-tab="page">By Page</button>
-      <button class="rvd-tab" data-tab="log">Master Log</button>
-    </div>
-
-    <div class="rvd-teamchips" id="rvd-teamchips"></div>
-
-    <div id="rvd-list"></div>
-    <p id="rvd-empty" class="rvd-empty" hidden>No comments yet.</p>
   </section>
 </BaseLayout>
 
@@ -131,6 +146,38 @@ const seo = {
   .rvd-login-btn{height:44px;padding:0 24px;border:none;border-radius:10px;background:var(--color-olive-900,#2e3914);
     color:#fff;font:600 14px/1 Outfit;cursor:pointer}
   .rvd-login-btn:disabled{opacity:.6;cursor:default}
+  /* left-sidebar shell */
+  .rvd .rvd-shell{display:flex;gap:24px;align-items:flex-start}
+  .rvd .rvd-side{flex:none;width:176px;display:flex;flex-direction:column;gap:4px;position:sticky;top:16px}
+  .rvd .rvd-nav{text-align:left;height:44px;padding:0 16px;border:none;border-radius:10px;background:none;cursor:pointer;
+    font:600 14px/1 Outfit;color:var(--color-text-secondary,#6b6b6b)}
+  .rvd .rvd-nav.is-active{background:var(--color-cream-400);color:var(--color-text-primary,#1d1d1d)}
+  .rvd .rvd-content{flex:1;min-width:0}
+  .rvd .rvd-entrieshead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+  .rvd .rvd-entrieshead h2{font-size:18px;font-weight:600}
+  .rvd .rvd-prompt-btn{height:30px;padding:0 12px;border:none;border-radius:8px;white-space:nowrap;cursor:pointer;
+    background:var(--color-surface-dark-card,#1d1d1d);color:#fff;font:600 12px/1 Outfit}
+  @media (max-width:768px){
+    .rvd .rvd-shell{flex-direction:column}
+    .rvd .rvd-side{flex-direction:row;width:auto;position:static}
+  }
+  /* AI change-prompt overlay */
+  .rvd-prompt{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .rvd-prompt-card{width:560px;max-width:100%;max-height:calc(100vh - 32px);overflow:auto;background:#fff;
+    color:var(--color-text-primary,#1d1d1d);border-radius:18px;padding:24px;box-shadow:0 24px 64px rgba(0,0,0,.4);
+    font:400 14px/1.5 Outfit;box-sizing:border-box}
+  .rvd-prompt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+  .rvd-prompt-title{font-size:18px;font-weight:700}
+  .rvd-prompt-x{border:none;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6b6b6b}
+  .rvd-prompt-meta{font-size:12px;color:var(--color-text-secondary,#6b6b6b);margin-bottom:14px;
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .rvd-prompt-box{white-space:pre-wrap;background:var(--color-cream-400);border:1px solid var(--color-cream-500,#e4ddcb);
+    border-radius:12px;padding:16px;font:400 14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#1d1d1d}
+  .rvd-prompt-gen{color:#6b6b6b;font-style:italic;font-family:Outfit}
+  .rvd-prompt-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  .rvd-prompt-copy{height:40px;padding:0 18px;border:none;border-radius:10px;background:var(--color-olive-900,#2e3914);
+    color:#fff;font:600 13px/1 Outfit;cursor:pointer}
   /* Master Log: session table */
   .rvd .rvd-logwrap{overflow-x:auto;border:1px solid var(--color-cream-500,#e4ddcb);border-radius:12px}
   .rvd .rvd-log{width:100%;border-collapse:collapse;font-size:14px;background:var(--color-cream-400)}
@@ -273,7 +320,7 @@ const seo = {
       return `<span class="rvd-team-chip" style="background:${c[0]};color:${c[1]}">${esc(team)}</span>`;
     };
     const TEAMS = ['Product', 'SEO', 'Marketing', 'Content'];
-    let all = [], tab = 'all', teamFilter = '', logSession = null;
+    let all = [], tab = 'all', teamFilter = '', logSession = null, view = 'dash';
 
     // group every comment/reply by its review session (one sitting)
     function sessions() {
@@ -417,7 +464,70 @@ const seo = {
       $('#rvd-back').addEventListener('click', () => { logSession = null; render(); });
     }
 
+    // ---- All Entries: tabular log of every change, with the AI prompt ----
+    function renderEntries() {
+      const rs = roots();
+      $('#rvd-empty').hidden = rs.length > 0;
+      if (!rs.length) { $('#rvd-entries').innerHTML = ''; return; }
+      $('#rvd-entries').innerHTML =
+        `<div class="rvd-entrieshead"><h2>All Entries <span style="font-weight:500;color:var(--color-text-secondary,#6b6b6b)">(${rs.length})</span></h2></div>` +
+        `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
+        `<th>When</th><th>Page</th><th>Element</th><th>Team</th><th>Reviewer</th><th>Status</th><th>Prompt</th>` +
+        `</tr></thead><tbody>` +
+        rs.map((c) => {
+          const a = c.anchor || {};
+          const el = a.snippet ? '“' + esc(a.snippet.slice(0, 40)) + '”' : esc(a.tag || '—');
+          const resolved = c.status === 'resolved';
+          return `<tr>` +
+            `<td>${esc(fmt(c.createdAt))}</td>` +
+            `<td><a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(c.page.path)}</a></td>` +
+            `<td>${el}</td>` +
+            `<td>${teamChip(c.team) || '—'}</td>` +
+            `<td>${esc(c.name || 'anonymous')}</td>` +
+            `<td><span class="rvd-chip ${resolved ? 'resolved' : 'open'}">${resolved ? 'Resolved' : 'Open'}</span></td>` +
+            `<td><button class="rvd-prompt-btn" data-id="${esc(c.id)}">View prompt</button></td>` +
+          `</tr>`;
+        }).join('') +
+        `</tbody></table></div>`;
+      $('#rvd-entries').querySelectorAll('.rvd-prompt-btn').forEach((b) =>
+        b.addEventListener('click', () => openPrompt(all.find((x) => x.id === b.dataset.id))));
+    }
+
+    // AI change-prompt overlay (precise, ready-to-hand-to-a-dev instruction)
+    function openPrompt(c) {
+      if (!c) return;
+      const a = c.anchor || {};
+      const el = document.createElement('div'); el.className = 'rvd-prompt';
+      const body = c.aiPrompt
+        ? `<div class="rvd-prompt-box">${esc(c.aiPrompt)}</div>` +
+          `<div class="rvd-prompt-actions"><button class="rvd-prompt-copy">Copy prompt</button></div>`
+        : `<div class="rvd-prompt-box rvd-prompt-gen">Generating the AI prompt — usually ready within seconds of submit. This view auto-refreshes; reopen in a moment.</div>`;
+      el.innerHTML =
+        `<div class="rvd-prompt-card">` +
+          `<div class="rvd-prompt-head"><div class="rvd-prompt-title">AI Change Prompt</div>` +
+          `<button class="rvd-prompt-x" aria-label="Close">×</button></div>` +
+          `<div class="rvd-prompt-meta">${teamChip(c.team)}<span>${esc(c.name || 'anonymous')}</span><span>·</span>` +
+            `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">${esc(c.page.path)}</a>` +
+            (a.tag ? `<span>·</span><span>${esc(a.tag)}</span>` : '') + `</div>` +
+          body +
+        `</div>`;
+      document.body.appendChild(el);
+      const close = () => el.remove();
+      el.querySelector('.rvd-prompt-x').addEventListener('click', close);
+      el.addEventListener('click', (e) => { if (e.target === el) close(); });
+      const copy = el.querySelector('.rvd-prompt-copy');
+      if (copy) copy.addEventListener('click', () => {
+        navigator.clipboard.writeText(c.aiPrompt || '').then(() => {
+          copy.textContent = 'Copied ✓'; setTimeout(() => { copy.textContent = 'Copy prompt'; }, 1500);
+        }).catch(() => {});
+      });
+    }
+
     function render() {
+      // left-sidebar view switch: Dashboard View vs All Entries
+      $('#rvd-view-dash').hidden = view !== 'dash';
+      $('#rvd-view-entries').hidden = view !== 'entries';
+      if (view === 'entries') { renderEntries(); return; }
       // team chips filter comments, not sessions -> hide them on the log tab
       $('#rvd-teamchips').style.display = tab === 'log' ? 'none' : 'flex';
       if (tab === 'log') { logSession ? renderSessionDetail() : renderLog(); return; }
@@ -466,6 +576,13 @@ const seo = {
         });
       });
     }
+
+    document.querySelector('.rvd-side').addEventListener('click', (e) => {
+      const b = e.target.closest('.rvd-nav'); if (!b) return;
+      view = b.dataset.view;
+      document.querySelectorAll('.rvd-nav').forEach((n) => n.classList.toggle('is-active', n === b));
+      render();
+    });
 
     $('#rvd-tabs').addEventListener('click', (e) => {
       const b = e.target.closest('.rvd-tab'); if (!b) return;
