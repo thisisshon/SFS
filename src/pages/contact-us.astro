@@ -120,13 +120,13 @@ const seo = {
             <p class="hf-err" id="err-purpose">Please select a purpose.</p>
           </div>
         </div>
-        <button class="btn-gold" type="submit">Submit</button>
+        <button class="btn btn-primary btn-xl" type="submit">Submit</button>
         <div class="hf-otp" role="group" aria-label="OTP Verification">
           <div class="hf-head">
             <h2>OTP Verification</h2>
             <p>We've sent a 6-digit verification code to your phone number. Please enter it below to submit your message.</p>
           </div>
-          <button class="btn-gold" type="button" id="cf-verify">Verify &amp; Submit</button>
+          <button class="btn btn-primary btn-xl" type="button" id="cf-verify">Verify &amp; Submit</button>
         </div>
         <div class="hf-success" role="status" aria-live="polite">
           <span class="ok" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
@@ -190,7 +190,7 @@ const seo = {
         <p class="ct-sub">In less than 5 minutes</p>
       </div>
       <div class="cta-actions">
-        <a class="btn-gold" href="/open-demat-account">Open Demat account</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat account</a>
       </div>
     </div>
   </section>
@@ -215,7 +215,7 @@ const seo = {
           <select id="bs-branch" aria-label="Select City"></select>
         </div>
       </div>
-      <button class="btn-gold" type="button" id="bs-search">Search</button>
+      <button class="btn btn-primary btn-xl" type="button" id="bs-search">Search</button>
     </div>
     <div class="map-wrap reveal" id="map-wrap">
       <iframe id="branch-map" title="Map view – enter state and city to locate branches" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
@@ -230,7 +230,7 @@ const seo = {
         <p class="ct-sub">In less than 5 minutes</p>
       </div>
       <div class="cta-actions">
-        <a class="btn-gold" href="/open-demat-account">Open Demat account</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat account</a>
       </div>
     </div>
   </section>
@@ -356,7 +356,7 @@ const seo = {
         <p class="ct-sub">In less than 5 minutes</p>
       </div>
       <div class="cta-actions">
-        <a class="btn-gold" href="/open-demat-account">Open Demat account</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat account</a>
       </div>
     </div>
   </section>
@@ -374,7 +374,7 @@ const seo = {
   /* design-system rule: every font renders at a 1.5 line-height. Buttons, inputs, pills and
      links reset to `normal` by default, so restore 1.5 on them explicitly (page-scoped). */
   .ct-pill, .tab, .hf-field-in input, .hf-field-in select, .doc-search input,
-  .bc-meta a, .bc-map, .directions, .doc-dl, .doc-chip, .btn-gold, .btn-dark, .btn-ghost {
+  .bc-meta a, .doc-dl, .doc-chip {
   }
 
   /* scroll-reveal (progressive enhancement: only hides when JS is on).
@@ -415,7 +415,7 @@ const seo = {
     font-size: 14px;
     transition: background 0.2s ease, border-color 0.2s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .ct-pill:hover {
     background: #43443e; /* page-local - Tier-2 candidate */
     border-color: var(--color-sage-700); /* #6d6e6a (Tier-1: absorbed by sage-700) */
@@ -461,9 +461,9 @@ const seo = {
   }
   /* Input field (.hf-row/.hf-unit/.hf-field/.hf-field-in/.hf-err) is the shared
      canonical component in global.css - see DESIGN-SYSTEM.md §4.15. Not redefined here. */
-  .hero-form .btn-gold {
+  .hero-form .btn-primary {
     width: 100%;
-    height: 48px;
+    min-width: 0; /* full-width form submit: exempt from the 220px footprint */
   }
   .hf-note {
     font-weight: 400;
@@ -476,11 +476,11 @@ const seo = {
     flex-direction: column;
     gap: 24px;
   }
-  .hf-otp .btn-gold {
+  .hf-otp .btn-primary {
     width: 100%;
-    height: 48px;
+    min-width: 0; /* full-width form submit: exempt from the 220px footprint */
   }
-  .hero-form.otp .hf-body, .hero-form.otp > .btn-gold {
+  .hero-form.otp .hf-body, .hero-form.otp > .btn-primary {
     display: none;
   }
   .hero-form.otp .hf-otp {
@@ -495,7 +495,7 @@ const seo = {
     gap: 12px;
     padding: 8px 0;
   }
-  .hero-form.done .hf-body, .hero-form.done .hf-actions, .hero-form.done .btn-gold,
+  .hero-form.done .hf-body, .hero-form.done .hf-actions, .hero-form.done .btn-primary,
   .hero-form.done .hf-note, .hero-form.done .hf-otp {
     display: none;
   }
@@ -577,7 +577,7 @@ const seo = {
     visibility: hidden;
     pointer-events: none;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .tab:hover {
     color: var(--color-text-heading-dark);
   }
@@ -709,11 +709,6 @@ const seo = {
     gap: 16px;
     align-items: stretch;
   }
-  #bs-search {
-    height: 48px;
-    padding: 0 32px;
-  }
-
   /* interactive (draggable) Google map embed */
   .map-wrap {
     position: relative;
@@ -800,7 +795,7 @@ const seo = {
     overflow-wrap: anywhere;
     transition: color 0.2s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .bc-meta a:hover {
     color: var(--color-text-heading-dark);
   }
@@ -817,60 +812,10 @@ const seo = {
     flex-wrap: wrap;
     margin-top: 4px;
   }
-  .bc-map {
-    appearance: none;
-    cursor: pointer;
-    background: none;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 40px;
-    padding: 0 16px;
-    border: 1px solid var(--color-border-card);
-    border-radius: 8px;
-    color: var(--color-text-heading-dark);
-    font-weight: 500;
-    font-size: 14px;
-    white-space: nowrap;
-    transition: background 0.2s ease, border-color 0.2s ease;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .bc-map:hover {
-    background: var(--color-surface-section-tint);
-    border-color: var(--color-sage-100); /* #c9c8c0 (Tier-1: absorbed by sage-100) */
-  }
-  }
-  .bc-map svg {
-    width: 16px;
-    height: 16px;
-    color: var(--color-gold-400);
-  }
+  /* .bc-map / .directions: layout-only now - fill, border, height, radius and
+     hover all come from the shared .btn .btn-secondary family. */
   .directions {
     flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 40px;
-    padding: 0 16px;
-    border: 1px solid var(--color-border-card);
-    border-radius: 8px;
-    color: var(--color-text-heading-dark);
-    font-weight: 500;
-    font-size: 14px;
-    white-space: nowrap;
-    transition: background 0.2s ease, border-color 0.2s ease;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .directions:hover {
-    background: var(--color-surface-section-tint);
-    border-color: var(--color-sage-100); /* #c9c8c0 (Tier-1: absorbed by sage-100) */
-  }
-  }
-  .directions svg {
-    width: 16px;
-    height: 16px;
-    color: var(--color-gold-400);
   }
 
   /* ---------- Downloads: category groups, card grid, search + chip toolbar and
@@ -878,7 +823,7 @@ const seo = {
      .doc-chips/.doc-chip/.doc-empty) - shared with /regulatorydocuments/investor-charter. ---------- */
 
   /* ---------- final CTA (dark, centered - shared with About).
-     .btn-ghost base is global now; only the page-scoped hover overrides remain. ---------- */
+     Button is the shared .btn .btn-primary - no page-local button styling remains. ---------- */
   .cta-box.dark {
     background: var(--color-olive-950);
   }
@@ -899,21 +844,6 @@ const seo = {
     gap: 16px;
     justify-content: center;
   }
-  .cta-actions .btn-gold, .cta-actions .btn-ghost {
-    transition: filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .cta-actions .btn-gold:hover {
-    filter: brightness(0.96);
-  }
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .cta-actions .btn-ghost:hover {
-    background: var(--color-charcoal-650); /* #383838 */
-    border-color: var(--color-white);
-  }
-  }
-
   /* ---------- responsive (two-column hero stacking is canonical in global.css @980px) ---------- */
   @media (max-width: 1024px) {
     .doc-grid {
@@ -1146,8 +1076,8 @@ const seo = {
       var PHONE_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
       var MAIL_SVG = '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
       /* "View on map" = location pin; "Directions" = a navigation arrow (distinct icons) */
-      var PIN_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.6"/></svg>';
-      var NAV_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M21 3 3 10.5l7.2 2.3 2.3 7.2L21 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+      var PIN_SVG = '<svg class="btn-ico" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.6"/></svg>';
+      var NAV_SVG = '<svg class="btn-ico" viewBox="0 0 24 24" fill="none"><path d="M21 3 3 10.5l7.2 2.3 2.3 7.2L21 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 
       function esc(s) {
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1214,8 +1144,8 @@ const seo = {
             '<a href="mailto:' + esc(b.email) + '">' + MAIL_SVG + esc(b.email) + '</a>' +
             '</div>' +
             '<div class="bc-actions">' +
-            '<button class="bc-map" type="button" data-map="' + b.id + '">' + PIN_SVG + 'View on map</button>' +
-            '<a class="directions" href="https://maps.google.com/?q=' + encodeURIComponent(b.q) + '" target="_blank" rel="noopener">' + NAV_SVG + 'Directions</a>' +
+            '<button class="btn btn-secondary bc-map" type="button" data-map="' + b.id + '">' + PIN_SVG + 'View on map</button>' +
+            '<a class="btn btn-secondary directions" href="https://maps.google.com/?q=' + encodeURIComponent(b.q) + '" target="_blank" rel="noopener">' + NAV_SVG + 'Directions</a>' +
             '</div>' +
             '</article>';
         });

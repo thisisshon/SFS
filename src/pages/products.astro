@@ -7,6 +7,7 @@
  * standard hero + FaqAccordion. Invents no CSS.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -65,13 +66,13 @@ const seo = {
 
 <BaseLayout seo={seo}>
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <div class="hero-inner">
-      <h1>Trade, Invest &amp; Grow with Shriram Financial Services — One Platform, Every Goal</h1>
-      <p class="lead">Trade and invest in Equities and Derivatives, create wealth with mutual funds, discover IPOs, access portfolio solutions, and manage financial opportunities in a secure investment platform.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    reveal={false}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Trade, Invest &amp; Grow with Shriram Financial Services — One Platform, Every Goal</Fragment>
+    <Fragment slot="lead">Trade and invest in Equities and Derivatives, create wealth with mutual funds, discover IPOs, access portfolio solutions, and manage financial opportunities in a secure investment platform.</Fragment>
+  </Hero>
 
   <!-- ================= INTRO ================= -->
   <section class="section stack sec-light" id="sec-intro" data-section="intro" style="gap:56px;justify-content:center">
@@ -126,7 +127,7 @@ const seo = {
           <span class="pcard-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
         </a>
       </div>
-      <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Trading</a>
+      <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Trading</a>
     </div>
 
     <!-- Group 2 - Investment & Wealth Products -->
@@ -169,7 +170,7 @@ const seo = {
           <span class="pcard-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
         </a>
       </div>
-      <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+      <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Investing</a>
     </div>
 
     <!-- Group 3 - Loan Against Securities -->
@@ -188,7 +189,7 @@ const seo = {
           <span class="pcard-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
         </a>
       </div>
-      <a class="btn-gold" href="/open-demat-account" style="align-self:center">Unlock Quick Funds</a>
+      <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Unlock Quick Funds</a>
     </div>
   </section>
 
@@ -199,7 +200,7 @@ const seo = {
         <h3>One Platform for Your Investment Goals - Antara</h3>
         <p class="ct-sub">Explore equity trading, IPOs, ETFs, portfolio solutions, and more — anytime, anywhere through the Antara app.</p>
       </div>
-      <div class="cta"><a class="btn-gold" href="#">Download Antara Now</a></div>
+      <div class="cta"><a class="btn btn-primary" href="#">Download Antara Now</a></div>
     </div>
   </section>
 
@@ -232,7 +233,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -245,7 +246,7 @@ const seo = {
         <h3>Ready to Start Your Investment Journey?</h3>
         <p class="ct-sub">Open your Demat and Trading Account with Shriram Financial Services - 100% online, SEBI-registered, backed by the trusted Shriram Group.</p>
       </div>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
+      <div class="cta"><a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a></div>
     </div>
   </section>
 </BaseLayout>

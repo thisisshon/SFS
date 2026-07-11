@@ -17,7 +17,7 @@
  * (rule 12); one shared .cta-box.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import { megaNavSections, type NavLink } from '../data/navigation';
 import { breadcrumbSchema } from '../lib/seo';
 
@@ -105,14 +105,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Sitemap' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Find Your Way Around <span class="g">Our Site</span></h1>
-      <p class="lead">A complete directory of everything on Shriram Financial Services - every product, research desk, calculator and support page, organised in one place.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Sitemap' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Find Your Way Around <span class="g">Our Site</span></Fragment>
+    <Fragment slot="lead">A complete directory of everything on Shriram Financial Services - every product, research desk, calculator and support page, organised in one place.</Fragment>
+  </Hero>
 
   <!-- ================= SITE DIRECTORY ================= -->
   <section class="section stack sec-light" id="sec-map" data-section="map" style="gap:56px" data-enter="2">
@@ -150,7 +149,7 @@ const seo = {
         <h3>Didn't Find What You Were Looking For?</h3>
         <p class="ct-sub">Our team is ready to point you in the right direction - reach out any time.</p>
       </div>
-      <a class="btn-gold" href="/contact-us">Contact Support</a>
+      <a class="btn btn-primary" href="/contact-us">Contact Support</a>
     </div>
   </section>
 </BaseLayout>
@@ -175,7 +174,7 @@ const seo = {
     border-radius: var(--radius-md); /* 8px - small tile */
     transition: background 0.25s ease, border-color 0.25s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .sm-link:hover {
     background: var(--color-cream-300);
     border-color: var(--color-tan-400);
@@ -195,7 +194,7 @@ const seo = {
     transform: translateX(-6px);
     transition: opacity 0.25s ease, transform 0.25s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .sm-link:hover .arr,
   .sm-link:focus-visible .arr {
     opacity: 1;

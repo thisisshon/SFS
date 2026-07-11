@@ -9,23 +9,27 @@
  * Nested route → BaseLayout / component imports at ../../ depth.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
 // Three-step route to invest abroad from India.
 const STEPS = [
   {
-    h: 'Open a Global Investing Account',
-    p: 'Complete KYC and open a global investing account through Shriram. This gives you access to US markets from India, fully within the RBI framework.',
+    icon: 'account',
+    title: 'Open a Global Investing Account',
+    desc: 'Complete KYC and open a global investing account through Shriram. This gives you access to US markets from India, fully within the RBI framework.',
   },
   {
-    h: 'Remit Funds Under LRS',
-    p: 'Transfer money from your Indian bank account under the RBI Liberalised Remittance Scheme, which permits up to USD 250,000 per financial year.',
+    icon: 'bank',
+    title: 'Remit Funds Under LRS',
+    desc: 'Transfer money from your Indian bank account under the RBI Liberalised Remittance Scheme, which permits up to USD 250,000 per financial year.',
   },
   {
-    h: 'Buy US Stocks & ETFs',
-    p: 'Invest in US-listed stocks, ETFs and thematic baskets - including fractional shares - so you can own global brands with any budget.',
+    icon: 'trade',
+    title: 'Buy US Stocks & ETFs',
+    desc: 'Invest in US-listed stocks, ETFs and thematic baskets - including fractional shares - so you can own global brands with any budget.',
   },
 ];
 
@@ -123,14 +127,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Global Investing' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Invest in <span class="g">US Stocks &amp; ETFs</span> from India</h1>
-      <p class="lead">Diversify beyond home. Own the world's leading companies through the RBI's LRS route - with fractional investing, USD assets and research-led guidance from Shriram.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Global Investing' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Invest in <span class="g">US Stocks &amp; ETFs</span> from India</Fragment>
+    <Fragment slot="lead">Diversify beyond home. Own the world's leading companies through the RBI's LRS route - with fractional investing, USD assets and research-led guidance from Shriram.</Fragment>
+  </Hero>
 
   <!-- ===== Why Invest Globally ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px;justify-content:center" data-enter="2">
@@ -171,15 +174,8 @@ const seo = {
       <h2 class="sec-title">How to Invest from India</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Investing abroad from India is a regulated, straightforward process routed through the RBI's Liberalised Remittance Scheme. Three steps take you from account opening to your first US trade.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      {STEPS.map((s, i) => (
-        <>
-          {i > 0 && <div class="step-div" />}
-          <div class="step"><div class="num">{i + 1}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-        </>
-      ))}
-    </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <StepsRow steps={STEPS} />
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== LRS Rules & Limits ===== -->
@@ -202,7 +198,7 @@ const seo = {
         <div class="cell tb"><p class="k">PAN Requirement</p></div><div class="cell tb"><p class="v">Mandatory for all remittances</p></div><div class="cell tb"><p class="v">Remittance is made through an authorised dealer bank</p></div>
       </div></div>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== Costs & Taxes ===== -->
@@ -229,7 +225,7 @@ const seo = {
     <div class="card">
       <p class="card-p">Foreign shares are treated as <strong>unlisted assets</strong> under Indian tax rules, so the 24-month long-term threshold applies rather than the 12-month rule for Indian listed equities. This is general information, not tax advice - consult a qualified tax adviser for your situation.</p>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== What You Can Invest In ===== -->
@@ -259,7 +255,7 @@ const seo = {
         <div class="cat"><h4>Global Brands</h4><p>Household names not listed in India, owned directly through your account.</p></div>
       </div>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== Risks to Weigh ===== -->
@@ -289,7 +285,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -302,7 +298,7 @@ const seo = {
         <h3>Start Investing Globally Within Minutes</h3>
         <p class="ct-sub">Open your account and access US stocks, ETFs and fractional shares - with zero paperwork.</p>
       </div>
-      <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
+      <a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a>
     </div>
   </section>
 </BaseLayout>

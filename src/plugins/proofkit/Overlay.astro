@@ -1,6 +1,9 @@
 ---
 /**
- * ReviewOverlay - temporary content-review annotation layer.
+ * Proofkit Overlay - the on-page content-review annotation layer.
+ *
+ * Part of the isolated Proofkit package (src/plugins/proofkit/ - see ./README.md).
+ * Toggle the whole tool on/off with PROOFKIT_ENABLED in ./config.ts.
  *
  * Closed-URL tool for the content team to review the LIVE site. In review mode
  * the page desaturates (B/W) but stays scrollable; existing comments show as
@@ -10,23 +13,28 @@
  * DESIGN NOTES
  * - Ships as ONE bundled, deferred, cached module. Renders NOTHING and injects no
  *   styles until review mode is armed (perf-budget safe for real visitors).
- * - Arm: `?review=1` (persists per tab; `?review=0` clears). While armed, the shared
- *   back-to-top FAB is hidden and a Comment FAB takes its place.
+ * - Arm: signing in at /review (Proofkit Login sets `reviewMode`; persists per tab,
+ *   `?review=0` signs out). Never arms on the tool's own /review + /reviewdash routes.
+ * - Auth gate: the Comment dock stays HIDDEN until the review session is authenticated
+ *   (a validated Key = `reviewPass`). Until then the page looks untouched; entering via
+ *   /<page>/review (or an Open-Pin #c= link) opens the Team + Key login, and only a
+ *   successful login reveals the dock (and hides the host back-to-top FAB) - on this page
+ *   and, since `reviewPass` persists per tab, on every page after.
  * - Enter review: click the Comment FAB -> grayscale backdrop + banner + pins load.
  * - Anchoring: each comment stores page path, a CSS selector, a text snippet, and
  *   click coords. Pins re-project onto the element's current rect each frame, so they
  *   track reflow; they fall back to page coords if the selector no longer matches.
- * - Storage: talks to the Cloudflare Worker (PUBLIC_REVIEW_WORKER_URL) when set,
+ * - Storage: talks to the Cloudflare Worker (WORKER_URL from ./config) when set,
  *   else a localStorage demo store so the flow is testable before deploy.
- *
- * TEMPORARY: remove <ReviewOverlay /> from BaseLayout before public launch.
  */
 ---
 
 {/* Bundled + deferred module - one shared cached file, dormant for real visitors. */}
 <script>
+  import { TEAMS, TEAM_COLORS, WORKER_URL, HIDE_SELECTORS, PROOFKIT_ENABLED } from './config';
   (() => {
     'use strict';
+    if (!PROOFKIT_ENABLED) return; // master switch (./config.ts) - tool off => never loads
 
     // ---- arm gate --------------------------------------------------------
     const KEY = 'reviewMode', PASS_KEY = 'reviewPass', NAME_KEY = 'reviewName', TEAM_KEY = 'reviewTeam',
@@ -38,18 +46,27 @@
       if (!s) { s = 'S' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36); sessionStorage.setItem(SESSION_KEY, s); }
       return s;
     }
-    const TEAMS = ['Product', 'SEO', 'Marketing', 'Content'];
-    const TEAM_COLORS = {
-      Product: ['#e7f0fb', '#1b5fa8'], SEO: ['#e7f7ee', '#1d7a46'],
-      Marketing: ['#fdeee6', '#b5541f'], Content: ['#f1eafb', '#6b3fa0'],
-    };
-    const params = new URLSearchParams(location.search);
-    const flag = params.get('review');
-    if (flag === '1') sessionStorage.setItem(KEY, '1');
-    if (flag === '0') sessionStorage.removeItem(KEY);
-    if (sessionStorage.getItem(KEY) !== '1') return; // dormant for real visitors
+    // Never arm on the dashboard board itself.
+    if (location.pathname === '/reviewdash') return;
+    // The review URL is the page path + "/review" (e.g. /equity/review, or /review for
+    // home). Strip that cosmetic suffix to get the real page key for storage.
+    const pagePath = () => location.pathname.replace(/\/review\/?$/, '') || '/';
+    const reviewUrl = () => { const p = pagePath(); return p === '/' ? '/review' : p + '/review'; };
+    // Arrival via /<page>/review (home stub or the 404 router set pkAutoReview) →
+    // arm the tab and auto-open the login / enter review on this page.
+    const AUTO = sessionStorage.getItem('pkAutoReview') === '1';
+    if (AUTO) { sessionStorage.removeItem('pkAutoReview'); sessionStorage.setItem(KEY, '1'); }
+    // Review mode is armed ONLY by signing in at /review - the Proofkit Login sets
+    // `reviewMode` on success. Nothing else shows the Comment dock, so real visitors
+    // (and anyone who hasn't signed in) never see it. `?review=0` signs out.
+    if (new URLSearchParams(location.search).get('review') === '0') sessionStorage.removeItem(KEY);
+    // The dashboard's "Open Pin" links (…#c=<id>) open in a fresh tab that has no
+    // armed session; treat that trusted deep link as an arm trigger so the pin still
+    // opens. The reviewer is still asked for their Team ID before any data loads, so
+    // this arms the dock but reveals nothing on its own.
+    if (/[#&]c=/.test(location.hash)) sessionStorage.setItem(KEY, '1');
+    if (sessionStorage.getItem(KEY) !== '1') return; // dormant until /review sign-in
 
-    const WORKER_URL = import.meta.env.PUBLIC_REVIEW_WORKER_URL || '';
     const LOCAL = !WORKER_URL;
 
     // ---- storage abstraction (Worker | localStorage demo) ----------------
@@ -81,9 +98,12 @@
           add: (rec) => apiFetch('/comments', { method: 'POST', body: JSON.stringify(rec) }),
         };
 
-    // ---- Team ID login gate ---------------------------------------------
+    // ---- Team + Key login gate ------------------------------------------
     // Clicking Comment opens an in-page login overlay (not a browser prompt).
-    // The Team ID is validated against the Worker before review mode starts.
+    // TWO fields: a Team dropdown (session-global team, stored in TEAM_KEY) and a
+    // Key (the shared passcode, stored in PASS_KEY and validated against the Worker
+    // before review mode starts). Team options are sourced from config's TEAMS
+    // (imported above) — never hardcoded here — and shown sorted alphabetically.
     let loginEl = null;
     function startReview() {
       if (sessionStorage.getItem(PASS_KEY)) return enter(); // already logged in this tab
@@ -91,53 +111,74 @@
     }
     function showLogin() {
       if (!loginEl) {
+        // Team <option>s from config's TEAMS, sorted alphabetically (config stays
+        // the single source — add/rename a team there and the login follows).
+        const teamOpts = [...TEAMS].sort((a, b) => a.localeCompare(b))
+          .map((t) => '<option value="' + t + '">' + t + '</option>').join('');
         loginEl = document.createElement('div'); loginEl.className = 'rv-login';
         loginEl.innerHTML =
           '<div class="rv-login-card" role="dialog" aria-modal="true">' +
-          '<div class="rv-login-title">Content Review</div>' +
-          '<div class="rv-login-sub">Enter your Team ID to start commenting.</div>' +
-          '<input class="rv-login-input" type="text" placeholder="Team ID" autocomplete="off" spellcheck="false">' +
+          '<div class="rv-login-brand"><span class="rv-login-mark"></span>ProofKit</div>' +
+          '<div class="rv-login-title">Review this page</div>' +
+          '<div class="rv-login-sub">Please select the Team Name and Enter Key to start marking comments.</div>' +
+          '<label class="rv-login-label" for="rv-login-team">Team</label>' +
+          '<select id="rv-login-team" class="rv-login-input rv-login-select">' +
+          '<option value="" disabled selected>Select Team</option>' + teamOpts +
+          '</select>' +
+          '<label class="rv-login-label rv-login-label2" for="rv-login-id">Authentication</label>' +
+          '<input id="rv-login-id" class="rv-login-input" type="password" placeholder="Enter Key" autocomplete="off" spellcheck="false">' +
           '<div class="rv-login-err" hidden></div>' +
           '<div class="rv-login-actions">' +
           '<button type="button" class="rv-login-cancel">Cancel</button>' +
-          '<button type="button" class="rv-login-btn">Login</button>' +
-          '</div></div>';
-        const input = loginEl.querySelector('.rv-login-input');
-        const go = () => tryLogin(input, loginEl);
+          '<button type="button" class="rv-login-btn">Sign in</button>' +
+          '</div>' +
+          '<div class="rv-login-foot">ProofKit · Content Review</div>' +
+          '</div>';
+        const teamSel = loginEl.querySelector('#rv-login-team');
+        const input = loginEl.querySelector('#rv-login-id');
+        const go = () => tryLogin(teamSel, input, loginEl);
         loginEl.querySelector('.rv-login-btn').addEventListener('click', go);
         loginEl.querySelector('.rv-login-cancel').addEventListener('click', hideLogin);
+        teamSel.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
         loginEl.addEventListener('click', (e) => { if (e.target === loginEl) hideLogin(); });
       }
       loginEl.querySelector('.rv-login-err').hidden = true;
-      const inp = loginEl.querySelector('.rv-login-input'); inp.value = '';
-      document.body.appendChild(loginEl); inp.focus();
+      const teamSel = loginEl.querySelector('#rv-login-team');
+      teamSel.value = localStorage.getItem(TEAM_KEY) || ''; // pre-fill last team
+      const inp = loginEl.querySelector('#rv-login-id'); inp.value = '';
+      document.body.appendChild(loginEl);
+      (teamSel.value ? inp : teamSel).focus();
     }
     function hideLogin() { loginEl && loginEl.remove(); }
-    async function tryLogin(input, el) {
+    async function tryLogin(teamSel, input, el) {
+      const team = teamSel.value;
       const id = input.value.trim();
-      if (!id) { input.focus(); return; }
       const err = el.querySelector('.rv-login-err');
+      if (!team) { teamSel.focus(); err.textContent = 'Please choose your team.'; err.hidden = false; return; }
+      if (!id) { input.focus(); return; }
       const btn = el.querySelector('.rv-login-btn');
-      sessionStorage.setItem(PASS_KEY, id);
+      localStorage.setItem(TEAM_KEY, team);   // session-global team (chosen once at login)
+      sessionStorage.setItem(PASS_KEY, id);   // the shared key, validated below
       btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
       try {
-        if (!LOCAL) await store.list(location.pathname); // validate Team ID against the Worker
+        if (!LOCAL) await store.list(pagePath()); // validate the Key against the Worker
         hideLogin();
         enter();
       } catch (e) {
         sessionStorage.removeItem(PASS_KEY);
-        btn.disabled = false; btn.textContent = 'Login';
+        btn.disabled = false; btn.textContent = 'Sign in';
         err.textContent = e.message === 'unauthorized'
-          ? 'Incorrect Team ID. Please try again.'
+          ? 'Incorrect key. Please try again.'
           : ('Could not connect — ' + e.message);
         err.hidden = false; input.focus(); input.select();
       }
     }
 
     // ---- styles (injected once, only in review mode) ---------------------
-    const css = `
-      html.rv-armed .to-top{display:none !important}
+    // Host-page elements to hide while armed (e.g. a back-to-top FAB); see ./config.
+    const hideCss = HIDE_SELECTORS.map((s) => `html.rv-armed ${s}{display:none !important}`).join('');
+    const css = hideCss + `
       /* Dock sits ABOVE popovers/toasts so its buttons are always clickable,
          even when a comment popover would otherwise overlap the bottom-right. */
       .rv-dock{position:fixed;right:24px;bottom:24px;z-index:2147483040;
@@ -182,8 +223,6 @@
       .rv-pop select{height:38px;cursor:pointer}
       .rv-pop textarea{min-height:84px;resize:vertical}
       .rv-pop input:focus,.rv-pop textarea:focus,.rv-pop select:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
-      .rv-row2{display:flex;gap:8px}
-      .rv-row2 .rv-team,.rv-row2 .rv-rteam{flex:0 0 44%}
       .rv-change,.rv-rchange{border-color:#b58a2e !important;background:#fffdf7 !important}
       .rv-team-chip{padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;
         text-transform:uppercase;letter-spacing:.02em}
@@ -223,29 +262,54 @@
       .rv-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483004;
         max-width:calc(100vw - 32px);padding:12px 16px;border-radius:12px;background:#1d1d1d;color:#fff;
         font:500 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+      /* ProofKit login module — Red Moon kit (near-black canvas, scarce Rosso Corsa,
+         Inter, sharp 0px corners, uppercase tracked CTA), over the blurred page. */
       .rv-login{position:fixed;inset:0;z-index:2147483090;display:flex;align-items:center;justify-content:center;
-        padding:16px;background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-      .rv-login-card{width:360px;max-width:100%;background:#fff;color:#1d1d1d;border-radius:18px;padding:28px;
-        box-shadow:0 24px 64px rgba(0,0,0,.4);font:400 14px/1.5 Outfit,system-ui,sans-serif;box-sizing:border-box}
-      .rv-login-title{font-size:20px;font-weight:700}
-      .rv-login-sub{font-size:14px;color:#6b6b6b;margin:6px 0 20px}
-      .rv-login-input{width:100%;height:48px;padding:0 14px;border:1px solid #d8d2c4;border-radius:10px;
-        font:inherit;color:inherit;background:#fff;box-sizing:border-box}
-      .rv-login-input:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
-      .rv-login-err{margin-top:8px;font-size:13px;font-weight:600;color:#a12626}
-      .rv-login-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
-      .rv-login-cancel{height:44px;padding:0 18px;border:none;border-radius:10px;background:transparent;
-        color:#6b6b6b;font:600 14px/1 Outfit,system-ui,sans-serif;cursor:pointer}
-      .rv-login-btn{height:44px;padding:0 24px;border:none;border-radius:10px;background:#2e3914;color:#fff;
-        font:600 14px/1 Outfit,system-ui,sans-serif;cursor:pointer}
-      .rv-login-btn:disabled{opacity:.6;cursor:default}
+        padding:16px;background:rgba(12,12,12,.72);
+        -webkit-backdrop-filter:blur(8px) saturate(.6);backdrop-filter:blur(8px) saturate(.6)}
+      .rv-login-card{width:400px;max-width:100%;background:#1b1b1b;color:#fff;border:1px solid #303030;border-radius:0;
+        padding:40px;box-shadow:0 30px 90px rgba(0,0,0,.6);box-sizing:border-box;
+        font:400 14px/1.5 Inter,Outfit,system-ui,sans-serif}
+      .rv-login-brand{display:flex;align-items:center;gap:8px;margin-bottom:26px;
+        font:600 12px/1 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1.1px;color:#fff}
+      .rv-login-mark{width:9px;height:9px;background:#da291c;display:inline-block;flex:none}
+      .rv-login-title{font:500 27px/1.1 Inter,system-ui,sans-serif;letter-spacing:-.5px;color:#fff}
+      .rv-login-sub{font-size:14px;color:#969696;margin:8px 0 26px}
+      .rv-login-label{display:block;margin-bottom:8px;font:600 11px/1 Inter,system-ui,sans-serif;
+        text-transform:uppercase;letter-spacing:1.1px;color:#8f8f8f}
+      .rv-login-input{width:100%;height:48px;padding:0 16px;border:1px solid #303030;border-radius:4px;background:#111;
+        color:#fff;font:400 14px/1.5 Inter,system-ui,sans-serif;box-sizing:border-box}
+      .rv-login-input::placeholder{color:#5a5a5a}
+      .rv-login-input:focus{outline:none;border-color:#da291c}
+      .rv-login-label2{margin-top:20px}
+      .rv-login-select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:40px;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f8f8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat:no-repeat;background-position:right 16px center}
+      .rv-login-select option{color:#fff;background:#111}
+      .rv-login-select:invalid,.rv-login-select option[value=""]{color:#5a5a5a}
+      .rv-login-err{margin-top:10px;font-size:13px;font-weight:600;color:#f13a2c}
+      .rv-login-actions{display:flex;gap:14px;align-items:center;justify-content:flex-end;margin-top:26px}
+      .rv-login-cancel{background:none;border:none;padding:8px 4px;color:#969696;cursor:pointer;
+        font:700 13px/1 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px}
+      .rv-login-btn{height:48px;padding:0 32px;border:none;border-radius:0;background:#da291c;color:#fff;cursor:pointer;
+        font:700 14px/1 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1.4px}
+      .rv-login-btn:active{background:#b01e0a}
+      .rv-login-btn:disabled{opacity:.55;cursor:default}
+      .rv-login-foot{margin-top:26px;padding-top:16px;border-top:1px solid #303030;
+        font:400 11px/1.4 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px;color:#666}
     `;
+    // Inter — the documented Red Moon / FerrariSans substitute — for the ProofKit UI.
+    if (!document.getElementById('pk-font')) {
+      const fl = document.createElement('link'); fl.id = 'pk-font'; fl.rel = 'stylesheet';
+      fl.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
+      document.head.appendChild(fl);
+    }
     const styleEl = document.createElement('style');
     styleEl.textContent = css;
 
     // ---- helpers ---------------------------------------------------------
     const slugFromPath = () =>
-      (location.pathname.replace(/^\/|\/$/g, '') || 'home').replace(/[^a-z0-9/-]/gi, '');
+      (pagePath().replace(/^\/|\/$/g, '') || 'home').replace(/[^a-z0-9/-]/gi, '');
 
     function cssPath(el) {
       if (!(el instanceof Element)) return '';
@@ -277,9 +341,18 @@
     // ---- bottom-right dock: [nav toolbar] [Comment/Save FAB] -------------
     // The nav toolbar (comment count + prev/next) shows only in review mode,
     // to the LEFT of the FAB. The FAB is the single Save/Comment button.
-    document.documentElement.classList.add('rv-armed');
     document.head.appendChild(styleEl);
+    // The Comment dock (and the host .to-top hide) appear ONLY once the review session
+    // is authenticated - i.e. a validated Key is stored in PASS_KEY (`reviewPass`).
+    const isAuthed = () => !!sessionStorage.getItem(PASS_KEY);
     const dock = document.createElement('div'); dock.className = 'rv-dock';
+    let dockShown = false;
+    function revealDock() {
+      if (dockShown) return;
+      dockShown = true;
+      document.documentElement.classList.add('rv-armed'); // hides the host .to-top FAB
+      dock.style.display = 'flex';
+    }
 
     const nav = document.createElement('div'); nav.className = 'rv-nav'; nav.style.display = 'none';
     const CHEV_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" ' +
@@ -312,17 +385,20 @@
 
     dock.appendChild(nav);
     dock.appendChild(fab);
+    dock.style.display = 'none'; // hidden until the review session is authenticated (revealDock)
     document.body.appendChild(dock);
 
     // ---- enter / exit review mode ---------------------------------------
     const backdrop = document.createElement('div'); backdrop.className = 'rv-backdrop';
 
     async function enter() {
+      revealDock();       // authenticated -> the Comment/Save dock is now visible
       reviewOn = true;
       setFab(true);
       nav.style.display = 'flex';
+      try { history.replaceState(null, '', reviewUrl()); } catch (e) {} // address bar → /<page>/review
       document.body.appendChild(backdrop);
-      try { comments = await store.list(location.pathname); }
+      try { comments = await store.list(pagePath()); }
       catch (e) {
         if (e.message === 'unauthorized') { toast('Wrong passcode — try again.'); return exit(); }
         toast('Could not load comments — ' + e.message); comments = [];
@@ -340,6 +416,7 @@
       reviewOn = false;
       setFab(false);
       nav.style.display = 'none';
+      try { history.replaceState(null, '', pagePath()); } catch (e) {} // address bar → back to the page
       backdrop.remove(); closePop();
       pinEls.forEach((el) => el.remove()); pinEls.clear(); activeId = null;
       sessionStorage.removeItem(SESSION_KEY); // end this review session -> next entry logs separately
@@ -441,11 +518,7 @@
         '<header><div><div class="t">Add a comment</div><div class="rv-snip"></div></div>' +
         '<button class="rv-x" aria-label="Close">×</button></header>' +
         '<div class="rv-body">' +
-        '<div class="rv-row2">' +
-        '<select class="rv-team" required><option value="" disabled selected>Team *</option>' +
-        TEAMS.map((t) => '<option>' + t + '</option>').join('') + '</select>' +
         '<input class="rv-name" placeholder="Your name *" autocomplete="name">' +
-        '</div>' +
         '<textarea class="rv-text" placeholder="What should change here? (⌘/Ctrl+Enter to save)"></textarea>' +
         '<textarea class="rv-change" placeholder="Change it to… (the new content)" hidden></textarea>' +
         '<div class="rv-actions"><button class="rv-btn ghost rv-cancel">Cancel</button>' +
@@ -454,17 +527,16 @@
       document.body.appendChild(pop);
       placePop(pop, cx, cy);
 
-      const teamI = pop.querySelector('.rv-team'), nameI = pop.querySelector('.rv-name');
+      const nameI = pop.querySelector('.rv-name');
       const textI = pop.querySelector('.rv-text'), changeI = pop.querySelector('.rv-change');
-      teamI.value = localStorage.getItem(TEAM_KEY) || '';
+      const team = localStorage.getItem(TEAM_KEY) || ''; // session-global team, chosen at login
       nameI.value = localStorage.getItem(NAME_KEY) || '';
       // Content is the only team that suggests replacement copy -> reveal 2nd field.
-      const syncChange = () => { changeI.hidden = teamI.value !== 'Content'; placePop(pop, cx, cy); };
-      syncChange();
-      teamI.addEventListener('change', syncChange);
-      (!teamI.value ? teamI : (!nameI.value ? nameI : textI)).focus();
+      changeI.hidden = team !== 'Content';
+      placePop(pop, cx, cy);
+      (!nameI.value ? nameI : textI).focus();
 
-      const submit = () => send(pop, teamI, nameI, textI, changeI, anchor);
+      const submit = () => send(pop, nameI, textI, changeI, anchor);
       pop.querySelector('.rv-x').addEventListener('click', closePop);
       pop.querySelector('.rv-cancel').addEventListener('click', closePop);
       pop.querySelector('.rv-send').addEventListener('click', submit);
@@ -473,21 +545,20 @@
       changeI.addEventListener('keydown', onKey);
     }
 
-    async function send(pop, teamI, nameI, textI, changeI, anchor) {
-      const team = teamI.value, name = nameI.value.trim(), comment = textI.value.trim();
+    async function send(pop, nameI, textI, changeI, anchor) {
+      const team = localStorage.getItem(TEAM_KEY) || ''; // session-global team from login
+      const name = nameI.value.trim(), comment = textI.value.trim();
       const changeTo = changeI.value.trim();
-      if (!team) { teamI.focus(); toast('Please choose a team.'); return; }
       if (!name) { nameI.focus(); toast('Please enter your name.'); return; }
       if (!comment) { textI.focus(); return; }
       if (team === 'Content' && !changeTo) { changeI.focus(); toast('Add the suggested content change.'); return; }
-      localStorage.setItem(TEAM_KEY, team);
       localStorage.setItem(NAME_KEY, name);
       const btn = pop.querySelector('.rv-send'); btn.disabled = true; btn.textContent = 'Sending…';
       try {
         const rec = await store.add({
           team, name, comment, changeTo: team === 'Content' ? changeTo : '', anchor,
           sessionId: sessionId(),
-          page: { path: location.pathname, url: location.href, title: document.title, slug: slugFromPath() },
+          page: { path: pagePath(), url: location.href, title: document.title, slug: slugFromPath() },
         });
         comments.push(rec); renderPins(); closePop();
         toast(LOCAL ? '✅ Saved locally (demo mode)' : '✅ Comment sent');
@@ -514,9 +585,7 @@
         (root.status === 'resolved' ? 'Resolved' : 'Open') + '</span></div>' +
         '<div class="rv-thread"></div>' +
         '<div class="rv-reply">' +
-        '<div class="rv-row2"><select class="rv-rteam" required><option value="" disabled selected>Team *</option>' +
-        TEAMS.map((t) => '<option>' + t + '</option>').join('') + '</select>' +
-        '<input class="rv-rname" placeholder="Your name *" autocomplete="name"></div>' +
+        '<input class="rv-rname" placeholder="Your name *" autocomplete="name">' +
         '<textarea class="rv-rtext" placeholder="Add another comment… (⌘/Ctrl+Enter)"></textarea>' +
         '<textarea class="rv-rchange" placeholder="Change it to… (the new content)" hidden></textarea>' +
         '<div class="rv-actions"><button class="rv-btn primary rv-radd">Add Comment</button></div></div>';
@@ -545,13 +614,12 @@
       });
       document.body.appendChild(pop);
       const p = pinPos(root); placePop(pop, p.x, p.y);
-      // Each added comment asks team + name; both are cached and pre-filled here.
-      const rteam = pop.querySelector('.rv-rteam'), rchange = pop.querySelector('.rv-rchange');
-      rteam.value = localStorage.getItem(TEAM_KEY) || '';
+      // The team is session-global (chosen at login); each reply asks only for a name.
+      const rteam = localStorage.getItem(TEAM_KEY) || '';
+      const rchange = pop.querySelector('.rv-rchange');
       pop.querySelector('.rv-rname').value = localStorage.getItem(NAME_KEY) || '';
-      const syncR = () => { rchange.hidden = rteam.value !== 'Content'; placePop(pop, p.x, p.y); };
-      syncR();
-      rteam.addEventListener('change', syncR);
+      rchange.hidden = rteam !== 'Content'; // Content team reveals the "change to…" field
+      placePop(pop, p.x, p.y);
       pop.querySelector('.rv-x').addEventListener('click', () => { closePop(); pinEls.forEach((el) => el.classList.remove('active')); });
       pop.querySelector('.rv-radd').addEventListener('click', () => addReply(pop, root));
       const onRKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addReply(pop, root); } };
@@ -560,15 +628,13 @@
     }
 
     async function addReply(pop, root) {
-      const team = pop.querySelector('.rv-rteam').value;
+      const team = localStorage.getItem(TEAM_KEY) || ''; // session-global team from login
       const name = pop.querySelector('.rv-rname').value.trim();
       const txt = pop.querySelector('.rv-rtext').value.trim();
       const changeTo = pop.querySelector('.rv-rchange').value.trim();
-      if (!team) { pop.querySelector('.rv-rteam').focus(); toast('Please choose a team.'); return; }
       if (!name) { pop.querySelector('.rv-rname').focus(); toast('Please enter your name.'); return; }
       if (!txt) { pop.querySelector('.rv-rtext').focus(); return; }
       if (team === 'Content' && !changeTo) { pop.querySelector('.rv-rchange').focus(); toast('Add the suggested content change.'); return; }
-      localStorage.setItem(TEAM_KEY, team);
       localStorage.setItem(NAME_KEY, name);
       const btn = pop.querySelector('.rv-radd'); btn.disabled = true; btn.textContent = 'Adding…';
       try {
@@ -599,7 +665,15 @@
       return '<span class="rv-team-chip" style="background:' + c[0] + ';color:' + c[1] + '">' + escapeHtml(team) + '</span>';
     }
 
-    // deep link from the dashboard (#c=<id>) auto-enters review mode
-    if (/[#&]c=/.test(location.hash)) startReview();
+    // Authenticated session (Key present) -> reveal the Comment dock on every armed page,
+    // and auto-enter review on a /<page>/review (AUTO) or Open-Pin (#c=) arrival.
+    // Not yet authenticated -> keep the dock hidden; only the entry flows open the
+    // Team + Key login so the reviewer can authenticate. A plain armed page shows nothing.
+    if (isAuthed()) {
+      revealDock();
+      if (AUTO || /[#&]c=/.test(location.hash)) startReview();
+    } else if (AUTO || /[#&]c=/.test(location.hash)) {
+      showLogin();
+    }
   })();
 </script>

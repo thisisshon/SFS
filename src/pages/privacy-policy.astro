@@ -4,7 +4,7 @@
  * Legal long-form page. Pixel parity with legacy privacy.html.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 
 const seo = {
   title: 'Privacy Policy',
@@ -16,18 +16,11 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Privacy Policy' }]} />
-    <div class="hero-inner" data-enter>
-      <div class="hero-content">
-        <h1>Privacy <span class="g">Policy</span></h1>
-        <p class="lead">
-          How Shriram Financial Services collects, uses, protects and shares your personal
-          information across our website, trading platforms and services.
-        </p>
-      </div>
-    </div>
-  </section>
+  <Hero breadcrumb={[{ name: 'Privacy Policy' }]}>
+    <Fragment slot="title">Privacy <span class="g">Policy</span></Fragment>
+    <Fragment slot="lead">How Shriram Financial Services collects, uses, protects and shares your personal
+          information across our website, trading platforms and services.</Fragment>
+  </Hero>
 
   <!-- ================= INTRODUCTION + DISCLOSURE ================= -->
   <section class="section sec-light" id="sec-intro" data-section="intro" data-enter="2">

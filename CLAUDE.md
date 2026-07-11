@@ -73,10 +73,15 @@ off against each other:
    only what is genuinely unique to that page - and its values reference **tokens**, not raw
    hexes (see the token contract below).
 
-3. **One font + `line-height:1.5`, site-wide - no exceptions.** The only font is **Outfit**;
+3. **One font + `line-height:1.5`, site-wide - one ruled exception.** The only font is **Outfit**;
    never set another `font-family` or load a second web font. Form controls are force-inherited
    in `global.css` base layer, so any new interactive element is covered. Every text element
    renders at `line-height:1.5` (enforced globally). Both live in `global.css` `@layer base`.
+   **Sanctioned exception (2026-07-12):** the homepage Antara **App Store / Google Play badges**
+   (`.store-btn`) set the platform **system-font stack** (`-apple-system, …, Roboto, …`) - no web
+   font loaded - so they read as the official Apple/Google artwork. This is the *only* non-Outfit
+   text on the site; do not add others. (Ideal end state: drop in Apple's/Google's official badge
+   SVG/PNG assets, which bake the type into the image and need no font at all.)
 
 4. **Icons are real `<svg>`s, never text glyphs, sized `16 / 20 / 24 / 32px` only.** Every icon
    is an inline `<svg>` - never a character (`✓ → ★ f in 𝕏`) or emoji. Width/height is one of
@@ -160,16 +165,18 @@ off against each other:
     micro-labels (the `.hf-field` floating label at ~10px, compact eyebrow/badge text) are
     sanctioned and must not be "fixed."
 
-15. **🟢 Hover states are desktop-only, gated at 1200px.** Every hover affordance lives inside the
-    one canonical gate `@media (min-width: 1200px) and (hover: hover)` - never author a hover rule
-    outside it. The **1200px** threshold matches the nav's desktop→hamburger switch
-    (`max-width: 1199.98px`), so hover and the full desktop layout begin/end together: **≥1200px hover
-    is active, below 1200px it never fires** (the layout is already the mobile hamburger). The
-    `(hover: hover)` half also excludes touch pointers at any width. *(Updated 2026-07-09: the gate
-    was raised from `1024px` to `1200px` sitewide so hover no longer lingers in the 1024-1199 band
-    where the mobile chrome is already showing.)* The design is otherwise **proportionally identical
-    1200→1920** by construction - no fixed content max-width; the page gutter is fluid
-    (`--pad: clamp(20px, 8vw, 144px)`) and grids reflow on `1fr`, so elements scale with the viewport.
+15. **🟢 Hover states are desktop-only, gated at 1024px.** Every hover affordance lives inside the
+    one canonical gate `@media (min-width: 1024px) and (hover: hover)` - never author a hover rule
+    outside it. The **1024px** threshold matches the nav's desktop→hamburger switch
+    (`max-width: 1023.98px`), so hover and the full desktop layout begin/end together: **≥1024px hover
+    is active, below 1024px it never fires** (the layout is the mobile hamburger). The
+    `(hover: hover)` half also excludes touch pointers at any width. *(Updated 2026-07-11: the gate +
+    nav hamburger switch were lowered from `1200px` to `1024px` sitewide so the full desktop layout
+    holds - as a proportional scaled-down miniature, never rearranging - all the way down to the 1024
+    desktop-band floor. The nav's 1024-1300 clamp block scales the bar down to ~0.72x at 1024.)* The
+    design is otherwise **proportionally identical 1024→1920** by construction - no fixed content
+    max-width; the page gutter is fluid (`--pad: clamp(20px, 8vw, 144px)`), grids reflow on `1fr`, and
+    in-band spacing/type uses `clamp()` so elements scale with the viewport with no breakpoint jumps.
 
 16. **🟢 The FAQ section has two sanctioned variants, one per section band - colour is
     automatic, never per-page.** *(Supersedes every earlier FAQ-styling instruction, 2026-07-10.)*
@@ -190,6 +197,72 @@ off against each other:
     Set only the band class on the page; **never** re-declare fills, borders, or the watermark in a
     page `<style>`. The homepage is the documented exception (single cream-100 band → `cream-350`
     items, its own olive side card, no watermark). Documented live in `/designsystem/proposed`.
+
+17. **🟢 There is ONE global button system - `.btn` + family + size (radius 8px).** *(Added
+    2026-07-11 from the Figma "V4 / Buttons" sheet, node 1190:7111; role naming v2 same day.)*
+    Compose a button as `.btn` + a **family** + a **size**: `<a class="btn btn-primary btn-xl">`.
+    **Families (use in MODERATION - mostly primary + the black-stroke secondary):**
+    - `btn-primary` - **gold solid**, the ONE main CTA per view.
+    - `btn-secondary` - **black stroke** (outline), the standard secondary. **This is the secondary
+      button** - reach for it for any "second" action on a light surface.
+    - `btn-secondary-inverse` - **white stroke**, the secondary on **dark** surfaces (a black stroke
+      is invisible there).
+    - `btn-tertiary` - **solid black** (charcoal), low-emphasis solid (e.g. the nav pill); use
+      sparingly.
+    - `btn-tertiary-inverse` - **solid white/light**, the tertiary on dark; use sparingly.
+    - `btn-link` (blue hyperlink) / `btn-link-inverse` (light link on dark) - text buttons.
+    **Sizes:** `btn-xxl` 52 · `btn-xl` 48 · `btn-lg` 40 (= base default) · `btn-md` 36 · `btn-sm` 32.
+    `btn-icon` makes a square icon-only button; in-button icons carry `btn-ico` (auto-sized on the
+    16/20/24/32 scale, rule 4). Radius is **8px** across the whole scale. **Uniform footprint
+    (2026-07-12):** every button carries a **220px min-width** (`--cta-w`, the hero CTA width) so
+    action buttons share one width sitewide rather than shrink-wrapping - written `min-width:
+    min(var(--cta-w), 100%)` so the cap auto-collapses in narrow/full-width containers and never
+    overflows (add `style="width:100%"` for full-bleed). **Exempt** (they keep their own sizing):
+    the compact `btn-md`/`btn-sm` (they hug), icon-only `btn-icon`, the nav pill `.nav-cta`, and the
+    FAQ side-card CTA (`.faq-side .btn`); the homepage hero buttons set explicit inline widths.
+    Hover is auto per family (gated at 1024px,
+    rule 15); `:disabled`/`[aria-disabled]` grey it out. Colours bind to `--color-btn-*` semantic
+    tokens (rule 9) - never hardcode a button colour on a page. Pages add only *layout* (width,
+    responsive, alignment), never re-declare fill/height/radius/font. **Companion:** the infotext
+    overlay `.infotip` (dark bubble + directional pointer; `.infotip-bottom/-top/-right/-left`).
+    Documented live in `/designsystem/proposed`. **Every button on the site uses this system** - the
+    legacy `.btn-gold`/`.btn-dark`/`.btn-ghost`/`.btn-outline` classes are retired (migrated sitewide
+    2026-07-11): `btn-gold`→`btn-primary`, `btn-dark`→`btn-tertiary`, `btn-ghost`/`btn-outline`→
+    `btn-secondary-inverse`.
+
+18. **🟢 The hero is a shared component - `<Hero>`, not hand-written markup.** *(Extracted
+    2026-07-11.)* `src/components/sections/Hero.astro` renders the entire standardised hero band
+    (rule 7): the gradient `<section class="hero">` (+ `compact` for the calculator hug variant),
+    an optional `<Breadcrumb>`, and the `.hero-inner` stack. **Props:** `breadcrumb` (trail array),
+    `cta` (`{ label, href }` - the single gold `btn-primary`, auto-sized to the **220px** `--cta-w`
+    min-width set once in `global.css`), `compact`, `reveal` (the `data-enter` scroll hook, default
+    true), `id`/`dataSection`. **Slots:** `title` (H1 inner, rich markup ok), `lead`, `eyebrow`,
+    `cta` (multi-button heroes), `aside` (two-column form/card → hero-grid), and the default slot
+    for extra in-hero content (tables, contact pills). **A sitewide hero change - button style,
+    width, spacing, a new element - is now a single edit to `Hero.astro` + `global.css`, never a
+    per-page sweep.** 33 pages use it; the few genuinely bespoke heroes with page-scoped `<style>`
+    (homepage video hero, `about-us` stats, `antara`, `become-a-partner`, the form two-column heroes
+    `open-demat-account`/`karnataka-bank-customers`/`contact-us`, `calculators` `.calc-hero`,
+    `designsystem`) stay hand-written. New pages build their hero with `<Hero>` - never re-author the
+    `<section class="hero">` markup.
+
+19. **🟢 Every How-To / process stepper is one of two shared components - `<StepsRow>` /
+    `<StepsRows>`, never hand-written `.steps`.** *(Unified 2026-07-12; retired the old `StepFlow`
+    component and the numbered `.steps`/`.step-div` markup.)* Both render an **icon-chip timeline**
+    (a gold chip + title + desc per step, joined by a dashed connector in `--color-tan-500`).
+    Each step is `{ icon, title, desc }`; **`icon` is a KEY into the shared set
+    `src/components/sections/stepIcons.ts`** (24px inline `<svg>`s, rule 4) - never inline an SVG on a
+    page, and add new concepts to `stepIcons.ts` only. Pick the component by step count:
+    - **`<StepsRow steps={[…]}>`** - a single row (≤5 steps). Connector runs first-chip-centre →
+      last-chip-centre (no bleed).
+    - **`<StepsRows steps={[…]} perRow={N}>`** - multi-row (≥6 steps; choose `perRow` to balance rows,
+      ≤5/row). Row 1 fills the row; **rows 2+ centre their chips**. Only the **stroke** bleeds - it runs
+      out through the page gutter to the **viewport edge** to signal the wrap (first row → right edge;
+      middle rows → full-bleed; last row: left edge → last chip). Chips never leave the content column.
+    Both collapse to a vertical dashed spine below 1024px. **A sitewide stepper change is a single edit
+    to these two files + `stepIcons.ts`.** *(Sole survivors on the legacy `.steps` markup, deliberately
+    left as non-process lists: commodities "Essential Rules for Risk Management" and mutual-funds "How
+    Mutual Funds Work".)*
 
 ---
 
@@ -218,7 +291,7 @@ src/
   layouts/BaseLayout.astro   Templated <head>/SEO + Header/MegaNav/Footer + scroll-reveal.
   components/
     site/               Header, MobileMenu, MegaNav, Footer (chrome; render from navigation.ts).
-    sections/           Composed sections: FaqAccordion, …
+    sections/           Composed sections: Hero (rule 18), StepsRow/StepsRows (+ stepIcons.ts, rule 19), FaqAccordion, …
     ui/                 Atomic primitives (as they are extracted).
   data/                 navigation.ts (nav tree → header/overlay/mobile/footer) + future data.
   lib/                  seo.ts (SEO type + fullTitle + faqPage/breadcrumb/organization schema).
@@ -303,10 +376,21 @@ docs/                   legacy-style-audit.md, porting-guide.md, and the build s
 
 > **Note:** `/antara` (Shriram X platform) is now built (2026-07-08). The homepage "Explore Antara" hero link and the footer "Explore Antara" entry in `navigation.ts` point at it; the homepage login links remain inert `#` placeholders.
 
+> **Proofkit — content-review tool (`/review` + `/reviewdash`).** The click-to-comment overlay, the
+> two dashboard routes, the two-tier auth and the Cloudflare Worker are **Proofkit**, an isolated,
+> versioned, portable **package** in `src/plugins/proofkit/` — deliberately decoupled from the design
+> system, built to zip up and drop into any Astro / Claude Code project. One switch, `PROOFKIT_ENABLED`
+> in its `config.ts`, toggles the whole tool on/off site-wide. Its `README.md` (what it does) +
+> `INSTALL.md` (how to integrate) are the **source of truth**; **keep them in sync and bump `VERSION` +
+> `CHANGELOG.md` whenever you change the tool.** The only host-project seams are the gated
+> `{PROOFKIT_ENABLED && <ProofkitOverlay />}` line in `BaseLayout.astro` and the two thin route shims
+> `src/pages/review.astro` + `reviewdash.astro`.
+
 **Adding a new page:** create `src/pages/<path>.astro`, import `BaseLayout`, pass a `seo` object,
-and build from the shared component classes + tokens in `global.css`. Copy an existing page of a
-similar shape (`privacy.astro` for content pages, `products/equity.astro` for nested). Use the
-data layer (`src/data/`) for anything repeated. Never fork `global.css`.
+and build from the shared component classes + tokens in `global.css`. Build the hero with the
+shared `<Hero>` component (rule 18), not hand-written `<section class="hero">` markup. Copy an
+existing page of a similar shape (`privacy.astro` for content pages, `products/equity.astro` for
+nested). Use the data layer (`src/data/`) for anything repeated. Never fork `global.css`.
 
 ## 🔗 The Figma round-trip
 

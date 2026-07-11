@@ -1,0 +1,31 @@
+{
+  "name": "proofkit",
+  "version": "1.6.3",
+  "private": true,
+  "description": "Proofkit — a self-contained, toggleable, portable content-review tool: an on-page click-to-comment overlay + admin dashboard + Cloudflare Worker, injectable into any Astro / Claude Code website project.",
+  "keywords": ["content-review", "annotation", "overlay", "review-tool", "astro", "claude-code", "plugin"],
+  "type": "module",
+  "proofkit": {
+    "kind": "astro-package",
+    "entrypoints": {
+      "overlay": "Overlay.astro",
+      "login": "Login.astro",
+      "dashboard": "Dashboard.astro",
+      "config": "config.ts",
+      "worker": "worker/worker.js"
+    },
+    "hostSeams": [
+      "one gated line in the shared layout (renders <ProofkitOverlay /> when PROOFKIT_ENABLED)",
+      "src/pages/review.astro route shim",
+      "src/pages/reviewdash.astro route shim",
+      "PUBLIC_REVIEW_WORKER_URL build env (CI) — optional, enables shared store"
+    ],
+    "hostRequirements": [
+      "Astro (static or hybrid) with a shared layout that accepts an `seo` prop + default <slot/>",
+      "an SEO type at src/lib/seo (adjust the import in config.ts if elsewhere)",
+      "Cloudflare account for the Worker (optional; runs in localStorage demo mode without it)"
+    ],
+    "install": "See ./INSTALL.md",
+    "toggle": "PROOFKIT_ENABLED in config.ts"
+  }
+}

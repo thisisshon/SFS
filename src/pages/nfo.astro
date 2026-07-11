@@ -7,7 +7,9 @@
  * .steps, FaqAccordion, .cta-box). Nested route → imports at ../ depth.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
@@ -22,13 +24,13 @@ const NFO_IPO_ROWS = [
 
 // The NFO Process - step by step.
 const PROCESS = [
-  { h: 'SEBI Approval', p: 'The AMC files a Scheme Information Document (SID) with SEBI and receives approval to launch the NFO.' },
-  { h: 'NFO Opens', p: 'The subscription window opens. Investors can apply through the AMC website, registered platforms, distributors, or directly at AMC branches.' },
-  { h: 'Subscription Period', p: 'Investors subscribe at ₹10 per unit. The AMC collects the pooled corpus.' },
-  { h: 'NFO Closes', p: 'At the end of the window (maximum 30 days for most fund types), the fund closes to fresh subscriptions.' },
-  { h: 'Allotment', p: 'Units are allotted to investors based on the amount invested at the offer price.' },
-  { h: 'Fund Deployment', p: "The fund manager begins deploying the corpus as per the scheme's investment mandate." },
-  { h: 'NAV-Based Transactions', p: 'For open-ended funds, the scheme opens for regular purchase and redemption at the prevailing Net Asset Value (NAV).' },
+  { icon: 'verify', h: 'SEBI Approval', p: 'The AMC files a Scheme Information Document (SID) with SEBI and receives approval to launch the NFO.' },
+  { icon: 'calendar', h: 'NFO Opens', p: 'The subscription window opens. Investors can apply through the AMC website, registered platforms, distributors, or directly at AMC branches.' },
+  { icon: 'coins', h: 'Subscription Period', p: 'Investors subscribe at ₹10 per unit. The AMC collects the pooled corpus.' },
+  { icon: 'clock', h: 'NFO Closes', p: 'At the end of the window (maximum 30 days for most fund types), the fund closes to fresh subscriptions.' },
+  { icon: 'portfolio', h: 'Allotment', p: 'Units are allotted to investors based on the amount invested at the offer price.' },
+  { icon: 'trade', h: 'Fund Deployment', p: "The fund manager begins deploying the corpus as per the scheme's investment mandate." },
+  { icon: 'chart', h: 'NAV-Based Transactions', p: 'For open-ended funds, the scheme opens for regular purchase and redemption at the prevailing Net Asset Value (NAV).' },
 ];
 
 // Key Features of a New Fund Offer - i to iv.
@@ -69,10 +71,10 @@ const TYPE_ROWS = [
 
 // How to Invest in NFO - the online process.
 const INVEST_STEPS = [
-  { h: 'Download and Register on the app', p: 'Download Shriram Financial Services’ “Purse+” app and get registered.' },
-  { h: 'Complete KYC', p: 'Complete the KYC formalities as per the instructions shared in the app.' },
-  { h: 'Post MF registration open the Purse+ App and Navigate to NFO Section', p: "Move to the mutual fund module on the home screen and select the dedicated 'New Fund Offers' to view all active, regulatory-approved subscription windows." },
-  { h: 'Review Allotment Confirmation', p: 'Upon successful transaction validation, your capital remains securely parked until the official closing date. The AMC will process unit generation within 5 business days of the subscription window ending, sending an official Statement of Account (SoA) directly to your registered digital destination.' },
+  { icon: 'phone', h: 'Download and Register on the app', p: 'Download Shriram Financial Services’ “Purse+” app and get registered.' },
+  { icon: 'kyc', h: 'Complete KYC', p: 'Complete the KYC formalities as per the instructions shared in the app.' },
+  { icon: 'select', h: 'Post MF registration open the Purse+ App and Navigate to NFO Section', p: "Move to the mutual fund module on the home screen and select the dedicated 'New Fund Offers' to view all active, regulatory-approved subscription windows." },
+  { icon: 'verify', h: 'Review Allotment Confirmation', p: 'Upon successful transaction validation, your capital remains securely parked until the official closing date. The AMC will process unit generation within 5 business days of the subscription window ending, sending an official Statement of Account (SoA) directly to your registered digital destination.' },
 ];
 
 // Benefits and Risks of an NFO.
@@ -152,14 +154,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'NFO' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Explore the Latest NFOs and Discover Tomorrow's Investment Opportunities.</h1>
-      <p class="lead">Whether you are a first-time investor curious about what an NFO is, or a seasoned market participant evaluating the next NFO mutual fund opportunity, this guide covers everything you need to know.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start Investing</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'NFO' }]}
+    cta={{ label: 'Start Investing', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Explore the Latest NFOs and Discover Tomorrow's Investment Opportunities.</Fragment>
+    <Fragment slot="lead">Whether you are a first-time investor curious about what an NFO is, or a seasoned market participant evaluating the next NFO mutual fund opportunity, this guide covers everything you need to know.</Fragment>
+  </Hero>
 
   <!-- ===== New Fund Offer: Discover the Latest Mutual Fund Launches ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px;justify-content:center" data-enter="2">
@@ -192,22 +193,7 @@ const seo = {
       <div class="stack" style="gap:16px">
         <h3 class="sub-title">The NFO Process — Step by Step:</h3>
       </div>
-      <div class="steps" data-reveal-row>
-        {PROCESS.slice(0, 4).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 1}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-      <div class="steps" data-reveal-row>
-        {PROCESS.slice(4).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 5}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
+      <StepsRows perRow={4} steps={PROCESS.map((s) => ({ icon: s.icon, title: s.h, desc: s.p }))} />
       <p class="sec-lead">Unlike IPOs, NFO prices don't fluctuate during the subscription period — all investors get in at the same fixed price. At the same time, an NFO's ₹10 offer price does not imply the fund is inherently "cheap." The actual value lies in the quality of the investment strategy and execution.</p>
     </div>
   </section>
@@ -244,7 +230,7 @@ const seo = {
       ))}
     </div></div>
     <p class="sec-lead">Each type carries its own risk-reward equation, liquidity profile, and tax treatment. A thorough understanding of each is essential before you decide which type suits your investment thesis.</p>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Investing</a>
   </section>
 
   <!-- ===== How to Invest in NFO? ===== -->
@@ -257,24 +243,9 @@ const seo = {
       <div class="stack" style="gap:16px">
         <h3 class="sub-title">Online Process</h3>
       </div>
-      <div class="steps" data-reveal-row>
-        {INVEST_STEPS.slice(0, 2).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 1}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-      <div class="steps" data-reveal-row>
-        {INVEST_STEPS.slice(2).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 3}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
+      <StepsRow steps={INVEST_STEPS.map((s) => ({ icon: s.icon, title: s.h, desc: s.p }))} />
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Investing</a>
   </section>
 
   <!-- ===== What are the Benefits and Risks of an NFO? ===== -->
@@ -354,7 +325,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

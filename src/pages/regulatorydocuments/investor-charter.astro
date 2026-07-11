@@ -6,7 +6,7 @@
  * (shared .doc-toolbar / .doc-chips / .doc-group component from global.css).
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Breadcrumb from '../../components/site/Breadcrumb.astro';
+import Hero from '../../components/sections/Hero.astro';
 
 const seo = {
   title:
@@ -59,16 +59,13 @@ const TOTAL = CATEGORIES.reduce((n, c) => n + c.docs.length, 0);
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Regulatory Documents', href: '/regulatorydocuments' }, { name: 'Investor Charter' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Investor <span class="g">Charter</span></h1>
-      <p class="lead">
+  <Hero breadcrumb={[{ name: 'Regulatory Documents', href: '/regulatorydocuments' }, { name: 'Investor Charter' }]}>
+    <Fragment slot="title">Investor <span class="g">Charter</span></Fragment>
+    <Fragment slot="lead">
         All mandatory disclosures, investor rights, grievance mechanisms and compliance documents
         - in one place. Search, filter by category, and view online or download as PDF.
-      </p>
-    </div>
-  </section>
+      </Fragment>
+  </Hero>
 
   <!-- ================= CHARTER & REGULATORY DOCUMENTS ================= -->
   <section class="section stack sec-light" id="sec-charters" data-section="charters" style="gap:40px" data-enter="2">

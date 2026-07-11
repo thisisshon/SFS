@@ -8,7 +8,8 @@
  * Nested route → BaseLayout / component imports at ../../ depth.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
@@ -39,14 +40,17 @@ const TERMS = [
 // IPO Process in India - three-step overview.
 const PROCESS = [
   {
+    icon: 'document',
     h: 'DRHP Filing & SEBI Approval',
     p: 'The company files a Draft Red Herring Prospectus (DRHP) with SEBI covering financials, risks, and business details. SEBI reviews and approves it, typically within 30 days.',
   },
   {
+    icon: 'rupee',
     h: 'Price Band & Subscription Window',
     p: 'Post-approval, a price band is announced and the IPO opens for bidding — usually for 3 business days. Anchor investors are allotted shares a day before the public subscription opens.',
   },
   {
+    icon: 'growth',
     h: 'Allotment & Listing',
     p: 'After the subscription closes, shares are allotted — via lottery for retail investors, proportionally for HNIs and institutions. Listing on NSE or BSE happens within 6 business days.',
   },
@@ -86,11 +90,11 @@ const APPLY_ROWS = [
 
 // How to Apply for an IPO - five-step flow via Shriram.
 const APPLY_STEPS = [
-  { h: 'Log In', p: 'Log in to your Shriram Financial Services trading account or Antara app.' },
-  { h: 'Select the Open IPO', p: 'Navigate to the IPO section and select the open IPO.' },
-  { h: 'Enter Your Bid', p: 'Enter bid quantity (in multiples of lot size) and select bid price (cut-off or specific price).' },
-  { h: 'Approve the UPI Mandate', p: 'Approve the UPI mandate on your UPI app to block funds via Application Supported by Blocked Amount (ASBA).' },
-  { h: 'Track Allotment', p: "Track allotment status on the registrar's website and your registered email id. Allotted shares are credited to the demat account on the listing eve." },
+  { icon: 'account', h: 'Log In', p: 'Log in to your Shriram Financial Services trading account or Antara app.' },
+  { icon: 'select', h: 'Select the Open IPO', p: 'Navigate to the IPO section and select the open IPO.' },
+  { icon: 'rupee', h: 'Enter Your Bid', p: 'Enter bid quantity (in multiples of lot size) and select bid price (cut-off or specific price).' },
+  { icon: 'verify', h: 'Approve the UPI Mandate', p: 'Approve the UPI mandate on your UPI app to block funds via Application Supported by Blocked Amount (ASBA).' },
+  { icon: 'chart', h: 'Track Allotment', p: "Track allotment status on the registrar's website and your registered email id. Allotted shares are credited to the demat account on the listing eve." },
 ];
 
 // How to Read an IPO Prospectus - what to pay attention to.
@@ -191,14 +195,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'IPO' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Explore IPOs. Invest with <span class="g">Confidence.</span></h1>
-      <p class="lead">Learn how IPOs work, how to apply online, how allotment happens, and what to check before investing in an IPO – all in one SEBI-regulated platform.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'IPO' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Explore IPOs. Invest with <span class="g">Confidence.</span></Fragment>
+    <Fragment slot="lead">Learn how IPOs work, how to apply online, how allotment happens, and what to check before investing in an IPO – all in one SEBI-regulated platform.</Fragment>
+  </Hero>
 
   <!-- ===== Initial Public Offering: Invest in Emerging Market Opportunities ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px;justify-content:center" data-enter="2">
@@ -256,16 +259,9 @@ const seo = {
       <p class="sec-lead">Understanding the IPO process helps investors participate with confidence. Here's a simplified step-by-step overview:</p>
     </div>
     <div class="stack" style="gap:32px;width:100%">
-      <div class="steps" data-reveal-row>
-        {PROCESS.map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 1}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
+      <StepsRow steps={PROCESS.map((s) => ({ icon: s.icon, title: s.h, desc: s.p }))} />
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== Advantages of IPO ===== -->
@@ -347,22 +343,7 @@ const seo = {
       <p class="sec-lead" style="color:var(--color-text-secondary)">Here are the steps to apply for an Initial Public Offering via Shriram Financial Services:</p>
     </div>
     <div class="stack" style="gap:32px;width:100%">
-      <div class="steps" data-reveal-row>
-        {APPLY_STEPS.slice(0, 3).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 1}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-      <div class="steps" data-reveal-row>
-        {APPLY_STEPS.slice(3).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 4}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
+      <StepsRow steps={APPLY_STEPS.map((s) => ({ icon: s.icon, title: s.h, desc: s.p }))} />
     </div>
   </section>
 
@@ -458,7 +439,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -485,6 +466,7 @@ const seo = {
   }
   .gloss > div:first-child {
     padding-top: 0;
+    border-top: none;
   }
   .gloss > div:last-child {
     padding-bottom: 0;

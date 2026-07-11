@@ -253,6 +253,49 @@
   --color-field-disabled-bg: var(--color-gray-75);
   --color-field-disabled-border: var(--color-gray-200);
   --color-field-disabled-ink: var(--color-sage-250);
+
+  /* Buttons - the global button system (Figma "V4 / Buttons", node 1190:7111).
+     ROLE NAMING (v2, 2026-07-11):
+       primary            = gold solid            (the ONE main CTA)
+       secondary          = BLACK STROKE          (the standard secondary, light bg)
+       secondary-inverse  = WHITE STROKE          (secondary on dark surfaces)
+       tertiary           = SOLID BLACK           (low-emphasis solid, e.g. nav pill)
+       tertiary-inverse   = SOLID WHITE/LIGHT      (low-emphasis solid on dark)
+       link / link-inverse = hyperlink text button
+     Source palette mapped to nearest primitives:
+       #f3b83f->gold-400  #f8a709->gold-500  #333->charcoal-700  #121212->charcoal-925
+       #f7f7f7->gray-50   #f2f2f2->gray-100  #e6e6e6->gray-200   #8a8a8a->gray-450
+       #2f7ef4->blue-500. Token names are the stable API (rule 9). */
+  --color-btn-primary-bg:                  var(--color-gold-400);
+  --color-btn-primary-bg-hover:            var(--color-gold-500);
+  --color-btn-primary-ink:                 var(--color-charcoal-925);
+  /* secondary = black stroke */
+  --color-btn-secondary-line:              var(--color-charcoal-925);
+  --color-btn-secondary-ink:               var(--color-charcoal-925);
+  --color-btn-secondary-bg-hover:          var(--color-gray-100);
+  /* secondary-inverse = white stroke (dark surfaces) */
+  --color-btn-secondary-inverse-line:      var(--color-gray-50);
+  --color-btn-secondary-inverse-ink:       var(--color-gray-50);
+  --color-btn-secondary-inverse-bg-hover:  var(--color-gray-50);
+  --color-btn-secondary-inverse-ink-hover: var(--color-charcoal-925);
+  /* tertiary = solid black */
+  --color-btn-tertiary-bg:                 var(--color-charcoal-700);
+  --color-btn-tertiary-bg-hover:           var(--color-charcoal-925);
+  --color-btn-tertiary-ink:                var(--color-gray-50);
+  /* tertiary-inverse = solid white/light */
+  --color-btn-tertiary-inverse-bg:         var(--color-gray-50);
+  --color-btn-tertiary-inverse-bg-hover:   var(--color-gray-100);
+  --color-btn-tertiary-inverse-ink:        var(--color-charcoal-925);
+  /* disabled + link */
+  --color-btn-disabled-bg:                 var(--color-gray-200);
+  --color-btn-disabled-ink:                var(--color-gray-450);
+  --color-btn-link:                        var(--color-blue-500);
+  --color-btn-link-hover:                  var(--color-blue-600);
+  --color-btn-link-inverse:                var(--color-cream-450); /* dark-surface link */
+
+  /* Infotext overlay (tooltip) - Figma "V4 / Tooltip", node 1190:5809 */
+  --color-infotip-bg:  var(--color-charcoal-700);
+  --color-infotip-ink: var(--color-gray-50);
 }
 
 /* ------------------------------------------------------------------ */
@@ -402,7 +445,7 @@
     border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
     transition: border-color 0.22s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .doc-card:hover { border-color: var(--color-sage-450); }
   } /* #8d8e84 (Tier-1) */
   .doc-card .nm { font-weight: 500; font-size: 16px; color: var(--color-text-primary); flex: 1 0 auto; }
@@ -414,7 +457,7 @@
     font-weight: 500; font-size: 14px; white-space: nowrap;
     text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .doc-dl:hover { color: var(--color-link-hover); }
   } /* #1c5fc4 */
 
@@ -456,7 +499,7 @@
     font-size: 14px; color: var(--color-text-tertiary); cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .doc-chip:hover { border-color: var(--color-sage-100); }
   } /* #c9c8c0 (Tier-1) */
   .doc-chip[aria-pressed='true'] {
@@ -512,11 +555,7 @@
   }
   a.login-item:hover { background: var(--color-cream-100); }
   .login-item--soon { color: var(--color-text-muted); cursor: default; }
-  .btn-dark {
-    background: var(--color-action-dark); color: var(--color-white); height: 40px; width: 200px;
-    border-radius: 4px; display: flex; align-items: center; justify-content: center;
-    padding: 8px 20px; font-weight: 500; font-size: 12px; white-space: nowrap;
-  }
+  /* .btn-dark retired 2026-07-11 -> global .btn .btn-tertiary (nav uses .nav-cta/.mm-cta sizing). */
 
   /* ===== HERO (standardised, rule 7) ===== */
   .hero {
@@ -566,7 +605,7 @@
   .crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
   .crumbs li { display: inline-flex; align-items: center; gap: 8px; }
   .crumbs a { font-weight: 400; font-size: var(--text-sm); color: var(--color-sage-100); text-decoration: none; transition: color var(--dur-fast) ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .crumbs a:hover { color: var(--color-white); }
   }
   .crumbs [aria-current="page"] { font-weight: 500; font-size: var(--text-sm); color: var(--color-white); }
@@ -583,6 +622,10 @@
   .hero h1 .g { color: var(--color-gold-400); }
   .hero .lead { margin-top: 16px; font-weight: 400; font-size: 18px; color: var(--color-text-on-dark-lead); max-width: var(--hero-text-w); }
   .hero .cta { margin-top: 40px; }
+  /* Hero CTA button is a fixed 220px (--cta-w), uniform across every page's
+     hero. min-width (not width) so a rare long label can still grow rather
+     than overflow the box. Scoped here so it's one change, not per-page. */
+  .hero .cta .btn { min-width: var(--cta-w); }
 
   /* Two-column hero (text + right card/form). The aside is ALWAYS
      --hero-aside-w; never hard-code a width or change the 56px gap. */
@@ -651,7 +694,8 @@
   .encl-cell p { font-weight: 400; font-size: 16px; color: var(--color-text-muted); }
 
   /* ===== checklist cards ===== */
-  .row-2 .check-card { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+  .check-card { display: flex; flex-direction: column; gap: 32px; }
+  .row-2 .check-card { flex: 1 0 0; min-width: 0; }
   .check-card .ch-title { font-weight: 500; font-size: 20px; color: var(--color-text-primary); }
   .check-list { display: flex; flex-direction: column; gap: 24px; }
   .check-row { display: flex; gap: 16px; align-items: flex-start; }
@@ -695,13 +739,13 @@
     border-radius: 24px; padding: var(--container-pad); display: flex; gap: 32px; align-items: flex-start;
     transition: background 0.25s ease, border-color 0.25s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     /* Card Hover Animation 1 - subtle colour shift + arrow nudge, no lift/shadow */
   .appr:hover { background: var(--color-olive-925); border-color: var(--color-olive-700); }
   }
   .appr .explore span:last-child { transition: transform 0.25s ease; display: inline-flex; }
   .appr .explore span:last-child svg { display: block; width: 16px; height: 16px; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .appr:hover .explore span:last-child { transform: translateX(8px); }
   }
   .appr-main { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 32px; }
@@ -717,6 +761,9 @@
      Overrides the equal-flex row; inherits the 24px gap. Collapses 3 -> 2 -> 1 in
      the responsive blocks below. */
   .risks-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+  /* 4-column grid variant of .risks (e.g. the 7 LAMF risk cards). Same as
+     .risks-3 but rows of four; collapses 4 -> 2 -> 1 in the responsive blocks. */
+  .risks-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .risk { flex: 1 0 0; min-width: 0; background: var(--color-surface-card); border: 1px solid var(--color-border-card); border-radius: 24px; padding: var(--container-pad); display: flex; flex-direction: column; gap: 12px; }
   .risk h4 { font-weight: 500; font-size: 20px; color: var(--color-text-primary); }
   .risk p { font-weight: 400; font-size: 16px; color: var(--color-text-tertiary); }
@@ -735,14 +782,14 @@
     border: 1px solid var(--color-border-product-card); border-radius: 24px; text-decoration: none;
     transition: background 0.25s ease, border-color 0.25s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .pcard:hover { background: var(--color-cream-300); border-color: var(--color-tan-400); }
   }
   .pcard-tx { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
   .pcard-tx h4 { font-weight: 500; font-size: 16px; color: var(--color-text-primary); }
   .pcard-tx p { font-weight: 400; font-size: 14px; color: var(--color-text-tertiary); }
   .pcard-arr { width: 24px; height: 24px; flex: none; color: var(--color-text-heading-dark); opacity: 0; transform: translateX(-6px); transition: opacity 0.25s ease, transform 0.25s ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .pcard:hover .pcard-arr { opacity: 1; transform: translateX(0); }
   }
   .pcard-arr svg { display: block; width: 24px; height: 24px; }
@@ -797,43 +844,160 @@
   .faq-side .side-tx { display: flex; flex-direction: column; gap: 8px; color: var(--color-charcoal-800); }
   .faq-side .side-tx h3 { font-weight: 500; font-size: 20px; letter-spacing: 0; }
   .faq-side .side-tx p { font-weight: 400; font-size: 14px; letter-spacing: 0; }
+  /* The FAQ-card CTA is exempt from the sitewide 220px button footprint - it hugs its label. */
+  .faq-side .btn { min-width: 0; }
 
-  /* ===== shared gold button =====
-     border:0 + appearance reset so the class works on <button> and <a>. */
-  .btn-gold {
-    background: var(--color-action-primary); height: 40px; width: var(--cta-w); border: 0; border-radius: 4px;
-    -webkit-appearance: none; appearance: none; cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 20px;
-    font-weight: 500; font-size: 12px; color: var(--color-action-primary-ink); white-space: nowrap;
+  /* Legacy button classes retired 2026-07-11 (migrated sitewide to the global
+     .btn system below): .btn-gold -> .btn-primary, .btn-ghost/.btn-outline ->
+     .btn-secondary-inverse (or .btn-secondary on light surfaces). */
+
+  /* ============================================================
+     GLOBAL BUTTON SYSTEM  (Figma V4 · node 1190:7111 · ported 2026-07-11)
+     Base + size scale + 6 families + states. Composable:
+       <a class="btn btn-primary btn-xl">Label</a>
+     Works on <a> and <button> (appearance reset). Hugs its content by
+     default; add style="width:100%" (or a page utility) for full-bleed.
+     Icons inside carry .btn-ico so they land on the 16/20/24/32 scale
+     (rule 4), sized per button size. Radius is 8px across the whole scale.
+     The older .btn-gold/.btn-dark/.btn-ghost/.btn-outline classes remain
+     for pages not yet migrated - see the button usage plan.
+     ============================================================ */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    box-sizing: border-box; border: 1px solid transparent; border-radius: 8px;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+    font-family: inherit; font-weight: 500; white-space: nowrap; text-decoration: none;
+    height: 40px; padding-inline: 20px; font-size: 14px; /* default = L (40px) */
+    /* Uniform CTA footprint: every button is >= 220px (--cta-w), matching the
+       hero CTA, so action buttons share one width sitewide instead of shrink-
+       wrapping. Exempt (they set min-width:0): compact sizes (sm/md), icon-only,
+       nav chrome, the FAQ card, and full-width buttons (width:100% in the gate/
+       access/unlock bands + the mobile-menu CTA) so those never overflow. */
+    min-width: var(--cta-w);
+    transition: background-color 0.18s var(--ease-standard),
+                color 0.18s var(--ease-standard),
+                border-color 0.18s var(--ease-standard);
+  }
+  .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; }
+
+  /* ---- size scale: height / inline-padding / label size (radius fixed 8px).
+     Vertical centring is by flex + fixed height, so the source's off-grid
+     vertical paddings (5/7/9/11) are not needed; inline padding snapped to
+     the 8px grid (source S=17 -> 16). ---- */
+  .btn-xxl { height: 52px; padding-inline: 24px; font-size: 14px; }
+  .btn-xl  { height: 48px; padding-inline: 24px; font-size: 14px; }
+  .btn-lg  { height: 40px; padding-inline: 20px; font-size: 14px; }
+  /* Compact sizes are the exception to the 220px footprint - they hug. */
+  .btn-md  { height: 36px; padding-inline: 20px; font-size: 12px; min-width: 0; }
+  .btn-sm  { height: 32px; padding-inline: 16px; font-size: 12px; min-width: 0; }
+
+  /* ---- in-button icon (rule 4 sizes, scaled to the button) ---- */
+  .btn .btn-ico { flex-shrink: 0; width: 20px; height: 20px; }
+  .btn-xxl .btn-ico, .btn-xl .btn-ico { width: 24px; height: 24px; }
+  .btn-lg  .btn-ico { width: 20px; height: 20px; }
+  .btn-md  .btn-ico, .btn-sm .btn-ico { width: 16px; height: 16px; }
+
+  /* ---- icon-only: square box, no inline padding (never the 220px footprint) ---- */
+  .btn-icon { padding-inline: 0; width: 40px; min-width: 0; }
+  .btn-icon.btn-xxl { width: 52px; }
+  .btn-icon.btn-xl  { width: 48px; }
+  .btn-icon.btn-lg  { width: 40px; }
+  .btn-icon.btn-md  { width: 36px; }
+  .btn-icon.btn-sm  { width: 32px; }
+
+  /* ---- families (default state) ----
+     secondary* = STROKE (transparent fill + coloured border);
+     primary / tertiary* = SOLID fill. ---- */
+  .btn-primary           { background: var(--color-btn-primary-bg); color: var(--color-btn-primary-ink); }
+  .btn-secondary         { background: transparent; border-color: var(--color-btn-secondary-line); color: var(--color-btn-secondary-ink); }
+  .btn-secondary-inverse { background: transparent; border-color: var(--color-btn-secondary-inverse-line); color: var(--color-btn-secondary-inverse-ink); }
+  .btn-tertiary          { background: var(--color-btn-tertiary-bg); color: var(--color-btn-tertiary-ink); }
+  .btn-tertiary-inverse  { background: var(--color-btn-tertiary-inverse-bg); color: var(--color-btn-tertiary-inverse-ink); }
+
+  /* ---- hover (desktop-only, gated at 1200px per rule 15) ---- */
+  @media (min-width: 1024px) and (hover: hover) {
+    .btn-primary:hover:not(:disabled)           { background: var(--color-btn-primary-bg-hover); }
+    .btn-secondary:hover:not(:disabled)         { background: var(--color-btn-secondary-bg-hover); }
+    .btn-secondary-inverse:hover:not(:disabled) { background: var(--color-btn-secondary-inverse-bg-hover); color: var(--color-btn-secondary-inverse-ink-hover); }
+    .btn-tertiary:hover:not(:disabled)          { background: var(--color-btn-tertiary-bg-hover); }
+    .btn-tertiary-inverse:hover:not(:disabled)  { background: var(--color-btn-tertiary-inverse-bg-hover); }
   }
 
-  /* ===== ghost button on dark surfaces (was duplicated in 5 page blocks) ===== */
-  .btn-ghost {
-    background: var(--color-charcoal-750); border: 1px solid var(--color-gray-500);
-    color: var(--color-white); height: 40px; width: 200px; border-radius: 4px;
-    display: flex; align-items: center; justify-content: center; padding: 8px 20px;
-    font-weight: 500; font-size: 12px; white-space: nowrap;
+  /* ---- disabled: solids grey the fill; strokes grey the line + ink ---- */
+  .btn-primary:disabled, .btn-primary[aria-disabled="true"],
+  .btn-tertiary:disabled, .btn-tertiary[aria-disabled="true"],
+  .btn-tertiary-inverse:disabled, .btn-tertiary-inverse[aria-disabled="true"] {
+    background: var(--color-btn-disabled-bg); color: var(--color-btn-disabled-ink); border-color: transparent;
   }
-  @media (min-width: 1200px) and (hover: hover) {
-    .btn-ghost:hover { background: var(--color-charcoal-650); }
+  .btn-secondary:disabled, .btn-secondary[aria-disabled="true"],
+  .btn-secondary-inverse:disabled, .btn-secondary-inverse[aria-disabled="true"] {
+    background: transparent; border-color: var(--color-btn-disabled-bg); color: var(--color-btn-disabled-ink);
   }
 
-  /* ===== outline button for dark / gradient bands =====
-     White outline + fill shows through, so it reads as an outline on any dark
-     surface - including a gradient, where no single solid hex can match (the
-     sanctioned exception to "solid hex only", rule 5). Hover inverts to a solid
-     white fill. Works on <a> and <button> (appearance reset). */
-  .btn-outline {
-    background: transparent; border: 1px solid var(--color-white); color: var(--color-white);
-    height: 40px; min-width: var(--cta-w); border-radius: 4px; padding: 8px 24px;
-    -webkit-appearance: none; appearance: none; cursor: pointer; font-family: inherit;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-weight: 500; font-size: 12px; white-space: nowrap;
-    transition: background 0.25s ease, color 0.25s ease;
+  /* ---- hyperlink (text button). .btn-link-inverse for dark surfaces. ---- */
+  .btn-link {
+    display: inline-flex; align-items: center; gap: 8px; box-sizing: border-box;
+    background: transparent; border: 0; padding: 0; cursor: pointer;
+    -webkit-appearance: none; appearance: none; font-family: inherit;
+    font-weight: 500; font-size: 14px; text-decoration: none; color: var(--color-btn-link);
   }
-  @media (min-width: 1200px) and (hover: hover) {
-    .btn-outline:hover { background: var(--color-white); color: var(--color-text-heading-dark); }
+  .btn-link .btn-ico { flex-shrink: 0; width: 24px; height: 24px; }
+  .btn-link-inverse { color: var(--color-btn-link-inverse); }
+  @media (min-width: 1024px) and (hover: hover) {
+    .btn-link:hover { color: var(--color-btn-link-hover); text-decoration: underline; }
+    .btn-link-inverse:hover { color: var(--color-white); text-decoration: none; }
   }
+
+  /* ============================================================
+     INFOTEXT OVERLAY (tooltip)  ·  Figma V4 · node 1190:5809
+     Dark bubble with a directional pointer. Markup:
+       <span class="infotip">
+         <button class="infotip-trigger" aria-label="More info">…icon…</button>
+         <span class="infotip-pop infotip-bottom" role="tooltip">
+           <span class="tip-title">Title</span>
+           <span class="tip-body">Body copy.</span>
+         </span>
+       </span>
+     Reveals on hover/focus-within. Four positions (bottom/top/right/left);
+     add -start/-end to shift the pointer to the near/far edge (default is
+     centred = the source's "Middle"). Pointer is a rotated square in the
+     bubble's own solid hex - no alpha (rule 5). ============ */
+  .infotip { position: relative; display: inline-flex; }
+  .infotip-pop {
+    position: absolute; z-index: 300; width: max-content; max-width: 296px;
+    display: flex; flex-direction: column; gap: 4px;
+    background: var(--color-infotip-bg); color: var(--color-infotip-ink);
+    border-radius: 8px; padding: 12px; font-size: 14px; line-height: 1.5;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14); /* sanctioned translucency: shadow */
+    opacity: 0; visibility: hidden; transform: translateY(-2px); pointer-events: none;
+    transition: opacity 0.16s var(--ease-standard), transform 0.16s var(--ease-standard), visibility 0.16s;
+  }
+  .infotip-pop .tip-title { font-weight: 700; }
+  .infotip-pop .tip-body  { font-weight: 400; }
+  .infotip:hover .infotip-pop,
+  .infotip:focus-within .infotip-pop { opacity: 1; visibility: visible; transform: none; }
+  .infotip-pop::before {
+    content: ""; position: absolute; width: 12px; height: 12px;
+    background: var(--color-infotip-bg); transform: rotate(45deg);
+  }
+  /* position: BOTTOM (bubble below trigger, pointer on top edge) - default */
+  .infotip-bottom { top: calc(100% + 10px); left: 0; }
+  .infotip-bottom::before { top: -5px; left: 20px; }
+  .infotip-bottom.infotip-end { left: auto; right: 0; }
+  .infotip-bottom.infotip-end::before { left: auto; right: 20px; }
+  /* position: TOP (bubble above, pointer on bottom edge) */
+  .infotip-top { bottom: calc(100% + 10px); left: 0; }
+  .infotip-top::before { bottom: -5px; left: 20px; }
+  .infotip-top.infotip-end { left: auto; right: 0; }
+  .infotip-top.infotip-end::before { left: auto; right: 20px; }
+  /* position: RIGHT (bubble to the right, pointer on left edge) */
+  .infotip-right { left: calc(100% + 10px); top: 50%; transform: translateY(-50%) translateX(-2px); }
+  .infotip:hover .infotip-right, .infotip:focus-within .infotip-right { transform: translateY(-50%); }
+  .infotip-right::before { left: -5px; top: 50%; margin-top: -6px; }
+  /* position: LEFT (bubble to the left, pointer on right edge) */
+  .infotip-left { right: calc(100% + 10px); top: 50%; transform: translateY(-50%) translateX(2px); }
+  .infotip:hover .infotip-left, .infotip:focus-within .infotip-left { transform: translateY(-50%); }
+  .infotip-left::before { right: -5px; top: 50%; margin-top: -6px; }
 
   /* ===== final CTA ===== */
   .cta-sec { padding: var(--section-y) var(--pad); }
@@ -858,11 +1022,11 @@
   .fb-row { display: flex; gap: 12px; align-items: flex-start; font-weight: 400; font-size: 14px; color: var(--color-sage-300); }
   .fb-row svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--color-gold-400); }
   a.fb-row { transition: color 0.15s ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     a.fb-row:hover { color: var(--color-white); }
   }
   .socials { margin-top: 32px; display: flex; gap: 8px; }
-  .socials a { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--color-charcoal-775); display: flex; align-items: center; justify-content: center; color: var(--color-sage-300); transition: color 0.15s ease, border-color 0.15s ease; } @media (min-width: 1200px) and (hover: hover) {
+  .socials a { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--color-charcoal-775); display: flex; align-items: center; justify-content: center; color: var(--color-sage-300); transition: color 0.15s ease, border-color 0.15s ease; } @media (min-width: 1024px) and (hover: hover) {
    /* 48px box = min mobile tap target, matches .hf-field / .to-top */
   .socials a:hover { color: var(--color-gold-400); border-color: var(--color-gold-400); }
  }
@@ -872,7 +1036,7 @@
   .foot-col h5 { font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--color-gold-400); }
   .foot-col ul { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
   .foot-col a { font-weight: 400; font-size: 14px; color: var(--color-text-faint); transition: color 0.15s ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .foot-col a:hover { color: var(--color-white); }
   }
   .foot-col-wide { grid-column: span 2; }
@@ -950,7 +1114,7 @@
 
   /* inline Verify / Verified affordances (trailing, inside the box) */
   .hf-verify { flex: none; border: 0; background: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; color: var(--color-link); padding: 0; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .hf-verify:hover { text-decoration: underline; }
   }
   .hf-verified { flex: none; display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 14px; color: var(--color-success); } /* 6px gap = legacy off-grid value, kept for parity (Tier-2: 8px) */
@@ -987,7 +1151,7 @@
   .nps-logo img { height: 48px; width: auto; display: block; object-fit: contain; }
   .nps-nav { display: flex; flex-direction: column; gap: clamp(24px, 3.5vw, 48px); }
   .nps-item { font-size: 24px; font-weight: 300; color: var(--color-tan-500);transition: color 0.2s ease; background: none; border: none; cursor: pointer; text-align: left; padding: 0; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .nps-item:hover { color: var(--color-white); }
   }
   #nav-panel[data-panel='products'] .nps-item[data-for='products'],
@@ -1010,7 +1174,7 @@
   .nps-col-title { font-size: 20px; font-weight: 500; color: var(--color-sage-900); text-transform: capitalize; }
   .nps-col-items { display: flex; flex-direction: column; gap: clamp(14px, 1.8vw, 24px); }
   .nps-col-items a { font-size: 16px; color: var(--color-charcoal-700); text-decoration: none; transition: color 0.2s ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .nps-col-items a:hover { color: var(--color-gold-400); }
   }
   .nps-divider { width: 1px; align-self: stretch; background: var(--color-border-divider); flex-shrink: 0; margin-top: calc(clamp(18px, 2.5vw, 32px) + clamp(14px, 1.3vw, 20px)); }
@@ -1021,7 +1185,7 @@
     color: #ffffffb3; /* legacy alpha over the sidebar GRADIENT - cannot flatten exactly; kept verbatim (Tier-2) */
     transition: color 0.2s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     #nps-go-back:hover { color: var(--color-white); }
   }
   #nps-go-back svg { width: 16px; height: 16px; flex-shrink: 0; }
@@ -1029,8 +1193,8 @@
   .nps-trade-cols { display: flex; gap: clamp(20px, 3vw, 48px); }
   .nps-trade-cols .nps-col-items { flex: 1; padding: 0; }
   .nps-view-all { margin-top: clamp(28px, 4vw, 56px); }
-  .nps-view-all a { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 28px; border: 1.5px solid var(--color-sage-900); border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--color-sage-900); text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  .nps-view-all a { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 28px; border: 1.5px solid var(--color-sage-900); border-radius: 8px; /* 8px - matches the global .btn system */ font-size: 14px; font-weight: 500; color: var(--color-sage-900); text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
+  @media (min-width: 1024px) and (hover: hover) {
     .nps-view-all a:hover { background: var(--color-sage-900); color: var(--color-white); }
   }
 
@@ -1157,7 +1321,7 @@
   .ready-text b { font-weight: 700; }
   .ready-btn {
     flex: none; background: var(--color-gold-100); color: var(--color-action-primary-ink); height: 40px;
-    padding: 7px 20px; /* off-grid - Tier-2 */ border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    padding: 7px 20px; /* off-grid - Tier-2 */ border-radius: 8px; /* 8px - matches the global .btn system */ display: flex; align-items: center; justify-content: center;
     font-weight: 500; font-size: 12px; white-space: nowrap;
   }
 
@@ -1175,7 +1339,7 @@
     background: var(--color-olive-950); border: 1px solid var(--color-olive-950); border-radius: 24px; padding: 32px;
     display: flex; flex-direction: column; color: inherit; transition: background-color 0.25s ease, border-color 0.25s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .xcard:hover { background: var(--color-olive-925); border-color: var(--color-olive-700); }
   }
   .xc-title { font-weight: 500; font-size: 19px; /* off-scale - Tier-2 */ color: var(--color-white); }
@@ -1183,7 +1347,7 @@
   .xc-cta { margin-top: 24px; display: inline-flex; align-items: center; gap: 8px; color: var(--color-gold-400); font-weight: 600; font-size: 14px; }
   .xc-cta .arr { display: inline-flex; transition: transform 0.25s ease; }
   .xc-cta .arr svg { display: block; width: 16px; height: 16px; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .xcard:hover .xc-cta .arr { transform: translateX(5px); }
   }
 }
@@ -1212,6 +1376,7 @@
   .risks { flex-wrap: wrap; }
   .risk { flex: 1 1 calc(50% - 12px); }
   .risks-3 { grid-template-columns: repeat(2, 1fr); }
+  .risks-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .faq-side .usr { display: none; }
   .explore-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -1227,28 +1392,37 @@
   .nav-links { gap: 16px; }
 }
 
-/* 1201-1300px: keep the FULL desktop nav (no hamburger yet) but render it as a
+/* 1024-1300px: keep the FULL desktop nav (no hamburger yet) but render it as a
    proportional miniature of the 1920 layout - every logo / text / button / gap
-   dimension is the 1920 design value scaled by a factor that eases from ~0.85 at
-   1200px up to ~0.95 at 1300px (fluid via clamp). The roomy 1920 spacing is
+   dimension is the 1920 design value scaled by a factor that eases from ~0.72 at
+   1024px up to ~0.95 at 1300px (fluid via clamp). The roomy 1920 spacing is
    restored here (overriding the <=1500 tightened gaps) so the bar reads as a
-   smaller 1920, not a squeezed one. Below 1200px the hamburger takes over.
+   smaller 1920, not a squeezed one. Below 1024px the hamburger takes over.
+   (Floor lowered 1200->1024, 2026-07-11: the desktop nav now holds down to the
+   1024 desktop-band floor, aligned with the hover gate + content layout.)
    Responsive fluid scaling: a sanctioned exception to the 8px-grid / icon-size
    rules, the same idiom as the clamp()-based --pad and hero sizing. */
-@media (min-width: 1200px) and (max-width: 1300px) {
-  .nav-left { gap: clamp(34px, calc(4vw - 14px), 38px); }
-  .logo-crop { width: clamp(108.8px, calc(12.8vw - 44.8px), 121.6px); height: clamp(47.6px, calc(5.6vw - 19.6px), 53.2px); }
-  .nav-links { gap: clamp(20.4px, calc(2.4vw - 8.4px), 22.8px); height: clamp(30.6px, calc(3.6vw - 12.6px), 34.2px); }
-  .nav-link span { font-size: clamp(11.9px, calc(1.4vw - 4.9px), 13.3px); }
-  .nav-link .chev { width: clamp(13.6px, calc(1.6vw - 5.6px), 15.2px); height: clamp(13.6px, calc(1.6vw - 5.6px), 15.2px); }
-  .nav-actions { gap: clamp(13.6px, calc(1.6vw - 5.6px), 15.2px); }
-  .login span { font-size: clamp(11.9px, calc(1.4vw - 4.9px), 13.3px); }
-  .login-chev { width: clamp(13.6px, calc(1.6vw - 5.6px), 15.2px); height: clamp(13.6px, calc(1.6vw - 5.6px), 15.2px); }
-  .btn-dark { width: clamp(170px, calc(20vw - 70px), 190px); height: clamp(34px, calc(4vw - 14px), 38px); font-size: clamp(10.2px, calc(1.2vw - 4.2px), 11.4px); }
+
+/* Header CTA - the compact nav pill on the global .btn .btn-tertiary base:
+   keep the legacy 40px/12px/200px sizing (the button system default is 40px/14px
+   and hugs). .nav-cta is the header instance; .mm-cta the mobile-menu one.
+   min-width:0 exempts the nav chrome from the sitewide 220px button footprint,
+   so its own width (200px / responsive clamp / auto-hug) governs. */
+.nav-cta { width: 200px; height: 40px; font-size: 12px; min-width: 0; }
+@media (min-width: 1024px) and (max-width: 1300px) {
+  .nav-left { gap: clamp(27px, calc(4vw - 14px), 38px); }
+  .logo-crop { width: clamp(86px, calc(12.8vw - 44.8px), 121.6px); height: clamp(37.6px, calc(5.6vw - 19.6px), 53.2px); }
+  .nav-links { gap: clamp(16px, calc(2.4vw - 8.4px), 22.8px); height: clamp(24px, calc(3.6vw - 12.6px), 34.2px); }
+  .nav-link span { font-size: clamp(9.4px, calc(1.4vw - 4.9px), 13.3px); }
+  .nav-link .chev { width: clamp(10.8px, calc(1.6vw - 5.6px), 15.2px); height: clamp(10.8px, calc(1.6vw - 5.6px), 15.2px); }
+  .nav-actions { gap: clamp(10.8px, calc(1.6vw - 5.6px), 15.2px); }
+  .login span { font-size: clamp(9.4px, calc(1.4vw - 4.9px), 13.3px); }
+  .login-chev { width: clamp(10.8px, calc(1.6vw - 5.6px), 15.2px); height: clamp(10.8px, calc(1.6vw - 5.6px), 15.2px); }
+  .nav-cta { width: clamp(134px, calc(20vw - 70px), 190px); height: clamp(27px, calc(4vw - 14px), 38px); font-size: clamp(8px, calc(1.2vw - 4.2px), 11.4px); }
 }
 
-/* Collapse the desktop nav into a hamburger (below 1200px) */
-@media (max-width: 1199.98px) {
+/* Collapse the desktop nav into a hamburger (below 1024px) */
+@media (max-width: 1023.98px) {
   .nav-links { display: none; }
   .nav-toggle { display: flex; }
   /* mweb header (Figma 1154:3221): hamburger far left, logo beside it, the
@@ -1261,7 +1435,7 @@
   .nav-right { display: flex; gap: 0; }
   .nav-actions { gap: 0; }
   .nav-actions .login-wrap { display: none; }
-  .nav-actions .btn-dark { width: auto; } /* hug the label (~165px, Figma) */
+  .nav-actions .nav-cta { width: auto; } /* hug the label (~165px, Figma) */
   /* Full-screen menu - fills the viewport below the 80px header, fades in as one
      surface while its rows stagger up. Frosted white layer (sanctioned translucency). */
   .mobile-menu {
@@ -1300,7 +1474,7 @@
   .mobile-menu.open .mm-inner > *:nth-child(n + 6) { transition-delay: 360ms; }
   .mm-actions { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: auto; padding-top: 40px; }
   .mm-actions .login { font-weight: 600; font-size: 16px; color: var(--color-link); text-align: center; }
-  .mm-actions .btn-dark { width: 100%; height: 56px; }
+  .mm-actions .mm-cta { width: 100%; height: 56px; min-width: 0; } /* full-width: exempt from the 220px footprint */
 
   /* Expandable panel-backed items (mWeb) */
   .mm-acc { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 24px 0; background: none; border: 0; cursor: pointer; font-weight: 500; font-size: 22px; color: var(--color-charcoal-700); text-align: left; }
@@ -1346,11 +1520,13 @@
 }
 
 /* Footer collapse: 6 link tracks → 3 (brand goes full-width) → 2 */
-@media (max-width: 1300px) {
+/* Footer holds its 6-col desktop layout down to 1024 (the desktop-band floor); it
+   only drops to 3-col below 1024, so the 1024-1920 band never rearranges. */
+@media (max-width: 1023.98px) {
   .foot-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 40px; }
 }
-@media (max-width: 1024px) {
-  .foot-main { grid-template-columns: 1fr; }
+@media (max-width: 1023.98px) {
+  .foot-main { grid-template-columns: 1fr; } /* 1023.98 so the 1024 desktop floor keeps the 2-col brand|links layout (e.g. iPad landscape) */
 }
 
 /* Phones */
@@ -1437,6 +1613,7 @@
   .pcard-grid { grid-template-columns: 1fr; }
   .risk { flex: 1 1 100%; }
   .risks-3 { grid-template-columns: 1fr; }
+  .risks-4 { grid-template-columns: 1fr; }
   .faq-q { gap: 20px; }
 
   /* calculator: single-column explore grid; keep result columns tidy */

@@ -6,7 +6,7 @@
  * .ready-* / .bullets / .explore-grid); page carries only content + its maths.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -51,14 +51,14 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero hero-compact" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators' }, { name: 'Lumpsum Calculator' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Lumpsum Calculator – Know Your One-Time Investment Returns <span class="g">Instantly</span></h1>
-      <p class="lead">Estimate the future value of your lumpsum investment in seconds.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Invest Now</a><a class="btn-ghost" href="/mutual-funds">Start Lumpsum</a></div>
-    </div>
-  </section>
+  <Hero
+    compact
+    breadcrumb={[{ name: 'Calculators', href: '/calculators' }, { name: 'Lumpsum Calculator' }]}
+    cta={{ label: 'Invest Now', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Lumpsum Calculator – Know Your One-Time Investment Returns <span class="g">Instantly</span></Fragment>
+    <Fragment slot="lead">Estimate the future value of your lumpsum investment in seconds.</Fragment>
+  </Hero>
 
   <!-- ===== Lumpsum Calculator ===== -->
   <section class="section stack sec-light" id="sec-calc" data-section="calc" style="gap:24px" data-enter="2">
@@ -354,7 +354,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -385,7 +385,7 @@ const seo = {
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
     </div>
-    <a class="btn-gold" href="/calculators" style="align-self:center">Explore All Calculators</a>
+    <a class="btn btn-primary" href="/calculators" style="align-self:center">Explore All Calculators</a>
   </section>
 </BaseLayout>
 

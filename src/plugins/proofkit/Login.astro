@@ -1,0 +1,118 @@
+---
+/**
+ * Proofkit Login - the /review auth gate.
+ *
+ * Front door for the dashboard: shows a login overlay asking for the admin
+ * password, validates it against the Cloudflare Worker (WORKER_URL) - or accepts
+ * anything in localStorage demo mode - then redirects to /reviewdash. The
+ * dashboard (Dashboard.astro) keeps its own gate, so this is the entry point,
+ * not the only guard. Rendered by the src/pages/review.astro route shim, gated
+ * on PROOFKIT_ENABLED (./config.ts).
+ */
+---
+
+<section class="section rvd-gate">
+  <p class="rvd-gate-note">Content review is restricted. Sign in to continue.</p>
+</section>
+
+<style is:global>
+  .rvd-gate{min-height:60vh;display:flex;align-items:center;justify-content:center}
+  .rvd-gate-note{color:var(--color-text-secondary,#6b6b6b);font-size:14px}
+  /* login overlay - same visual language as the dashboard gate */
+  .rvd-login{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .rvd-login-card{width:360px;max-width:100%;background:#fff;color:var(--color-text-primary,#1d1d1d);border-radius:18px;
+    padding:28px;box-shadow:0 24px 64px rgba(0,0,0,.4);font:400 14px/1.5 Outfit;box-sizing:border-box}
+  .rvd-login-title{font-size:20px;font-weight:700}
+  .rvd-login-sub{font-size:14px;color:var(--color-text-secondary,#6b6b6b);margin:6px 0 20px}
+  .rvd-login-input{width:100%;height:48px;padding:0 14px;border:1px solid var(--color-cream-500,#d8d2c4);border-radius:10px;
+    font:inherit;color:inherit;background:#fff;box-sizing:border-box}
+  .rvd-login-input:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
+  .rvd-login-err{margin-top:8px;font-size:13px;font-weight:600;color:#a12626}
+  .rvd-login-actions{display:flex;justify-content:flex-end;margin-top:20px}
+  .rvd-login-btn{height:44px;padding:0 24px;border:none;border-radius:10px;background:var(--color-olive-900,#2e3914);
+    color:#fff;font:600 14px/1 Outfit;cursor:pointer}
+  .rvd-login-btn:disabled{opacity:.6;cursor:default}
+</style>
+
+<script>
+  import { WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword } from './config';
+  (() => {
+    if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
+    const LOCAL = !WORKER_URL;
+    const PASS_KEY = 'reviewAdminPass'; // admin password (shared with the dashboard)
+    const DASH = '/reviewdash';
+
+    // Validate a password. With the Worker: hit the admin-only "list all comments"
+    // endpoint (401 => wrong). Without it (static/no-Worker, incl. live): check the
+    // configured review password (hash-compared, so it holds on every deployment).
+    async function validate(pass) {
+      if (LOCAL) {
+        if (!(await checkReviewPassword(pass))) throw new Error('unauthorized');
+        return true;
+      }
+      const res = await fetch(WORKER_URL + '/comments', {
+        headers: { 'Content-Type': 'application/json', 'X-Review-Pass': pass },
+      });
+      if (res.status === 401) throw new Error('unauthorized');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return true;
+    }
+
+    let loginEl = null;
+
+    function showLogin() {
+      if (!loginEl) {
+        loginEl = document.createElement('div');
+        loginEl.className = 'rvd-login';
+        loginEl.innerHTML =
+          '<div class="rvd-login-card" role="dialog" aria-modal="true">' +
+          '<div class="rvd-login-title">Content Review</div>' +
+          '<div class="rvd-login-sub">Enter the review password to open the dashboard.</div>' +
+          '<input class="rvd-login-input" type="password" placeholder="Password" autocomplete="current-password">' +
+          '<div class="rvd-login-err" hidden></div>' +
+          '<div class="rvd-login-actions"><button type="button" class="rvd-login-btn">Login</button></div>' +
+          '</div>';
+        const input = loginEl.querySelector('.rvd-login-input');
+        const go = () => tryLogin(input);
+        loginEl.querySelector('.rvd-login-btn').addEventListener('click', go);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      }
+      document.body.appendChild(loginEl);
+      loginEl.querySelector('.rvd-login-input').focus();
+    }
+
+    async function tryLogin(input) {
+      const pass = input.value.trim();
+      if (!pass) { input.focus(); return; }
+      const err = loginEl.querySelector('.rvd-login-err');
+      const btn = loginEl.querySelector('.rvd-login-btn');
+      btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
+      try {
+        await validate(pass);
+        sessionStorage.setItem(PASS_KEY, pass); // dashboard reuses this session token
+        sessionStorage.setItem('reviewMode', '1'); // arm the on-page Comment dock site-wide
+        location.replace(DASH);
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Login';
+        err.textContent = e.message === 'unauthorized'
+          ? 'Incorrect password. Please try again.'
+          : ('Could not connect — ' + e.message);
+        err.hidden = false; input.focus(); input.select();
+      }
+    }
+
+    // Already signed in this session? Verify the stored token still works, then
+    // skip straight to the dashboard; otherwise clear it and ask again.
+    async function init() {
+      const existing = sessionStorage.getItem(PASS_KEY);
+      if (existing) {
+        try { await validate(existing); sessionStorage.setItem('reviewMode', '1'); location.replace(DASH); return; }
+        catch { sessionStorage.removeItem(PASS_KEY); }
+      }
+      showLogin();
+    }
+
+    init();
+  })();
+</script>

@@ -7,7 +7,8 @@
  * .cat-grid, .steps, .check-card, .product-page_table, FaqAccordion, .cta-box).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
@@ -43,6 +44,64 @@ const FAQS = [
 
 const site = Astro.site!.href;
 
+// How Fixed Deposits Work? - 5-step process (fits one row -> StepsRow).
+const worksSteps = [
+  {
+    icon: 'rupee',
+    title: 'Choose Your Investment Amount',
+    desc: 'Decide how much you want to invest. With Shriram Unnati FD, the minimum is just ₹5,000 and you can invest in multiples of ₹1,000. There is no upper cap, making it suitable for both small savers and large corpus investors.',
+  },
+  {
+    icon: 'calendar',
+    title: 'Select Your Tenure',
+    desc: 'Pick a tenure between 12 months and 60 months (1 to 5 years). Longer tenures generally earn higher interest. For NRI depositors, tenures range from 12 to 36 months.',
+  },
+  {
+    icon: 'select',
+    title: 'Choose Your Scheme Type (Cumulative or Non-Cumulative)',
+    desc: 'In a cumulative FD, interest is compounded monthly and paid at maturity — ideal for wealth-building. In a non-cumulative FD, interest is paid monthly, quarterly, half-yearly, or annually — perfect if you need regular income.',
+  },
+  {
+    icon: 'kyc',
+    title: 'Complete KYC & Book Your FD',
+    desc: 'Submit your PAN, Aadhaar, and bank details. The entire process is 100% digital on the Shriram Finance app or website — no branch visit required.',
+  },
+  {
+    icon: 'settle',
+    title: 'Receive Your Maturity Amount',
+    desc: 'On the maturity date, your principal + accumulated interest is credited directly to your registered bank account. You can also choose to auto-renew.',
+  },
+];
+
+// How to Open a Fixed Deposit Online? - 5-step process (fits one row -> StepsRow).
+const openSteps = [
+  {
+    icon: 'phone',
+    title: 'Visit the Website or App',
+    desc: "Go to the Shriram Finance website or download the Shriram One App. Navigate to the Fixed Deposit section and click on 'Open Fixed Deposit'.",
+  },
+  {
+    icon: 'verify',
+    title: 'Verify Your Mobile Number',
+    desc: 'Enter your registered mobile number and complete OTP verification to begin the application process securely.',
+  },
+  {
+    icon: 'select',
+    title: 'Choose Your Investment Details',
+    desc: 'Enter your investment amount (starting from ₹5,000), select your preferred tenure, and choose an interest payout option—Cumulative or Non-Cumulative (Monthly, Quarterly, Half-Yearly, or Yearly).',
+  },
+  {
+    icon: 'kyc',
+    title: 'Complete KYC Verification',
+    desc: 'Complete your KYC using Aadhaar-based e-KYC. Existing Shriram Finance customers can proceed using their existing KYC details. Keep your PAN card, identity proof, and bank account details handy.',
+  },
+  {
+    icon: 'fund',
+    title: 'Make Payment and Receive Confirmation',
+    desc: 'Fund your FD through Net Banking, UPI, NEFT, or RTGS. Once the payment is successful, your Fixed Deposit is created instantly and the FD receipt is shared digitally for your records.',
+  },
+];
+
 const seo = {
   title: 'Fixed Deposit - Up to 8.05%* p.a.',
   description:
@@ -65,14 +124,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Fixed Deposit' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Fixed Deposit in India - Earn Up to 8.05%* p.a. with Shriram Unnati <span class="g">Fixed Deposit</span></h1>
-      <p class="lead">Enjoy the stability of guaranteed returns, flexible tenures (12 to 60 months), and a 100% digital investment experience. Choose Fixed Deposits designed to help you achieve your financial goals.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open FD</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Fixed Deposit' }]}
+    cta={{ label: 'Open FD', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Fixed Deposit in India - Earn Up to 8.05%* p.a. with Shriram Unnati <span class="g">Fixed Deposit</span></Fragment>
+    <Fragment slot="lead">Enjoy the stability of guaranteed returns, flexible tenures (12 to 60 months), and a 100% digital investment experience. Choose Fixed Deposits designed to help you achieve your financial goals.</Fragment>
+  </Hero>
 
   <!-- ===== Hero highlights ===== -->
   <section class="section stack sec-light" id="sec-highlights" data-section="highlights" style="gap:56px;justify-content:center" data-enter="2">
@@ -121,36 +179,91 @@ const seo = {
       <h2 class="sec-title">How Fixed Deposits Work?</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Opening a fixed deposit with Shriram Finance is an easy 5-step process — from choosing your investment to receiving your maturity amount in your bank account:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Choose Your Investment Amount</h4><p>Decide how much you want to invest. With Shriram Unnati FD, the minimum is just ₹5,000 and you can invest in multiples of ₹1,000. There is no upper cap, making it suitable for both small savers and large corpus investors.</p></div>
+    <StepsRow steps={worksSteps} />
+  </section>
+
+  <!-- ===== FD Calculator (ported from /fd-calculator) ===== -->
+  <section class="section stack sec-light" id="sec-calc" data-section="calc" style="gap:24px">
+    <div class="stack" style="gap:16px">
+      <h2 class="sec-title">Fixed Deposit Calculator</h2>
+      <p class="sec-lead" style="color:var(--color-text-secondary)">Estimate your maturity amount and interest earned in seconds. Drag the sliders or type your own numbers - results update instantly.</p>
+    </div>
+
+    <div class="calc-row">
+      <!-- inputs -->
+      <div class="card calc-panel">
+        <div class="fields">
+          <div class="field">
+            <div class="field-top">
+              <label for="amt">Principal Amount</label>
+              <div class="field-val"><span class="pfx">₹</span><input id="amt" type="text" inputmode="numeric" value="1,00,000" aria-label="Principal amount in rupees" /></div>
+            </div>
+            <input class="slider" id="amtR" type="range" min="1000" max="10000000" step="1000" value="100000" aria-label="Principal amount" />
+            <div class="slider-scale"><span>₹1,000</span><span>₹1,00,00,000</span></div>
+          </div>
+
+          <div class="field">
+            <div class="field-top">
+              <label for="rate">Interest Rate (% p.a.)</label>
+              <div class="field-val"><input id="rate" type="text" inputmode="decimal" value="8.05" aria-label="Annual interest rate in percent" /><span class="sfx">%</span></div>
+            </div>
+            <input class="slider" id="rateR" type="range" min="1" max="15" step="0.05" value="8.05" aria-label="Annual interest rate in percent" />
+            <div class="slider-scale"><span>1%</span><span>15%</span></div>
+          </div>
+
+          <div class="field">
+            <div class="field-top">
+              <label for="dur">Tenure</label>
+              <div class="field-val"><input id="dur" type="text" inputmode="numeric" value="3" aria-label="Tenure in years" /><span class="sfx">yrs</span></div>
+            </div>
+            <input class="slider" id="durR" type="range" min="1" max="10" step="1" value="3" aria-label="Tenure in years" />
+            <div class="slider-scale"><span>1 yrs</span><span>10 yrs</span></div>
+          </div>
+        </div>
       </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Select Your Tenure</h4><p>Pick a tenure between 12 months and 60 months (1 to 5 years). Longer tenures generally earn higher interest. For NRI depositors, tenures range from 12 to 36 months.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Choose Your Scheme Type (Cumulative or Non-Cumulative)</h4><p>In a cumulative FD, interest is compounded monthly and paid at maturity — ideal for wealth-building. In a non-cumulative FD, interest is paid monthly, quarterly, half-yearly, or annually — perfect if you need regular income.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Complete KYC &amp; Book Your FD</h4><p>Submit your PAN, Aadhaar, and bank details. The entire process is 100% digital on the Shriram Finance app or website — no branch visit required.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Receive Your Maturity Amount</h4><p>On the maturity date, your principal + accumulated interest is credited directly to your registered bank account. You can also choose to auto-renew.</p></div>
+
+      <!-- results -->
+      <div class="calc-results">
+        <div class="bar-wrap">
+          <div class="bar-top">
+            <div class="bar-head">
+              <span class="bar-cap">Total Value</span>
+              <span class="bar-tot" id="d-tot">₹1,24,899</span>
+            </div>
+            <div class="stack-bar" role="img" aria-label="Total value split between invested amount and estimated returns">
+              <div class="seg seg-inv" id="seg-inv" style="width:80%"></div>
+              <div class="seg seg-ret" id="seg-ret" style="width:20%"></div>
+            </div>
+          </div>
+
+          <div class="res-cards" data-reveal-row>
+            <div class="res-card">
+              <div class="res-top"><span class="dot" style="background:var(--c-inv)"></span>Invested Amount</div>
+              <div class="res-val" id="r-inv">₹1,00,000</div>
+            </div>
+            <div class="res-card">
+              <div class="res-top"><span class="dot" style="background:var(--c-ret)"></span>Estimated Returns</div>
+              <div class="res-val" id="r-ret">₹24,899</div>
+            </div>
+          </div>
+
+          <div class="bar-div" role="presentation"></div>
+
+          <p class="bar-note">Figures are illustrative and assume a constant rate over the full term; actual returns fluctuate and are not guaranteed.</p>
+        </div>
+
+        <div class="ready-bar">
+          <p class="ready-text">Put your plan into action - <b>open a free Demat account</b></p>
+          <a class="ready-btn" href="/open-demat-account">Open Demat Account</a>
+        </div>
       </div>
     </div>
+
+    <p class="sr-only" id="sr-summary" aria-live="polite"></p>
   </section>
 
   <!-- ===== Types of Fixed Deposits ===== -->
-  <section class="section stack sec-light" id="sec-types" data-section="types" style="gap:56px;justify-content:center">
+  <section class="section stack sec-tint" id="sec-types" data-section="types" style="gap:56px;justify-content:center">
     <div class="stack" style="gap:16px">
       <h2 class="sec-title">Types of Fixed Deposits in India</h2>
       <p class="sec-lead">Depending on your financial goal — whether it's growing wealth, generating monthly income, saving on taxes, or planning for retirement — there is a specific type of FD for you. Here are the most important ones:</p>
@@ -175,15 +288,6 @@ const seo = {
         <div class="cell tb"><p class="k">NRI FD</p></div><div class="cell tb"><p class="v">As per Scheme</p></div><div class="cell tb"><p class="v">Flexible</p></div><div class="cell tb"><p class="v">Depends</p></div><div class="cell tb"><p class="v">NRIs</p></div>
       </div></div>
     </div>
-  </section>
-
-  <!-- ===== Fixed Deposit Calculator ===== -->
-  <section class="section stack sec-tint" id="sec-calculator" data-section="calculator" style="gap:56px;justify-content:center">
-    <div class="stack" style="gap:16px">
-      <h2 class="sec-title">Fixed Deposit Calculator</h2>
-      <p class="sec-lead" style="color:var(--color-text-secondary)">Understanding how your FD interest is calculated helps you make smarter choices about tenure and scheme type.</p>
-    </div>
-    <a class="btn-gold" href="/fd-calculator" style="align-self:center">Open FD Account</a>
   </section>
 
   <!-- ===== Benefits and Features ===== -->
@@ -236,33 +340,8 @@ const seo = {
       <h2 class="sec-title">How to Open a Fixed Deposit Online?</h2>
       <p class="sec-lead">Open your Fixed Deposit online in just 5 simple steps and start growing your savings with confidence.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Visit the Website or App</h4><p>Go to the Shriram Finance website or download the Shriram One App. Navigate to the Fixed Deposit section and click on 'Open Fixed Deposit'.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Verify Your Mobile Number</h4><p>Enter your registered mobile number and complete OTP verification to begin the application process securely.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Choose Your Investment Details</h4><p>Enter your investment amount (starting from ₹5,000), select your preferred tenure, and choose an interest payout option—Cumulative or Non-Cumulative (Monthly, Quarterly, Half-Yearly, or Yearly).</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Complete KYC Verification</h4><p>Complete your KYC using Aadhaar-based e-KYC. Existing Shriram Finance customers can proceed using their existing KYC details. Keep your PAN card, identity proof, and bank account details handy.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Make Payment and Receive Confirmation</h4><p>Fund your FD through Net Banking, UPI, NEFT, or RTGS. Once the payment is successful, your Fixed Deposit is created instantly and the FD receipt is shared digitally for your records.</p></div>
-      </div>
-    </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open FD</a>
+    <StepsRow steps={openSteps} />
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open FD</a>
   </section>
 
   <!-- ===== General Questions ===== -->
@@ -279,12 +358,135 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  // Fixed deposit calculator - compound interest with selectable frequency.
+  // (Ported from /fd-calculator; the standalone page is unchanged.)
+  const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const amt = document.getElementById('amt') as HTMLInputElement;
+  const amtR = document.getElementById('amtR') as HTMLInputElement;
+  const rate = document.getElementById('rate') as HTMLInputElement;
+  const rateR = document.getElementById('rateR') as HTMLInputElement;
+  const dur = document.getElementById('dur') as HTMLInputElement;
+  const durR = document.getElementById('durR') as HTMLInputElement;
+  const freq = 4; // compounding periods per year - quarterly (Indian FD standard)
+
+  const segInv = document.getElementById('seg-inv') as HTMLElement;
+  const segRet = document.getElementById('seg-ret') as HTMLElement;
+  let last = { inv: 0, ret: 0, tot: 0 };
+
+  function digits(s: string) {
+    return String(s).replace(/[^0-9.]/g, '');
+  }
+  function clamp(v: number, mn: number, mx: number) {
+    return Math.max(mn, Math.min(mx, v));
+  }
+  function fillSlider(sl: HTMLInputElement) {
+    const p = ((+sl.value - +sl.min) / (+sl.max - +sl.min)) * 100;
+    sl.style.background =
+      'linear-gradient(90deg, var(--color-olive-600) 0%, var(--color-olive-600) ' + p + '%, var(--color-gray-100) ' + p + '%, var(--color-gray-100) 100%)';
+  }
+  function countTo(el: HTMLElement, from: number, to: number, fn: (n: number) => string) {
+    if (reduce || from === to) {
+      el.textContent = fn(to);
+      return;
+    }
+    let t0: number | null = null;
+    const d = 350;
+    function tick(ts: number) {
+      if (t0 === null) t0 = ts;
+      const t = Math.min(1, (ts - t0) / d);
+      const e = 1 - Math.pow(1 - t, 3);
+      el.textContent = fn(from + (to - from) * e);
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function render(animate: boolean) {
+    const amount = clamp(parseFloat(digits(amt.value)) || 0, +amtR.min, +amtR.max);
+    const ratePct = clamp(parseFloat(digits(rate.value)) || 0, +rateR.min, +rateR.max);
+    const years = clamp(parseFloat(digits(dur.value)) || 0, +durR.min, +durR.max);
+
+    const i = ratePct / 100 / freq;
+    const fv = amount * Math.pow(1 + i, freq * years);
+    const invested = amount;
+    const interest = fv - invested;
+    const rupee = (v: number) => '₹' + fmt.format(Math.round(v));
+
+    if (animate) {
+      countTo(document.getElementById('r-inv') as HTMLElement, last.inv, invested, rupee);
+      countTo(document.getElementById('r-ret') as HTMLElement, last.ret, interest, rupee);
+      countTo(document.getElementById('d-tot') as HTMLElement, last.tot, fv, rupee);
+    } else {
+      (document.getElementById('r-inv') as HTMLElement).textContent = rupee(invested);
+      (document.getElementById('r-ret') as HTMLElement).textContent = rupee(interest);
+      (document.getElementById('d-tot') as HTMLElement).textContent = rupee(fv);
+    }
+    last = { inv: invested, ret: interest, tot: fv };
+
+    const invPct = fv > 0 ? (invested / fv) * 100 : 0;
+    segInv.style.width = invPct + '%';
+    segRet.style.width = 100 - invPct + '%';
+
+    (document.getElementById('sr-summary') as HTMLElement).textContent =
+      'Maturity value ' + rupee(fv) + ' on ' + rupee(invested) + ' deposited for ' + years + ' years.';
+
+    amtR.setAttribute('aria-valuetext', '₹' + fmt.format(amount));
+    rateR.setAttribute('aria-valuetext', ratePct + ' percent');
+    durR.setAttribute('aria-valuetext', years + ' years');
+  }
+
+
+  function pairNumberAndSlider(numEl: HTMLInputElement, slEl: HTMLInputElement, group: boolean) {
+    slEl.addEventListener('input', function () {
+      numEl.value = group ? fmt.format(+slEl.value) : slEl.value;
+      fillSlider(slEl);
+      render(false);
+    });
+    numEl.addEventListener('input', function () {
+      const raw = parseFloat(digits(numEl.value)) || 0;
+      if (group) numEl.value = raw ? fmt.format(raw) : '';
+      slEl.value = String(clamp(raw, +slEl.min, +slEl.max));
+      fillSlider(slEl);
+      render(false);
+    });
+    numEl.addEventListener('change', function () {
+      const v = clamp(parseFloat(digits(numEl.value)) || +slEl.min, +slEl.min, +slEl.max);
+      numEl.value = group ? fmt.format(v) : String(v);
+      slEl.value = String(v);
+      fillSlider(slEl);
+      render(true);
+    });
+  }
+  pairNumberAndSlider(amt, amtR, true);
+  pairNumberAndSlider(rate, rateR, false);
+  pairNumberAndSlider(dur, durR, false);
+
+  (function initFromUrl() {
+    const p = new URLSearchParams(location.search);
+    function setNum(el: HTMLInputElement, sl: HTMLInputElement, key: string, group: boolean) {
+      if (!p.has(key)) return;
+      const v = clamp(parseFloat(p.get(key) || '') || +sl.min, +sl.min, +sl.max);
+      sl.value = String(v);
+      el.value = group ? fmt.format(v) : String(v);
+    }
+    setNum(amt, amtR, 'amt', true);
+    setNum(rate, rateR, 'rate', false);
+    setNum(dur, durR, 'dur', false);
+  })();
+
+  [amtR, rateR, durR].forEach(fillSlider);
+  render(true);
+</script>
 
 <style>
   /* ===== fd - page-specific only ===== */

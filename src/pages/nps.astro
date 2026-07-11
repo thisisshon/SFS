@@ -8,7 +8,8 @@
  * token-bound. Nested route → BaseLayout / component imports at ../../ depth.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
@@ -118,14 +119,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'NPS' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Build a Retirement Corpus With the <span class="g">National Pension System</span></h1>
-      <p class="lead">A voluntary, market-linked retirement scheme regulated by PFRDA - with an exclusive extra tax benefit, low costs and the flexibility to shape your own asset mix.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start Investing</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'NPS' }]}
+    cta={{ label: 'Start Investing', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Build a Retirement Corpus With the <span class="g">National Pension System</span></Fragment>
+    <Fragment slot="lead">A voluntary, market-linked retirement scheme regulated by PFRDA - with an exclusive extra tax benefit, low costs and the flexibility to shape your own asset mix.</Fragment>
+  </Hero>
 
   <!-- ===== What Is NPS ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px;justify-content:center" data-enter="2">
@@ -148,7 +148,7 @@ const seo = {
       <div class="cell tb"><p class="k">Tax Benefit</p></div><div class="cell tb"><p class="v">Yes - 80CCD(1), 80CCD(1B) and 80CCD(2)</p></div><div class="cell tb"><p class="v">None, except a 3-year lock-in option for government employees</p></div>
       <div class="cell tb"><p class="k">Minimum Contribution</p></div><div class="cell tb"><p class="v">₹500 to open, ₹1,000 per financial year to stay active</p></div><div class="cell tb"><p class="v">₹1,000 to open, no minimum annual balance</p></div>
     </div></div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:flex-start">Start Investing</a>
   </section>
 
   <!-- ===== Asset Classes & Investment Choice ===== -->
@@ -193,7 +193,7 @@ const seo = {
       <div class="cell tb"><p class="k">80CCD(1B)</p></div><div class="cell tb"><p class="v">Your own contribution (exclusive to NPS)</p></div><div class="cell tb"><p class="v">Additional up to ₹50,000, over and above 80C</p></div>
       <div class="cell tb"><p class="k">80CCD(2)</p></div><div class="cell tb"><p class="v">Employer contribution</p></div><div class="cell tb"><p class="v">Up to 10% of salary (14% for government employees)</p></div>
     </div></div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:flex-start">Start Investing</a>
   </section>
 
   <!-- ===== How to Open & Contribute ===== -->
@@ -202,28 +202,13 @@ const seo = {
       <h2 class="sec-title">How to Open &amp; Contribute</h2>
       <p class="sec-lead">Getting started takes just a few steps - from generating your PRAN to making your first contribution.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Generate Your PRAN</h4><p>Register online via eNPS or a Point of Presence (POP) to get your Permanent Retirement Account Number.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Complete PAN / KYC</h4><p>Submit your PAN, complete Aadhaar-based eKYC and link your bank account.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Choose Fund Manager &amp; Allocation</h4><p>Select a PFRDA-registered pension fund manager and pick Active or Auto Choice for your asset mix.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Contribute &amp; Track</h4><p>Invest via one-off or recurring contributions and monitor your corpus as it grows.</p></div>
-      </div>
-    </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+    <StepsRow steps={[
+      { icon: 'account', title: 'Generate Your PRAN', desc: 'Register online via eNPS or a Point of Presence (POP) to get your Permanent Retirement Account Number.' },
+      { icon: 'kyc', title: 'Complete PAN / KYC', desc: 'Submit your PAN, complete Aadhaar-based eKYC and link your bank account.' },
+      { icon: 'select', title: 'Choose Fund Manager & Allocation', desc: 'Select a PFRDA-registered pension fund manager and pick Active or Auto Choice for your asset mix.' },
+      { icon: 'fund', title: 'Contribute & Track', desc: 'Invest via one-off or recurring contributions and monitor your corpus as it grows.' },
+    ]} />
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Investing</a>
   </section>
 
   <!-- ===== Withdrawal & Annuity ===== -->
@@ -254,7 +239,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led retirement plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -267,7 +252,7 @@ const seo = {
         <h3>Start Building Your Retirement Corpus</h3>
         <p class="ct-sub">Open your account in minutes and begin contributing to NPS with zero paperwork.</p>
       </div>
-      <a class="btn-gold" href="/open-demat-account">Start Investing</a>
+      <a class="btn btn-primary" href="/open-demat-account">Start Investing</a>
     </div>
   </section>
 </BaseLayout>

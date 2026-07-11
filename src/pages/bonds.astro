@@ -8,7 +8,8 @@
  * Content implemented verbatim from the compliance-approved doc (V3, July 06).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
@@ -240,14 +241,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Bonds' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Grow Your Wealth Steadily with <span class="g">Bonds</span></h1>
-      <p class="lead">Understand bond types, returns, risks and investment strategies to make informed fixed-income decisions.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Bonds' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Grow Your Wealth Steadily with <span class="g">Bonds</span></Fragment>
+    <Fragment slot="lead">Understand bond types, returns, risks and investment strategies to make informed fixed-income decisions.</Fragment>
+  </Hero>
 
   <!-- ===== Bonds: Balance Growth with Stability ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" data-enter="2" style="gap:56px;justify-content:center">
@@ -280,7 +280,7 @@ const seo = {
         <div class="card"><h4 class="card-h">{c.h}</h4><p class="card-p">{c.p}</p></div>
       ))}
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== Risk Factors in Bonds ===== -->
@@ -320,25 +320,18 @@ const seo = {
       <h2 class="sec-title">How to Invest in Bonds in India?</h2>
       <p class="sec-lead">Investment in bonds in the secondary market through Shriram Financial Services can be completed in a few steps, which are:</p>
     </div>
-    <div class="stack" style="gap:32px;width:100%">
-      <div class="steps" data-reveal-row>
-        {STEPS.slice(0, 3).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 1}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-      <div class="steps" data-reveal-row>
-        {STEPS.slice(3).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 4}</div><div class="st-body"><h4>{s.h}</h4><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-    </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing in Bonds</a>
+    <StepsRows
+      perRow={3}
+      steps={[
+        { icon: 'phone', title: STEPS[0].h, desc: STEPS[0].p },
+        { icon: 'kyc', title: STEPS[1].h, desc: STEPS[1].p },
+        { icon: 'activate', title: STEPS[2].h, desc: STEPS[2].p },
+        { icon: 'select', title: STEPS[3].h, desc: STEPS[3].p },
+        { icon: 'trade', title: STEPS[4].h, desc: STEPS[4].p },
+        { icon: 'chart', title: STEPS[5].h, desc: STEPS[5].p },
+      ]}
+    />
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Investing in Bonds</a>
   </section>
 
   <!-- ===== Bond Investment Strategies ===== -->
@@ -381,7 +374,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

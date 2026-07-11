@@ -9,7 +9,7 @@
  * alerts columns). Every value binds to a token (rule 9).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -125,14 +125,13 @@ const seo = {
   </svg>
 
   <!-- ================= SECTION 1 - HERO BANNER (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Hub' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Shriram Financial Services <span class="g">Research Hub</span></h1>
-      <p class="lead">Institutional-grade financial research — produced daily by certified analysts. Access the full reports by logging in or opening your demat account.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Research Hub' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Shriram Financial Services <span class="g">Research Hub</span></Fragment>
+    <Fragment slot="lead">Institutional-grade financial research — produced daily by certified analysts. Access the full reports by logging in or opening your demat account.</Fragment>
+  </Hero>
 
   <!-- ================= SECTION 2 - WHAT IS RESEARCH & WHY DOES IT MATTER? ================= -->
   <section class="section stack sec-light" id="sec-what" data-section="what" style="gap:56px;justify-content:center" data-enter="2">
@@ -185,7 +184,7 @@ const seo = {
         </a>
       ))}
     </div>
-    <div style="display:flex"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
+    <div style="display:flex"><a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a></div>
   </section>
 
   <!-- ================= SECTION 5 - WHY SHRIRAM FINANCIAL SERVICES RESEARCH? ================= -->
@@ -215,8 +214,8 @@ const seo = {
       <h2>Access Full Research Reports</h2>
       <p>Report titles and overviews are public. To read the complete analysis, download PDFs, and receive daily alerts, login or open your free demat account.</p>
       <div class="access-cta">
-        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
-        <a class="btn-outline" href="#">Existing Client Login</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a>
+        <a class="btn btn-secondary-inverse" href="#">Existing Client Login</a>
       </div>
     </div>
   </section>
@@ -251,8 +250,8 @@ const seo = {
     <div class="get-access">
       <h3>To get access to this feature now:</h3>
       <div class="ga-cta">
-        <a class="btn-gold" href="#">Login Now</a>
-        <a class="btn-outline" href="/open-demat-account">Open Demat Account</a>
+        <a class="btn btn-primary" href="#">Login Now</a>
+        <a class="btn btn-secondary-inverse" href="/open-demat-account">Open Demat Account</a>
       </div>
     </div>
   </section>
@@ -271,7 +270,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -296,7 +295,7 @@ const seo = {
     display: flex; flex-direction: column; gap: 16px;
     transition: border-color 0.22s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .fcard:hover { border-color: var(--color-sage-450); }
   }
   /* icon tile - 48px container (8px grid), warm gold tint + olive brand icon */
@@ -324,7 +323,6 @@ const seo = {
   .access-band h2 { font-weight: 500; font-size: 40px; color: var(--color-white); }
   .access-band p { font-weight: 400; font-size: 16px; color: var(--color-text-on-dark-lead); max-width: 640px; }
   .access-cta { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
-  .access-cta .btn-gold { width: auto; min-width: var(--cta-w); padding: 8px 24px; }
 
   /* ===== Market alerts / commentary columns ===== */
   .row-2 .card { display: flex; flex-direction: column; gap: 16px; }
@@ -353,7 +351,6 @@ const seo = {
   }
   .get-access h3 { font-weight: 500; font-size: 28px; color: var(--color-white); }
   .ga-cta { display: flex; gap: 16px; flex-wrap: wrap; }
-  .ga-cta .btn-gold { width: auto; min-width: var(--cta-w); padding: 8px 24px; }
 
   /* ===== responsive ===== */
   @media (max-width: 1024px) {
@@ -369,8 +366,7 @@ const seo = {
     .access-band h2 { font-size: clamp(24px, 6.4vw, 40px); }
     .get-access h3 { font-size: clamp(22px, 5.6vw, 28px); }
     .access-cta, .ga-cta { width: 100%; }
-    .access-cta .btn-gold, .access-cta .btn-outline,
-    .ga-cta .btn-gold, .ga-cta .btn-outline { width: 100%; flex: 1 1 100%; }
+    .access-cta .btn, .ga-cta .btn { width: 100%; flex: 1 1 100%; min-width: 0; }
     .fcard p { font-size: 14px; }
   }
   @media (max-width: 640px) {

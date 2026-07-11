@@ -9,6 +9,7 @@
  * template scales to any number of documents (rule 1). No component forks (rule 2).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/sections/Hero.astro';
 import { organizationSchema } from '../lib/seo';
 
 // Hub cards → one shared .doc-card each. The two live sub-pages use their real
@@ -76,16 +77,12 @@ const seo = {
 
 <BaseLayout seo={seo}>
   <!-- ================= HERO (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <div class="hero-inner">
-      <h1>Regulatory <span class="g">Documents</span></h1>
-      <p class="lead">
-        Every regulatory and compliance document from Shriram Financial Services - investor
+  <Hero reveal={false}>
+    <Fragment slot="title">Regulatory <span class="g">Documents</span></Fragment>
+    <Fragment slot="lead">Every regulatory and compliance document from Shriram Financial Services - investor
         charters, member disclosures, risk documents and policies - in one place. View online or
-        download as PDF.
-      </p>
-    </div>
-  </section>
+        download as PDF.</Fragment>
+  </Hero>
 
   <!-- ================= DOCUMENT LIST (shared .doc-card grid) ================= -->
   <section class="section stack sec-light" id="sec-docs" data-section="docs">

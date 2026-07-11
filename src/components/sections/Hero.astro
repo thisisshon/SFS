@@ -1,0 +1,92 @@
+---
+/**
+ * Hero - THE shared hero band (rule 7).
+ *
+ * One component for every standard page hero: renders the gradient
+ * `<section class="hero">` (+ optional `hero-compact`), an optional
+ * `<Breadcrumb>`, and the `.hero-inner` stack (eyebrow -> h1 -> lead ->
+ * cta -> extra). Layout - min-height, vertical centring, the compact hug,
+ * two-column split - is all driven by global.css via `:has()`, so this
+ * component only has to emit the right children; it never sets geometry.
+ *
+ * Because the hero markup now lives here, sitewide hero changes (button
+ * style, width, spacing, a new element) are a SINGLE edit to this file +
+ * global.css, never a 30-page sweep.
+ *
+ * Props
+ *   breadcrumb?  trail passed straight to <Breadcrumb> (omit -> no crumbs)
+ *   cta?         single primary button { label, href } (omit for no CTA;
+ *                for multi-button heroes use the `cta` slot instead)
+ *   compact?     adds `.hero-compact` (calculator detail hug variant)
+ *   reveal?      emit the `data-enter` scroll-reveal hook (default true;
+ *                pass false for the few static heroes without the animation)
+ *   id / dataSection  section attributes (defaults sec-hero / hero)
+ *
+ * Slots
+ *   eyebrow  optional line above the H1
+ *   title    H1 inner (rich markup, e.g. <span class="g">) - required
+ *   lead     lead paragraph inner (omit -> no lead)
+ *   cta      custom CTA markup (multi-button heroes); wrapped in `.cta`
+ *   aside    right-hand column (form / card); switches to the two-column grid
+ *   default  extra content appended inside `.hero-inner` (pills, subline, ...)
+ */
+import Breadcrumb from '../site/Breadcrumb.astro';
+
+interface CrumbItem { name: string; href?: string }
+interface Cta { label: string; href: string }
+interface Props {
+  breadcrumb?: CrumbItem[];
+  cta?: Cta;
+  compact?: boolean;
+  reveal?: boolean;
+  id?: string;
+  dataSection?: string;
+}
+
+const {
+  breadcrumb,
+  cta,
+  compact = false,
+  reveal = true,
+  id = 'sec-hero',
+  dataSection = 'hero',
+} = Astro.props;
+
+const hasAside = Astro.slots.has('aside');
+const showCta = Boolean(cta) || Astro.slots.has('cta');
+---
+
+<section class:list={['hero', { 'hero-compact': compact }]} id={id} data-section={dataSection}>
+  {breadcrumb && <Breadcrumb trail={breadcrumb} />}
+
+  {hasAside ? (
+    <div class="hero-grid">
+      <div class="hero-inner" data-enter={reveal ? '' : undefined}>
+        {Astro.slots.has('eyebrow') && <p class="hero-eyebrow"><slot name="eyebrow" /></p>}
+        <h1><slot name="title" /></h1>
+        {Astro.slots.has('lead') && <p class="lead"><slot name="lead" /></p>}
+        {showCta && (
+          <div class="cta">
+            {cta && <a class="btn btn-primary" href={cta.href}>{cta.label}</a>}
+            <slot name="cta" />
+          </div>
+        )}
+        <slot />
+      </div>
+      <slot name="aside" />
+    </div>
+  ) : (
+    <div class="hero-inner" data-enter={reveal ? '' : undefined}>
+      {Astro.slots.has('eyebrow') && <p class="hero-eyebrow"><slot name="eyebrow" /></p>}
+      <h1><slot name="title" /></h1>
+      {Astro.slots.has('lead') && <p class="lead"><slot name="lead" /></p>}
+      {showCta && (
+        <div class="cta">
+          {cta && <a class="btn btn-primary" href={cta.href}>{cta.label}</a>}
+          <slot name="cta" />
+        </div>
+      )}
+      <slot />
+    </div>
+  )}
+</section>

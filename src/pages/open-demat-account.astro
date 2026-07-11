@@ -8,6 +8,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumb from '../components/site/Breadcrumb.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import { faqPageSchema } from '../lib/seo';
 
 const FAQS = [
@@ -100,7 +101,7 @@ const seo = {
           </div>
           <p class="hf-note">By continuing, I agree to receive the OTP and updates via SMS/WhatsApp</p>
           <div class="hf-actions">
-            <button class="btn-gold" type="submit">Get Started</button>
+            <button class="btn btn-primary btn-xl" type="submit">Get Started</button>
             <p class="hf-login">Already a part of us? <a href="#">Login Here.</a></p>
           </div>
         </div>
@@ -168,21 +169,18 @@ const seo = {
       <h2 class="sec-title">How to Open a Demat Account Online</h2>
       <p class="sec-lead">You can complete the application of a demat account on a phone or laptop. Keep your PAN, Aadhaar-linked mobile number and bank proof ready.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step"><div class="num">1</div><div class="st-body"><h4>Verify your mobile number</h4><p>Enter the mobile number linked with your Aadhaar. Use the OTP you receive to continue.</p></div></div>
-      <div class="step-div"></div>
-      <div class="step"><div class="num">2</div><div class="st-body"><h4>Complete PAN and Aadhaar KYC</h4><p>Enter your PAN details. Then verify your identity with the OTP sent to your Aadhaar-linked mobile number.</p></div></div>
-      <div class="step-div"></div>
-      <div class="step"><div class="num">3</div><div class="st-body"><h4>Add personal and bank details</h4><p>Fill in your name, date of birth, address, occupation, income range, IFSC code and bank account number. Check the details carefully. Small mistakes can delay approval.</p></div></div>
-      <div class="step-div"></div>
-      <div class="step"><div class="num">4</div><div class="st-body"><h4>Upload documents</h4><p>Upload your bank proof. This can be a cancelled cheque or recent bank statement. If you want F&amp;O or derivatives, upload income proof too. However, please note that if your UPI verification or Penny-drop bank verification is successful during the process, you often do not need to manually upload any physical documents.</p></div></div>
-      <div class="step-div"></div>
-      <div class="step"><div class="num">5</div><div class="st-body"><h4>Add nominee details</h4><p>Add your nominee&rsquo;s name, relationship and ID details. If you do not want a nominee, check if the platform allows you to opt out.</p></div></div>
-      <div class="step-div"></div>
-      <div class="step"><div class="num">6</div><div class="st-body"><h4>Sign online</h4><p>Read the application once. If the details are correct, complete the Aadhaar-based e-signature using the OTP.</p></div></div>
-      <div class="step-div"></div>
-      <div class="step"><div class="num">7</div><div class="st-body"><h4>Wait for activation</h4><p>After verification, your account details and login credentials are usually sent by email and SMS within 24 hours.</p></div></div>
-    </div>
+    <StepsRows
+      perRow={4}
+      steps={[
+        { icon: 'phone', title: 'Verify your mobile number', desc: 'Enter the mobile number linked with your Aadhaar. Use the OTP you receive to continue.' },
+        { icon: 'kyc', title: 'Complete PAN and Aadhaar KYC', desc: 'Enter your PAN details. Then verify your identity with the OTP sent to your Aadhaar-linked mobile number.' },
+        { icon: 'bank', title: 'Add personal and bank details', desc: 'Fill in your name, date of birth, address, occupation, income range, IFSC code and bank account number. Check the details carefully. Small mistakes can delay approval.' },
+        { icon: 'upload', title: 'Upload documents', desc: 'Upload your bank proof. This can be a cancelled cheque or recent bank statement. If you want F&O or derivatives, upload income proof too. However, please note that if your UPI verification or Penny-drop bank verification is successful during the process, you often do not need to manually upload any physical documents.' },
+        { icon: 'document', title: 'Add nominee details', desc: 'Add your nominee’s name, relationship and ID details. If you do not want a nominee, check if the platform allows you to opt out.' },
+        { icon: 'signature', title: 'Sign online', desc: 'Read the application once. If the details are correct, complete the Aadhaar-based e-signature using the OTP.' },
+        { icon: 'activate', title: 'Wait for activation', desc: 'After verification, your account details and login credentials are usually sent by email and SMS within 24 hours.' },
+      ]}
+    />
   </section>
 
   <!-- ================= AM I ELIGIBLE? ================= -->
@@ -226,7 +224,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -322,9 +320,9 @@ const seo = {
     flex-direction: column;
     gap: 16px;
   }
-  .hero-form .btn-gold {
+  .hero-form .btn-primary {
     width: 100%;
-    height: 48px;
+    min-width: 0; /* full-width form submit: exempt from the 220px footprint */
   }
   .hf-login {
     font-weight: 500;
@@ -375,21 +373,6 @@ const seo = {
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center;
-  }
-  .cta-actions .btn-gold,
-  .cta-actions .btn-ghost {
-    transition: filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .cta-actions .btn-gold:hover {
-    filter: brightness(0.96);
-  }
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .cta-actions .btn-ghost:hover {
-    background: var(--color-charcoal-650);
-    border-color: var(--color-white);
-  }
   }
 
   /* ---------- responsive (two-column hero stacking is canonical in global.css @980px) ---------- */

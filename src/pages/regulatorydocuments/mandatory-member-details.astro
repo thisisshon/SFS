@@ -8,7 +8,7 @@
  * member documents - the scale North Star. No page-local component forks (rule 2).
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Breadcrumb from '../../components/site/Breadcrumb.astro';
+import Hero from '../../components/sections/Hero.astro';
 import { organizationSchema } from '../../lib/seo';
 
 // Mandatory member-disclosure documents → one shared .doc-card each.
@@ -34,16 +34,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Regulatory Documents', href: '/regulatorydocuments' }, { name: 'Mandatory Member Details' }]} />
-    <div class="hero-inner" data-enter>
-      <h1><span class="g">Mandatory Member Details</span></h1>
-      <p class="lead">
+  <Hero breadcrumb={[{ name: 'Regulatory Documents', href: '/regulatorydocuments' }, { name: 'Mandatory Member Details' }]}>
+    <Fragment slot="title"><span class="g">Mandatory Member Details</span></Fragment>
+    <Fragment slot="lead">
         All mandatory disclosures, investor rights, grievance mechanisms and compliance documents
         - in one place. View online or download as PDF.
-      </p>
-    </div>
-  </section>
+      </Fragment>
+  </Hero>
 
   <!-- ================= DOCUMENT LIST (shared .doc-card grid) ================= -->
   <section class="section stack sec-light" id="sec-docs" data-section="docs" data-enter="2">

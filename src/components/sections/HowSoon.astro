@@ -81,7 +81,7 @@ const {
       </div>
       <!-- Centred CTA below the timeline -->
       <div class="steps-cta-wrap">
-        <a href={ctaHref} class="steps-link">{ctaLabel}</a>
+        <a href={ctaHref} class="btn btn-primary btn-xl">{ctaLabel}</a>
       </div>
     </div>
   </div>
@@ -129,21 +129,7 @@ const {
   .steps-text :global(strong) {
     font-weight: 600;
   }
-  .steps-link {
-    display: flex;
-    height: 48px; /* rule 14: 48px tap target */
-    width: 220px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    background-color: #f3b83f; /* --color-gold-400 */
-    font-size: 12px;
-    font-weight: 500;
-    color: #202318; /* --color-charcoal-825 */
-    transition-property: color, background-color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
+  /* .steps-link migrated to global .btn .btn-primary .btn-xl (centred by .steps-cta-wrap). */
   .steps-box-4 {
     display: none;
     flex: 1;
@@ -243,7 +229,7 @@ const {
       font-size: 40px;
     }
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .steps-link:hover {
       background-color: #d4982a; /* --color-gold-600 */
     }

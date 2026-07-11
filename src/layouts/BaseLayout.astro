@@ -11,7 +11,8 @@ import '../styles/global.css';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
 import MegaNav from '../components/site/MegaNav.astro';
-import ReviewOverlay from '../components/site/ReviewOverlay.astro';
+import ProofkitOverlay from '../plugins/proofkit/Overlay.astro';
+import { PROOFKIT_ENABLED } from '../plugins/proofkit/config';
 import { fullTitle, type SEO } from '../lib/seo';
 
 interface Props {
@@ -25,9 +26,15 @@ interface Props {
   footer?: 'site' | 'custom';
   /** Optional class on <main> - e.g. opt a page into a reveal-motion variant. */
   mainClass?: string;
+  /**
+   * `true` (default) renders the shared site chrome (skip-link + Header + MegaNav).
+   * `false` omits it for full-bleed tool pages that own their chrome - e.g. the
+   * Proofkit /reviewdash dashboard.
+   */
+  chrome?: boolean;
 }
 
-const { seo, footer = 'site', mainClass } = Astro.props;
+const { seo, footer = 'site', mainClass, chrome = true } = Astro.props;
 const site = Astro.site!.href;
 const canonical = new URL(seo.path, site).href;
 const title = fullTitle(seo.title);
@@ -82,22 +89,23 @@ const title = fullTitle(seo.title);
     <slot name="head" />
   </head>
   <body>
-    <a href="#main" class="skip-link">Skip to content</a>
+    {chrome && <a href="#main" class="skip-link">Skip to content</a>}
 
-    <Header />
+    {chrome && <Header />}
 
     <main id="main" class={mainClass}>
       <slot />
     </main>
 
     {footer === 'site' && <Footer />}
-    <MegaNav />
+    {chrome && <MegaNav />}
 
     <slot name="body-end" />
 
-    {/* TEMPORARY content-review overlay - dormant unless ?review=1.
-        Remove this line before public launch. */}
-    <ReviewOverlay />
+    {/* Proofkit review overlay - dormant unless ?review=1, and only when the
+        tool is switched on (PROOFKIT_ENABLED in the plugin's config.ts).
+        See src/plugins/proofkit/README.md. */}
+    {PROOFKIT_ENABLED && <ProofkitOverlay />}
 
     <script>
       // Scroll reveal (progressive enhancement) - parity with legacy app.js.
@@ -151,6 +159,27 @@ const title = fullTitle(seo.title);
           }
 
           rows.forEach((el) => io.observe(el));
+
+          // Buttons that fall OUTSIDE every reveal block (standalone section CTAs
+          // in custom bands, hero form submits) would otherwise pop in statically
+          // while the containers around them fade. Give any such button its own
+          // reveal so every button eases in along with its surrounding content.
+          // Skip chrome (nav/mobile-menu pills), the footer, and buttons already
+          // covered by a reveal block/row/[data-enter] (they fade WITH their box -
+          // this must run AFTER the blocks above are tagged with data-reveal).
+          const loneButtons = Array.from(
+            document.querySelectorAll<HTMLElement>('.btn, .hero-link, .hero-link-2')
+          ).filter(
+            (el) =>
+              !el.classList.contains('nav-cta') &&
+              !el.classList.contains('mm-cta') &&
+              !el.closest('[data-reveal], [data-reveal-row], [data-enter]') &&
+              !el.closest('footer, .mobile-menu')
+          );
+          loneButtons.forEach((el) => {
+            el.setAttribute('data-reveal', '');
+            io.observe(el);
+          });
         }
       }
     </script>

@@ -7,7 +7,9 @@
  * (The NPS *product* page lives at /nps/.)
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -52,14 +54,14 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero hero-compact" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators' }, { name: 'NPS Calculator' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>NPS Calculator – Estimate Your <span class="g">Retirement Corpus &amp; Monthly Pension</span></h1>
-      <p class="lead">Plan your retirement with a quick estimate of your NPS returns.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open NPS Account Now</a></div>
-    </div>
-  </section>
+  <Hero
+    compact
+    breadcrumb={[{ name: 'Calculators', href: '/calculators' }, { name: 'NPS Calculator' }]}
+    cta={{ label: 'Open NPS Account Now', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">NPS Calculator – Estimate Your <span class="g">Retirement Corpus &amp; Monthly Pension</span></Fragment>
+    <Fragment slot="lead">Plan your retirement with a quick estimate of your NPS returns.</Fragment>
+  </Hero>
 
   <!-- ===== NPS Calculator ===== -->
   <section class="section stack sec-light" id="sec-calc" data-section="calc" style="gap:24px" data-enter="2">
@@ -232,32 +234,13 @@ const seo = {
       <h2 class="sec-title">How to Use the NPS Calculator</h2>
       <p class="sec-lead">Use the NPS Calculator to estimate your retirement corpus and potential pension by entering your age, contribution amount, expected returns, and annuity preferences.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Step 1</h4><p>Enter your current age.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Step 2</h4><p>Add your monthly NPS contribution.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Step 3</h4><p>Choose your planned retirement age.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Step 4</h4><p>Enter your expected annual return.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Step 5</h4><p>Select your annuity percentage and expected annuity rate.</p></div>
-      </div>
-    </div>
+    <StepsRow steps={[
+      { icon: 'calendar', title: 'Step 1', desc: 'Enter your current age.' },
+      { icon: 'coins', title: 'Step 2', desc: 'Add your monthly NPS contribution.' },
+      { icon: 'target', title: 'Step 3', desc: 'Choose your planned retirement age.' },
+      { icon: 'percent', title: 'Step 4', desc: 'Enter your expected annual return.' },
+      { icon: 'select', title: 'Step 5', desc: 'Select your annuity percentage and expected annuity rate.' },
+    ]} />
     <p class="sec-lead" style="width:100%">The calculator will instantly show your total investment, retirement corpus, lump sum amount, annuity corpus and estimated monthly pension.</p>
     <div class="card" style="align-self:flex-start">
       <h4 class="card-h">Pro tip</h4>
@@ -369,37 +352,14 @@ const seo = {
       <h2 class="sec-title">How to Open an NPS Account Online</h2>
       <p class="sec-lead">Open an NPS account online by following these simple steps.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Step 1</h4><p>Visit the NPS portal on the Shriram Financial Services website.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Step 2</h4><p>Choose the subscriber type: individual or corporate.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Step 3</h4><p>Choose between NSDL or Kfintech</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Step 4</h4><p>Complete KYC with PAN, Aadhaar and bank details.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Step 5</h4><p>Select your Pension Fund Manager and asset allocation.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">6</div>
-        <div class="st-body"><h4>Step 6</h4><p>Make your first contribution and receive your PRAN.</p></div>
-      </div>
-    </div>
+    <StepsRows perRow={3} steps={[
+      { icon: 'link', title: 'Step 1', desc: 'Visit the NPS portal on the Shriram Financial Services website.' },
+      { icon: 'select', title: 'Step 2', desc: 'Choose the subscriber type: individual or corporate.' },
+      { icon: 'compare', title: 'Step 3', desc: 'Choose between NSDL or Kfintech' },
+      { icon: 'kyc', title: 'Step 4', desc: 'Complete KYC with PAN, Aadhaar and bank details.' },
+      { icon: 'select', title: 'Step 5', desc: 'Select your Pension Fund Manager and asset allocation.' },
+      { icon: 'fund', title: 'Step 6', desc: 'Make your first contribution and receive your PRAN.' },
+    ]} />
   </section>
 
   <!-- ===== General Questions ===== -->
@@ -416,7 +376,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -447,7 +407,7 @@ const seo = {
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
     </div>
-    <a class="btn-gold" href="/calculators" style="align-self:center">Explore All Calculators</a>
+    <a class="btn btn-primary" href="/calculators" style="align-self:center">Explore All Calculators</a>
   </section>
 </BaseLayout>
 

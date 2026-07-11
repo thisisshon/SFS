@@ -9,7 +9,7 @@
  * thousands of instances - the scale North Star.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -62,14 +62,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Mutual Fund Research' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Mutual Fund Research</h1>
-      <p class="lead">Picking a fund shouldn’t take longer than picking the stock it’s invested in.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Mutual Fund Research' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Mutual Fund Research</Fragment>
+    <Fragment slot="lead">Picking a fund shouldn’t take longer than picking the stock it’s invested in.</Fragment>
+  </Hero>
 
   <!-- ================= WHAT IS MUTUAL FUND RESEARCH ================= -->
   <section class="section stack sec-light" id="sec-what" data-section="what" style="gap:56px" data-enter="2">
@@ -100,8 +99,8 @@ const seo = {
         <p class="ct-sub">Log in to read the full review and our category rating, or open an account to get started.</p>
       </div>
       <div class="cta">
-        <a class="btn-gold" href="#">Login</a>
-        <a class="btn-outline" href="/open-demat-account">Open Investment Account</a>
+        <a class="btn btn-primary" href="#">Login</a>
+        <a class="btn btn-secondary" href="/open-demat-account">Open Investment Account</a>
       </div>
     </div>
   </section>
@@ -122,8 +121,8 @@ const seo = {
         <p class="ct-sub">Open your demat account and get free, unlimited access to every fund review, category comparison and portfolio check-in we publish.</p>
       </div>
       <div class="cta">
-        <a class="btn-gold" href="/open-demat-account">Open Account</a>
-        <a class="btn-outline" href="#">Login to Existing Account</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Account</a>
+        <a class="btn btn-secondary" href="#">Login to Existing Account</a>
       </div>
     </div>
   </section>
@@ -142,7 +141,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show which funds fit your goals - and what a research-led, direct-plan portfolio would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

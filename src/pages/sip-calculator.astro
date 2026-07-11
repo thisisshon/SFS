@@ -6,7 +6,8 @@
  * shared imports use ../../ depth.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -51,14 +52,14 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero hero-compact" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators' }, { name: 'SIP Calculator' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>SIP Calculator – Estimate Your <span class="g">Mutual Fund Returns Instantly</span></h1>
-      <p class="lead">A SIP Calculator estimates the maturity value of your monthly mutual fund investments using compound interest.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start SIP Now</a><a class="btn-ghost" href="/mutual-funds">Invest in Mutual Funds</a></div>
-    </div>
-  </section>
+  <Hero
+    compact
+    breadcrumb={[{ name: 'Calculators', href: '/calculators' }, { name: 'SIP Calculator' }]}
+    cta={{ label: 'Start SIP Now', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">SIP Calculator – Estimate Your <span class="g">Mutual Fund Returns Instantly</span></Fragment>
+    <Fragment slot="lead">A SIP Calculator estimates the maturity value of your monthly mutual fund investments using compound interest.</Fragment>
+  </Hero>
 
   <!-- ===== SIP Calculator ===== -->
   <section class="section stack sec-light" id="sec-calc" data-section="calc" data-enter="2" style="gap:24px">
@@ -215,7 +216,7 @@ const seo = {
       </div></div>
       <p class="sub-lead">The calculator performs this calculation automatically, so you only need to enter your SIP amount, tenure, and expected return.</p>
     </div>
-    <a class="btn-gold" href="#sec-calc" style="align-self:center">Try the Calculator Above</a>
+    <a class="btn btn-primary" href="#sec-calc" style="align-self:center">Try the Calculator Above</a>
   </section>
 
   <!-- ===== SIP Returns – Illustrative Scenarios ===== -->
@@ -233,7 +234,7 @@ const seo = {
       <div class="cell tb"><p class="k">₹25,000</p></div><div class="cell tb"><p class="v">25 years</p></div><div class="cell tb"><p class="v">12% p.a.</p></div><div class="cell tb"><p class="v">₹75,00,000</p></div><div class="cell tb"><p class="v">₹4,74,40,877</p></div>
     </div></div>
     <p class="sec-lead">Disclaimer: These values are illustrative. Mutual fund returns are market-linked and not guaranteed.</p>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Your SIP</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Your SIP</a>
   </section>
 
   <!-- ===== How to Use the SIP Calculator ===== -->
@@ -242,32 +243,13 @@ const seo = {
       <h2 class="sec-title">How to Use the SIP Calculator</h2>
       <p class="sec-lead">Follow these simple steps to estimate your SIP returns:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Enter your monthly SIP amount</h4><p>Add the amount you plan to invest every month.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Choose your investment duration</h4><p>Select how long you want to continue your SIP.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Enter expected annual return</h4><p>Use a realistic return assumption based on the mutual fund category.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>View your estimated corpus</h4><p>The calculator shows your invested amount, estimated returns, and maturity value.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Compare different scenarios</h4><p>Increase or decrease the SIP amount, tenure, or return rate to plan better.</p></div>
-      </div>
-    </div>
+    <StepsRow steps={[
+      { icon: 'rupee', title: 'Enter your monthly SIP amount', desc: 'Add the amount you plan to invest every month.' },
+      { icon: 'calendar', title: 'Choose your investment duration', desc: 'Select how long you want to continue your SIP.' },
+      { icon: 'percent', title: 'Enter expected annual return', desc: 'Use a realistic return assumption based on the mutual fund category.' },
+      { icon: 'growth', title: 'View your estimated corpus', desc: 'The calculator shows your invested amount, estimated returns, and maturity value.' },
+      { icon: 'compare', title: 'Compare different scenarios', desc: 'Increase or decrease the SIP amount, tenure, or return rate to plan better.' },
+    ]} />
     <p class="sec-lead" style="width:100%">Pro Tip: Use conservative return assumptions when planning important goals. Kindly note that equity mutual funds can deliver higher long-term growth but also carry higher short-term volatility.</p>
   </section>
 
@@ -284,7 +266,7 @@ const seo = {
       <div class="cell tb"><p class="k">10% Step-Up SIP</p></div><div class="cell tb"><p class="v">10 years</p></div><div class="cell tb"><p class="v">12% p.a.</p></div><div class="cell tb"><p class="v">₹9,56,245</p></div><div class="cell tb"><p class="v">₹16,87,163</p></div>
     </div></div>
     <p class="sec-lead">A Step-Up SIP can create a larger corpus because both your investment amount and compounding base increase over time.</p>
-    <a class="btn-gold" href="#sec-calc" style="align-self:center">Calculate Step-Up SIP</a>
+    <a class="btn btn-primary" href="#sec-calc" style="align-self:center">Calculate Step-Up SIP</a>
   </section>
 
   <!-- ===== Benefits of Investing via SIP ===== -->
@@ -348,32 +330,13 @@ const seo = {
       <h2 class="sec-title">How to Start a SIP</h2>
       <p class="sec-lead">You can start a SIP online in a few simple steps.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Download the Purse+ Mobile App</h4><p>Install the Purse+ app on your smartphone and sign in or create your account.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Open a Demat Account</h4><p>Complete the KYC process by submitting the required documents to open your Demat account.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Visit the NFO Section</h4><p>From the app dashboard, navigate to the NFO section to view the available New Fund Offers.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Select an NFO</h4><p>Review the available NFOs and choose the one that matches your investment goals.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Complete Your Investment</h4><p>Select Buy for a one-time investment or SIP for regular investments, enter the investment amount, and complete the transaction securely.</p></div>
-      </div>
-    </div>
+    <StepsRow steps={[
+      { icon: 'phone', title: 'Download the Purse+ Mobile App', desc: 'Install the Purse+ app on your smartphone and sign in or create your account.' },
+      { icon: 'account', title: 'Open a Demat Account', desc: 'Complete the KYC process by submitting the required documents to open your Demat account.' },
+      { icon: 'search', title: 'Visit the NFO Section', desc: 'From the app dashboard, navigate to the NFO section to view the available New Fund Offers.' },
+      { icon: 'select', title: 'Select an NFO', desc: 'Review the available NFOs and choose the one that matches your investment goals.' },
+      { icon: 'fund', title: 'Complete Your Investment', desc: 'Select Buy for a one-time investment or SIP for regular investments, enter the investment amount, and complete the transaction securely.' },
+    ]} />
   </section>
 
   <!-- ===== Factors Affecting SIP Returns ===== -->
@@ -456,7 +419,7 @@ const seo = {
       </div></div>
       <p class="sub-lead">Best for: Investors focused on long-term capital growth.</p>
     </div>
-    <a class="btn-gold" href="#sec-calc" style="align-self:center">Plan My Goal SIP</a>
+    <a class="btn btn-primary" href="#sec-calc" style="align-self:center">Plan My Goal SIP</a>
   </section>
 
   <!-- ===== General Questions ===== -->
@@ -465,7 +428,6 @@ const seo = {
       <div class="faq-left">
         <h2 class="faq-title">Got Questions?</h2>
         <FaqAccordion faqs={FAQS} />
-        <a class="btn-gold" href="/contact-us" style="align-self:flex-start;margin-top:24px">Still have questions? Chat with us</a>
       </div>
       <div class="faq-side">
         <div class="usr"><img src="/assets/user.svg" alt="" /></div>
@@ -474,7 +436,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -529,7 +491,7 @@ const seo = {
       </div>
     </div>
     <p class="sec-lead">SEBI Registration Number: INZ000178638</p>
-    <div class="cta" style="align-self:flex-start"><a class="btn-gold" href="/open-demat-account">Start SIP Now</a><a class="btn-ghost" href="/contact-us">Talk to an Expert</a></div>
+    <div class="cta" style="align-self:flex-start"><a class="btn btn-primary" href="/open-demat-account">Start SIP Now</a><a class="btn btn-secondary" href="/contact-us">Talk to an Expert</a></div>
   </section>
 </BaseLayout>
 

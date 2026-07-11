@@ -1,0 +1,798 @@
+---
+/**
+ * Proofkit Dashboard - the /reviewdash admin view.
+ *
+ * Client-rendered admin view of every comment across the site: where each sits
+ * on its page, who wrote it, when, open/resolved status, threaded replies, the
+ * per-session Master Log, and the AI change-prompt per entry. Reads the
+ * Cloudflare Worker (WORKER_URL) when set, else the localStorage demo store.
+ * Resolving/deleting happen here (admin side); the on-page overlay is add-only.
+ *
+ * Rendered by the src/pages/reviewdash.astro route shim, gated on PROOFKIT_ENABLED
+ * (./config.ts). Keeps its own admin-password gate so hitting /reviewdash
+ * directly still requires the password.
+ */
+---
+
+<section class="section rvd">
+  <div class="rvd-app" data-enter>
+    <!-- Brand top bar -->
+    <header class="rvd-top">
+      <div class="rvd-brand">
+        <svg class="rvd-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="#da291c"/>
+          <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
+        </svg>
+        <span class="rvd-word">ProofKit</span>
+        <span class="rvd-tag">Content Review | Shriram Financial Services</span>
+      </div>
+      <div class="rvd-actions">
+        <a class="rvd-btn rvd-btn-primary" href="/">Go to site</a>
+        <button id="rvd-refresh" class="rvd-btn" type="button">
+          <span class="rvd-refresh-ico">
+            <svg class="ico-sync" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            <svg class="ico-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span class="rvd-refresh-label">Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Headline -->
+    <div class="rvd-headband">
+      <h1 class="rvd-h1">Review Dashboard</h1>
+      <p class="rvd-lead">Every comment left across the site. Open a pin to see it in
+        context on the live page; resolve items here as you action them.</p>
+    </div>
+
+    <!-- Stat tiles -->
+    <div class="rvd-bar">
+      <div class="rvd-counts" id="rvd-counts"></div>
+    </div>
+
+    <div class="rvd-shell">
+      <aside class="rvd-side">
+        <button class="rvd-nav is-active" data-view="dash">Dashboard</button>
+        <button class="rvd-nav" data-view="log">Master Log</button>
+        <button class="rvd-nav" data-view="entries">All Entries</button>
+      </aside>
+
+      <div class="rvd-content">
+        <!-- Dashboard View: all current info -->
+        <div id="rvd-view-dash">
+          <div class="rvd-tabs" id="rvd-tabs" role="tablist">
+            <button class="rvd-tab is-active" data-tab="all">All</button>
+            <button class="rvd-tab" data-tab="page">By Page</button>
+            <button class="rvd-tab" data-tab="open">Open</button>
+            <button class="rvd-tab" data-tab="closed">Closed</button>
+          </div>
+          <div class="rvd-teamchips" id="rvd-teamchips"></div>
+          <div id="rvd-list"></div>
+        </div>
+
+        <!-- All Entries: tabular log (one row per change) with AI prompts -->
+        <div id="rvd-view-entries" hidden>
+          <div id="rvd-entries"></div>
+        </div>
+
+        <p id="rvd-empty" class="rvd-empty" hidden>No comments yet.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* is:global (namespaced under .rvd) because cards are injected via innerHTML at
+    runtime and would not receive Astro's scoped-style attribute. The .rvd
+    ancestor keeps these rules from leaking to any other page. */}
+<style is:global>
+  /* ===== ProofKit "Red Moon" theme — self-contained, no host tokens ===== */
+  .rvd, .rvd-login, .rvd-prompt{
+    --pk-canvas:#181818; --pk-card:#1e1e1e; --pk-elev:#242424; --pk-input:#141414;
+    --pk-red:#da291c; --pk-red-2:#b01e0a;
+    --pk-ink:#ffffff; --pk-body:#a7a7a7; --pk-muted:#7d7d7d; --pk-hair:#333333;
+    --pk-amber:#f5a623; --pk-green:#3ddc84; --pk-softred:#ef5b50;
+    --pk-font:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  /* page floor goes dark on the dashboard route only (this component ships only here) */
+  :root{color-scheme:dark}
+  body:has(.rvd){background:#141414}
+
+  .rvd{background:var(--pk-canvas);color:var(--pk-ink);font-family:var(--pk-font);
+    min-height:100vh;padding-top:40px;padding-bottom:96px}
+  .rvd *{box-sizing:border-box}
+  .rvd .rvd-app{max-width:1180px;margin:0 auto}
+  @keyframes pk-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes pk-spin{to{transform:rotate(360deg)}}
+  @keyframes pk-pop-in{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+  @keyframes pk-ring{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.22)}}
+
+  /* --- page entry: staggered cascade of the structural bands. `data-enter` also
+     opts .rvd-app out of the host's scroll-reveal (matches the site's entry idiom);
+     we neutralise the app-level anim and stagger its children instead. --- */
+  .rvd .rvd-app[data-enter]{animation:none}
+  .rvd .rvd-app > *{animation:pk-rise .55s cubic-bezier(.2,.7,.2,1) both}
+  .rvd .rvd-app > *:nth-child(1){animation-delay:.04s}
+  .rvd .rvd-app > *:nth-child(2){animation-delay:.12s}
+  .rvd .rvd-app > *:nth-child(3){animation-delay:.20s}
+  .rvd .rvd-app > *:nth-child(4){animation-delay:.28s}
+
+  /* --- content entry: injected tiles / cards / tables ease in whenever rendered
+     (initial load, filter switch, and every Refresh) --- */
+  .rvd #rvd-counts .rvd-count{animation:pk-rise .5s cubic-bezier(.2,.7,.2,1) both}
+  .rvd #rvd-counts .rvd-count:nth-child(2){animation-delay:.07s}
+  .rvd #rvd-counts .rvd-count:nth-child(3){animation-delay:.14s}
+  .rvd .rvd-grid > .rvd-item{animation:pk-rise .45s cubic-bezier(.2,.7,.2,1) both}
+  .rvd .rvd-grid > .rvd-item:nth-child(2){animation-delay:.04s}
+  .rvd .rvd-grid > .rvd-item:nth-child(3){animation-delay:.08s}
+  .rvd .rvd-grid > .rvd-item:nth-child(4){animation-delay:.12s}
+  .rvd .rvd-grid > .rvd-item:nth-child(5){animation-delay:.16s}
+  .rvd .rvd-grid > .rvd-item:nth-child(6){animation-delay:.20s}
+  .rvd .rvd-grid > .rvd-item:nth-child(7){animation-delay:.23s}
+  .rvd .rvd-grid > .rvd-item:nth-child(n+8){animation-delay:.26s}
+  .rvd .rvd-logwrap{animation:pk-rise .45s cubic-bezier(.2,.7,.2,1) both}
+  .rvd .rvd-entrieshead{animation:pk-rise .45s cubic-bezier(.2,.7,.2,1) both}
+
+  /* ---- brand top bar ---- */
+  .rvd .rvd-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding-bottom:22px;border-bottom:1px solid var(--pk-hair)}
+  .rvd .rvd-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+  .rvd .rvd-mark{display:block;flex:none}
+  .rvd .rvd-word{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--pk-ink)}
+  .rvd .rvd-tag{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--pk-muted);padding-left:12px;border-left:1px solid var(--pk-hair)}
+
+  /* ---- headline ---- */
+  .rvd .rvd-headband{padding:44px 0 4px}
+  .rvd .rvd-h1{margin:0;font-size:clamp(30px,4.4vw,44px);line-height:1.04;font-weight:500;
+    letter-spacing:-.02em;color:var(--pk-ink)}
+  .rvd .rvd-lead{margin:14px 0 0;max-width:640px;font-size:14px;line-height:1.6;color:var(--pk-body)}
+
+  /* ---- stat tiles (spec-cell) ---- */
+  .rvd .rvd-bar{margin:32px 0 8px}
+  .rvd #rvd-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+    background:var(--pk-hair);border:1px solid var(--pk-hair)}
+  .rvd #rvd-counts .rvd-count{background:var(--pk-canvas);padding:22px 24px;border-radius:0;
+    display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+    font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-muted)}
+  .rvd #rvd-counts .rvd-count b{font-size:clamp(30px,4vw,42px);font-weight:700;line-height:.95;
+    letter-spacing:-.02em;color:var(--pk-ink);font-variant-numeric:tabular-nums}
+  .rvd #rvd-counts .rvd-count:first-child b{color:var(--pk-red)}
+
+  /* ---- top-bar buttons: sharp corners, uppercase ---- */
+  .rvd .rvd-actions{display:flex;align-items:center;gap:10px}
+  /* secondary (default): ghost outline */
+  .rvd .rvd-btn{position:relative;height:40px;padding:0 20px;border:1px solid var(--pk-hair);background:transparent;
+    color:var(--pk-ink);font:700 12px/1 var(--pk-font);letter-spacing:.12em;text-transform:uppercase;
+    cursor:pointer;border-radius:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;
+    transition:border-color .15s,color .15s,background .15s}
+  /* primary: solid Rosso Corsa */
+  .rvd .rvd-btn.rvd-btn-primary{background:var(--pk-red);border-color:var(--pk-red);color:#fff}
+  /* Refresh micro-interaction: the two glyphs are stacked in the same 16px box and
+     cross-morph (opacity + spin-scale) so tick⇄refresh reads as one icon transforming. */
+  .rvd .rvd-refresh-ico{position:relative;display:inline-block;width:16px;height:16px;margin-right:8px}
+  .rvd .rvd-refresh-ico svg{position:absolute;inset:0;width:16px;height:16px;display:block;
+    transition:opacity .22s ease, transform .4s cubic-bezier(.4,.2,.2,1.35)}
+  .rvd .rvd-refresh-ico .ico-sync{opacity:1;transform:none}
+  .rvd .rvd-refresh-ico .ico-check{opacity:0;transform:scale(.3) rotate(-140deg)}
+  .rvd .rvd-btn.is-refreshing{color:var(--pk-body);border-color:var(--pk-hair)}
+  .rvd .rvd-btn.is-refreshing .ico-sync{animation:pk-spin .7s cubic-bezier(.5,.15,.3,1) infinite;transform-origin:50% 50%}
+  /* done: tick morphs in, sync spins out */
+  .rvd .rvd-btn.is-done{border-color:var(--pk-green);color:var(--pk-green)}
+  .rvd .rvd-btn.is-done .ico-sync{opacity:0;transform:scale(.3) rotate(140deg)}
+  .rvd .rvd-btn.is-done .ico-check{opacity:1;transform:none;color:var(--pk-green)}
+  /* reset: as is-done is removed the tick morphs back into the refresh icon (the
+     transitions above reverse), and a green ring pulses out around the button. */
+  .rvd .rvd-btn::after{content:"";position:absolute;inset:-1px;border:1px solid var(--pk-green);
+    border-radius:inherit;opacity:0;pointer-events:none}
+  .rvd .rvd-btn.is-resetting::after{animation:pk-ring .5s cubic-bezier(.3,.7,.3,1) both}
+
+  /* ---- left-sidebar shell ---- */
+  .rvd .rvd-shell{display:flex;gap:32px;align-items:flex-start;margin-top:28px}
+  .rvd .rvd-side{flex:none;width:184px;display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+  .rvd .rvd-nav{position:relative;text-align:left;height:46px;padding:0 16px;border:none;border-radius:0;
+    background:transparent;cursor:pointer;color:var(--pk-body);
+    font:600 12px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;transition:color .15s,background .15s}
+  .rvd .rvd-nav::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:2px;background:transparent;transition:background .15s}
+  .rvd .rvd-nav.is-active{color:var(--pk-ink);background:#202020}
+  .rvd .rvd-nav.is-active::before{background:var(--pk-red)}
+  .rvd .rvd-content{flex:1;min-width:0}
+
+  /* ---- tabs ---- */
+  .rvd .rvd-tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--pk-hair);margin-bottom:20px}
+  .rvd .rvd-tab{height:46px;padding:0 16px;border:none;background:none;cursor:pointer;margin-bottom:-1px;
+    font:600 12px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;color:var(--pk-muted);
+    border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+  .rvd .rvd-tab.is-active{color:var(--pk-ink);border-bottom-color:var(--pk-red)}
+
+  /* ---- team filter chips (colours set inline by JS) ---- */
+  .rvd .rvd-teamchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+  .rvd .rvd-tchip{height:30px;padding:0 14px;border:1.5px solid transparent;border-radius:9999px;cursor:pointer;
+    font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;transition:transform .12s}
+
+  /* ---- list ---- */
+  .rvd .rvd-grid{display:flex;flex-direction:column;gap:10px}
+  .rvd .rvd-group{margin-bottom:32px}
+  .rvd .rvd-gh{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;font-size:13px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--pk-body)}
+  .rvd .rvd-gh a{color:var(--pk-ink);text-decoration:none;border-bottom:1px solid var(--pk-hair)}
+  .rvd .rvd-gh span{font-size:12px;font-weight:500;color:var(--pk-muted);letter-spacing:0;text-transform:none}
+
+  /* ---- comment card ---- */
+  .rvd .rvd-item{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:0;
+    background:var(--pk-card);border:1px solid var(--pk-hair);border-left:2px solid var(--pk-hair);
+    transition:border-color .15s,background .15s}
+  .rvd .rvd-line{display:flex;align-items:flex-start;gap:14px}
+  .rvd .rvd-line .rvd-chip{flex:none;margin-top:1px}
+  .rvd .rvd-headline{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .rvd .rvd-comment{font-size:15px;font-weight:500;line-height:1.5;color:var(--pk-ink);
+    display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .rvd .rvd-comment .rvd-count{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--pk-muted)}
+  .rvd .rvd-snip{font-size:12px;color:var(--pk-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rvd .rvd-acts{flex:none;display:flex;align-items:center;gap:8px}
+
+  /* row action buttons */
+  .rvd .rvd-openpin{height:32px;padding:0 14px;border-radius:0;border:1px solid var(--pk-hair);background:transparent;
+    color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap;transition:border-color .15s,color .15s}
+  .rvd .rvd-a{height:32px;padding:0 14px;border-radius:0;border:1px solid var(--pk-hair);background:transparent;cursor:pointer;
+    white-space:nowrap;color:var(--pk-body);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;transition:border-color .15s,color .15s}
+  .rvd .rvd-del{height:32px;background:none;border:none;padding:0 6px;cursor:pointer;white-space:nowrap;
+    font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;color:var(--pk-muted);transition:color .15s}
+
+  /* status + team chips (badge pills) */
+  .rvd .rvd-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  .rvd .rvd-chip.open{background:#3a2a12;color:var(--pk-amber)}
+  .rvd .rvd-chip.resolved{background:#16281c;color:var(--pk-green)}
+  .rvd .rvd-team-chip{padding:4px 10px;border-radius:9999px;font-weight:700;font-size:10px;
+    text-transform:uppercase;letter-spacing:.08em}
+
+  /* "change to" callout */
+  .rvd .rvd-change{padding:12px 14px;border-radius:0;background:#241a10;border:1px solid #4a3417;border-left:2px solid var(--pk-amber)}
+  .rvd .rvd-change span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;
+    color:var(--pk-amber);letter-spacing:.12em;margin-bottom:4px}
+  .rvd .rvd-change div{white-space:pre-wrap;font-size:14px;line-height:1.5;color:var(--pk-ink)}
+
+  /* meta + replies */
+  .rvd .rvd-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .rvd .rvd-by{font-size:12px;font-weight:600;color:var(--pk-ink)}
+  .rvd .rvd-time{font-size:12px;color:var(--pk-muted)}
+  .rvd .rvd-slug{font-size:12px;font-weight:500;color:var(--pk-body);text-decoration:none;border-bottom:1px solid var(--pk-hair)}
+  .rvd .rvd-replies{display:flex;flex-direction:column;gap:12px;padding-left:16px;border-left:2px solid var(--pk-hair)}
+  .rvd .rvd-reply{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+  .rvd .rvd-rtxt{font-size:14px;line-height:1.5;color:var(--pk-ink)}
+  .rvd .rvd-rmeta{font-size:12px;color:var(--pk-muted)}
+
+  .rvd .rvd-empty{margin:64px 0;text-align:center;color:var(--pk-muted);font-size:14px;letter-spacing:.02em}
+
+  /* All Entries head + prompt trigger */
+  .rvd .rvd-entrieshead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+  .rvd .rvd-entrieshead h2{font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pk-ink)}
+  .rvd .rvd-prompt-btn{height:30px;padding:0 12px;border:1px solid var(--pk-hair);border-radius:0;white-space:nowrap;cursor:pointer;
+    background:transparent;color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;transition:border-color .15s,color .15s}
+
+  /* Master Log table */
+  .rvd .rvd-logwrap{overflow-x:auto;border:1px solid var(--pk-hair);border-radius:0}
+  .rvd .rvd-log{width:100%;border-collapse:collapse;font-size:13px;background:var(--pk-card)}
+  .rvd .rvd-log th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--pk-muted);padding:14px 16px;white-space:nowrap;border-bottom:1px solid var(--pk-hair);background:#161616}
+  .rvd .rvd-log td{padding:14px 16px;border-bottom:1px solid var(--pk-hair);vertical-align:middle;color:var(--pk-body)}
+  .rvd .rvd-log tbody tr:last-child td{border-bottom:none}
+  .rvd .rvd-logrow{cursor:pointer;transition:background .12s}
+  .rvd .rvd-log td.num{font-weight:700;text-align:center;color:var(--pk-ink);font-variant-numeric:tabular-nums}
+  .rvd .rvd-log .rvd-team-chip{margin-right:4px}
+  .rvd .rvd-back{margin-bottom:16px;background:none;border:none;cursor:pointer;padding:0;
+    font:700 11px/1 var(--pk-font);letter-spacing:.08em;text-transform:uppercase;color:var(--pk-body);transition:color .15s}
+  .rvd .rvd-detailhead{font-size:13px;color:var(--pk-muted);margin-bottom:20px}
+
+  /* ===== overlays (appended to <body>, outside .rvd) ===== */
+  .rvd-login,.rvd-prompt{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:rgba(8,8,8,.74);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font-family:var(--pk-font)}
+  .rvd-login-card,.rvd-prompt-card{animation:pk-pop .2s ease both}
+  @keyframes pk-pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+
+  /* login modal */
+  .rvd-login-card{width:380px;max-width:100%;background:var(--pk-card);color:var(--pk-ink);border:1px solid var(--pk-hair);
+    border-radius:12px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.6);font:400 14px/1.5 var(--pk-font);box-sizing:border-box}
+  .rvd-login-title{font-size:20px;font-weight:600;letter-spacing:-.01em}
+  .rvd-login-sub{font-size:13px;color:var(--pk-body);margin:8px 0 22px}
+  .rvd-login-input{width:100%;height:48px;padding:0 14px;border:1px solid var(--pk-hair);border-radius:4px;
+    font:inherit;color:var(--pk-ink);background:var(--pk-input);box-sizing:border-box}
+  .rvd-login-input::placeholder{color:var(--pk-muted)}
+  .rvd-login-input:focus{outline:none;border-color:var(--pk-red)}
+  .rvd-login-err{margin-top:10px;font-size:13px;font-weight:600;color:var(--pk-softred)}
+  .rvd-login-actions{display:flex;justify-content:flex-end;margin-top:22px}
+  .rvd-login-btn{height:44px;padding:0 26px;border:none;border-radius:0;background:var(--pk-red);color:#fff;
+    font:700 12px/1 var(--pk-font);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .15s}
+  .rvd-login-btn:disabled{opacity:.6;cursor:default}
+
+  /* AI change-prompt modal */
+  .rvd-prompt-card{width:600px;max-width:100%;max-height:calc(100vh - 32px);overflow:auto;background:var(--pk-card);
+    color:var(--pk-ink);border:1px solid var(--pk-hair);border-radius:12px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.6);
+    font:400 14px/1.5 var(--pk-font);box-sizing:border-box}
+  .rvd-prompt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+  .rvd-prompt-title{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pk-ink)}
+  .rvd-prompt-x{border:none;background:none;font-size:24px;line-height:1;cursor:pointer;color:var(--pk-muted);transition:color .15s}
+  .rvd-prompt-meta{font-size:12px;color:var(--pk-muted);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .rvd-prompt-meta .rvd-slug{font-size:12px;font-weight:500;color:var(--pk-body);text-decoration:none;border-bottom:1px solid var(--pk-hair)}
+  .rvd-prompt-box{white-space:pre-wrap;background:var(--pk-input);border:1px solid var(--pk-hair);border-left:2px solid var(--pk-red);
+    border-radius:0;padding:18px;font:400 13px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;color:#e8e8e8}
+  .rvd-prompt-gen{color:var(--pk-muted);font-style:italic;font-family:var(--pk-font)}
+  .rvd-prompt-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+  .rvd-prompt-copy{height:42px;padding:0 20px;border:none;border-radius:0;background:var(--pk-red);color:#fff;
+    font:700 12px/1 var(--pk-font);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .15s}
+
+  /* ===== responsive ===== */
+  @media (max-width:768px){
+    .rvd .rvd-shell{flex-direction:column;gap:20px}
+    .rvd .rvd-side{flex-direction:row;width:auto;position:static;flex-wrap:wrap}
+  }
+  @media (max-width:560px){
+    .rvd #rvd-counts{grid-template-columns:1fr}
+    .rvd .rvd-line{flex-wrap:wrap}
+    .rvd .rvd-acts{width:100%}
+  }
+
+  /* ===== hover (desktop only, gated) ===== */
+  @media (min-width:1024px) and (hover:hover){
+    .rvd .rvd-btn:not(.rvd-btn-primary):hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd .rvd-btn-primary:hover{background:var(--pk-red-2);border-color:var(--pk-red-2);color:#fff}
+    .rvd .rvd-nav:hover{color:var(--pk-ink)}
+    .rvd .rvd-tab:hover{color:var(--pk-ink)}
+    .rvd .rvd-tchip:hover{transform:translateY(-1px)}
+    .rvd .rvd-item:hover{border-left-color:var(--pk-red);background:var(--pk-elev)}
+    .rvd .rvd-openpin:hover,.rvd .rvd-prompt-btn:hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd .rvd-a:hover{border-color:var(--pk-ink);color:var(--pk-ink)}
+    .rvd .rvd-del:hover{color:var(--pk-softred)}
+    .rvd .rvd-slug:hover{color:var(--pk-red);border-color:var(--pk-red)}
+    .rvd .rvd-logrow:hover{background:var(--pk-elev)}
+    .rvd .rvd-back:hover{color:var(--pk-red)}
+    .rvd-login-btn:hover,.rvd-prompt-copy:hover{background:var(--pk-red-2)}
+    .rvd-prompt-x:hover{color:var(--pk-ink)}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .rvd .rvd-app > *,.rvd #rvd-counts .rvd-count,.rvd .rvd-grid > .rvd-item,.rvd .rvd-logwrap,
+    .rvd .rvd-entrieshead,.rvd .rvd-btn.is-refreshing .ico-sync,.rvd .rvd-btn.is-resetting::after,
+    .rvd-login-card,.rvd-prompt-card{animation:none !important}
+    .rvd .rvd-refresh-ico svg{transition:none !important}
+  }
+</style>
+
+<script>
+  import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword } from './config';
+  (() => {
+    if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
+    const LOCAL = !WORKER_URL;
+    const PASS_KEY = 'reviewAdminPass'; // admin password for the dashboard (separate from reviewer Team ID)
+
+    async function apiFetch(path, opts = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      const pass = sessionStorage.getItem(PASS_KEY);
+      if (pass) headers['X-Review-Pass'] = pass;
+      const res = await fetch(WORKER_URL + path, { ...opts, headers });
+      if (res.status === 401) { sessionStorage.removeItem(PASS_KEY); throw new Error('unauthorized'); }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+    function localAll() {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('rvc:')) { try { out.push(...JSON.parse(localStorage.getItem(k) || '[]')); } catch {} }
+      }
+      out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      return out;
+    }
+    function localResolve(rec, status) {
+      const key = 'rvc:' + rec.page.path;
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const r = arr.find((x) => x.id === rec.id); if (r) r.status = status;
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+    function localDelete(rec) {
+      const key = 'rvc:' + rec.page.path;
+      let arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr = arr.filter((r) => r.id !== rec.id && r.parentId !== rec.id); // root + replies
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+    // No-Worker gate (static/live included): the local store has no server, so check
+    // the session password against the configured review password (hash-compared).
+    // Throws the same 'unauthorized' the Worker would, so login/init handle it alike.
+    const localGuard = async () => {
+      if (!(await checkReviewPassword(sessionStorage.getItem(PASS_KEY) || ''))) throw new Error('unauthorized');
+    };
+    const store = LOCAL
+      ? {
+          all: async () => { await localGuard(); return localAll(); },
+          resolve: async (rec, status) => { await localGuard(); localResolve(rec, status); return { ...rec, status }; },
+          del: async (rec) => { await localGuard(); localDelete(rec); return { ok: true }; },
+        }
+      : {
+          all: () => apiFetch('/comments'),
+          resolve: (rec, status) => apiFetch('/resolve', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, status }) }),
+          del: (rec) => apiFetch('/delete', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path }) }),
+        };
+
+    let loginEl = null, refreshTimer = null;
+
+    async function loadData() { all = await store.all(); counts(); render(); }
+
+    // Keep the review page current: submits land in the DB instantly; poll so the
+    // dashboard reflects new comments without a manual Refresh.
+    function startAutoRefresh() {
+      if (refreshTimer) return;
+      refreshTimer = setInterval(() => { if (!document.hidden) loadData().catch(() => {}); }, 30000);
+      window.addEventListener('focus', () => loadData().catch(() => {}));
+    }
+
+    function showLogin() {
+      if (!loginEl) {
+        loginEl = document.createElement('div'); loginEl.className = 'rvd-login';
+        loginEl.innerHTML =
+          '<div class="rvd-login-card" role="dialog" aria-modal="true">' +
+          '<div class="rvd-login-title">Content Review</div>' +
+          '<div class="rvd-login-sub">Enter the review password to open the dashboard.</div>' +
+          '<input class="rvd-login-input" type="password" placeholder="Password" autocomplete="current-password">' +
+          '<div class="rvd-login-err" hidden></div>' +
+          '<div class="rvd-login-actions"><button type="button" class="rvd-login-btn">Login</button></div>' +
+          '</div>';
+        const input = loginEl.querySelector('.rvd-login-input');
+        const go = () => tryLogin(input);
+        loginEl.querySelector('.rvd-login-btn').addEventListener('click', go);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      }
+      document.body.appendChild(loginEl);
+      loginEl.querySelector('.rvd-login-input').focus();
+    }
+    function hideLogin() { loginEl && loginEl.remove(); }
+
+    async function tryLogin(input) {
+      const id = input.value.trim(); if (!id) { input.focus(); return; }
+      const err = loginEl.querySelector('.rvd-login-err');
+      const btn = loginEl.querySelector('.rvd-login-btn');
+      sessionStorage.setItem(PASS_KEY, id);
+      btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
+      try { await loadData(); hideLogin(); startAutoRefresh(); }
+      catch (e) {
+        sessionStorage.removeItem(PASS_KEY);
+        btn.disabled = false; btn.textContent = 'Login';
+        err.textContent = e.message === 'unauthorized' ? 'Incorrect password. Please try again.' : ('Could not connect — ' + e.message);
+        err.hidden = false; input.focus(); input.select();
+      }
+    }
+
+    function init() {
+      if (sessionStorage.getItem(PASS_KEY)) {
+        loadData().then(startAutoRefresh).catch((e) => {
+          if (e.message === 'unauthorized') { sessionStorage.removeItem(PASS_KEY); showLogin(); }
+          else { $('#rvd-empty').hidden = false; $('#rvd-empty').textContent = 'Could not load — ' + e.message; }
+        });
+      } else showLogin();
+    }
+
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; };
+    const fmt = (iso) => { try { return new Date(iso).toLocaleString(); } catch { return iso; } };
+    // Dark-mode chip colours derived from each team's identity hue (TEAM_COLORS'
+    // saturated ink value), blended toward the canvas for a muted dark fill + a
+    // brightened readable label — instead of the bright light pastels used on-page.
+    const mix = (a, b, t) => {
+      const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+      const [ar, ag, ab] = p(a), [br, bg, bb] = p(b);
+      const ch = (x, y) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
+      return '#' + ch(ar, br) + ch(ag, bg) + ch(ab, bb);
+    };
+    const teamStyle = (team) => {
+      const accent = (TEAM_COLORS[team] || ['#888', '#888'])[1];
+      return { bg: mix(accent, '#181818', 0.82), fg: mix(accent, '#ffffff', 0.55), bd: mix(accent, '#181818', 0.5) };
+    };
+    const teamChip = (team) => {
+      if (!team) return '';
+      const s = teamStyle(team);
+      return `<span class="rvd-team-chip" style="background:${s.bg};color:${s.fg};border:1px solid ${s.bd}">${esc(team)}</span>`;
+    };
+    let all = [], tab = 'all', teamFilter = '', logSession = null, view = 'dash';
+
+    // group every comment/reply by its review session (one sitting)
+    function sessions() {
+      const map = new Map();
+      all.forEach((c) => {
+        const sid = c.sessionId || '(legacy)';
+        if (!map.has(sid)) map.set(sid, []);
+        map.get(sid).push(c);
+      });
+      return [...map.entries()].map(([sid, items]) => {
+        const times = items.map((i) => i.createdAt).sort();
+        const roots = items.filter((i) => !i.parentId);
+        return {
+          sid, items,
+          start: times[0], end: times[times.length - 1],
+          names: [...new Set(items.map((i) => i.name).filter(Boolean))],
+          teams: [...new Set(items.map((i) => i.team).filter(Boolean))],
+          pages: [...new Set(items.map((i) => i.page.path))],
+          changes: roots.length,
+          total: items.length,
+          open: roots.filter((r) => r.status !== 'resolved').length,
+        };
+      }).sort((a, b) => (a.start < b.start ? 1 : -1)); // newest session first
+    }
+
+    function buildTeamChips() {
+      const one = (label, team) => {
+        const active = teamFilter === team;
+        let style;
+        if (team) { const s = teamStyle(team); style = `background:${s.bg};color:${s.fg};border-color:${active ? '#da291c' : s.bd}`; }
+        else style = active ? 'background:#da291c;color:#fff;border-color:#da291c'
+                            : 'background:#242424;color:#c9c9c9;border-color:#333';
+        return `<button class="rvd-tchip" data-team="${esc(team)}" style="${style}">${esc(label)}</button>`;
+      };
+      $('#rvd-teamchips').innerHTML = one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
+      $('#rvd-teamchips').querySelectorAll('.rvd-tchip').forEach((b) => {
+        b.addEventListener('click', () => { teamFilter = b.dataset.team; buildTeamChips(); render(); });
+      });
+    }
+    const roots = () => all.filter((c) => !c.parentId);
+    const repliesOf = (id) => all.filter((c) => c.parentId === id).sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+
+    function counts() {
+      const rs = roots();
+      const open = rs.filter((c) => c.status !== 'resolved').length;
+      $('#rvd-counts').innerHTML =
+        `<span class="rvd-count"><b>${open}</b> open</span>` +
+        `<span class="rvd-count"><b>${rs.length}</b> changes</span>` +
+        `<span class="rvd-count"><b>${new Set(rs.map((c) => c.page.path)).size}</b> pages</span>`;
+    }
+
+    function card(root) {
+      const a = root.anchor || {};
+      const resolved = root.status === 'resolved';
+      const replies = repliesOf(root.id);
+      const repliesHtml = replies.length
+        ? `<div class="rvd-replies">` + replies.map((r) =>
+            `<div class="rvd-reply">${teamChip(r.team)}<div class="rvd-rtxt">${esc(r.comment)}</div>` +
+            (r.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(r.changeTo)}</div></div>` : '') +
+            `<div class="rvd-rmeta">${esc(r.name || 'anonymous')} · ${esc(fmt(r.createdAt))}</div></div>`).join('') + `</div>`
+        : '';
+      const meta =
+        `<div class="rvd-meta">` +
+          teamChip(root.team) +
+          `<span class="rvd-by">${esc(root.name || 'anonymous')}</span>` +
+          `<a class="rvd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(root.page.path)}</a>` +
+          `<span class="rvd-time">${esc(fmt(root.createdAt))}</span>` +
+        `</div>`;
+      return (
+        `<article class="rvd-item">` +
+          `<div class="rvd-line">` +
+            `<span class="rvd-chip ${resolved ? 'resolved' : 'open'}">${resolved ? 'Resolved' : 'Open'}</span>` +
+            `<div class="rvd-headline">` +
+              `<div class="rvd-comment">${esc(root.comment)}` +
+                (replies.length ? `<span class="rvd-count">${replies.length + 1} comments</span>` : '') + `</div>` +
+              (a.snippet ? `<div class="rvd-snip">on “${esc(a.snippet)}”</div>` : '') +
+            `</div>` +
+            `<div class="rvd-acts">` +
+              `<a class="rvd-openpin" href="${esc(root.page.path)}?review=1#c=${esc(root.id)}" target="_blank" rel="noopener">Open Pin</a>` +
+              `<button class="rvd-a resolve" data-id="${esc(root.id)}">${resolved ? 'Mark as Open' : 'Mark as Resolved'}</button>` +
+              `<button class="rvd-del delete" data-id="${esc(root.id)}">Delete</button>` +
+            `</div>` +
+          `</div>` +
+          (root.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(root.changeTo)}</div></div>` : '') +
+          meta +
+          repliesHtml +
+        `</article>`
+      );
+    }
+
+    function renderLog() {
+      const ss = sessions();
+      $('#rvd-empty').hidden = ss.length > 0;
+      $('#rvd-list').innerHTML = !ss.length ? '' :
+        `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
+        `<th>When</th><th>Reviewer</th><th>Team</th><th>Changes</th><th>Comments</th><th>Pages</th><th>Open</th>` +
+        `</tr></thead><tbody>` +
+        ss.map((s) =>
+          `<tr class="rvd-logrow" data-sid="${esc(s.sid)}">` +
+            `<td>${esc(fmt(s.start))}</td>` +
+            `<td>${esc(s.names.join(', ') || '—')}</td>` +
+            `<td>${s.teams.map(teamChip).join('') || '—'}</td>` +
+            `<td class="num">${s.changes}</td>` +
+            `<td class="num">${s.total}</td>` +
+            `<td class="num">${s.pages.length}</td>` +
+            `<td class="num">${s.open}</td>` +
+          `</tr>`).join('') +
+        `</tbody></table></div>`;
+      $('#rvd-list').querySelectorAll('.rvd-logrow').forEach((tr) =>
+        tr.addEventListener('click', () => { logSession = tr.dataset.sid; render(); }));
+    }
+
+    function logItem(c) {
+      const a = c.anchor || {};
+      const isReply = !!c.parentId;
+      return `<article class="rvd-item">` +
+        `<div class="rvd-line">` +
+          (isReply ? `<span class="rvd-chip resolved">Reply</span>`
+                   : `<span class="rvd-chip ${c.status === 'resolved' ? 'resolved' : 'open'}">${c.status === 'resolved' ? 'Resolved' : 'Open'}</span>`) +
+          `<div class="rvd-headline"><div class="rvd-comment">${esc(c.comment)}</div>` +
+            (a.snippet ? `<div class="rvd-snip">on “${esc(a.snippet)}”</div>` : '') + `</div>` +
+          `<a class="rvd-openpin" href="${esc(c.page.path)}?review=1#c=${esc(c.parentId || c.id)}" target="_blank" rel="noopener">Open Pin</a>` +
+        `</div>` +
+        (c.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(c.changeTo)}</div></div>` : '') +
+        `<div class="rvd-meta">${teamChip(c.team)}<span class="rvd-by">${esc(c.name || 'anonymous')}</span>` +
+          `<a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(c.page.path)}</a>` +
+          `<span class="rvd-time">${esc(fmt(c.createdAt))}</span></div>` +
+      `</article>`;
+    }
+
+    function renderSessionDetail() {
+      const s = sessions().find((x) => x.sid === logSession);
+      if (!s) { logSession = null; return renderLog(); }
+      $('#rvd-empty').hidden = true;
+      const items = s.items.slice().sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      $('#rvd-list').innerHTML =
+        `<button class="rvd-back" id="rvd-back">← Back to log</button>` +
+        `<div class="rvd-detailhead">Session · ${esc(fmt(s.start))} · ${esc(s.names.join(', ') || 'anonymous')}` +
+          ` · ${s.total} comment${s.total > 1 ? 's' : ''} across ${s.pages.length} page${s.pages.length > 1 ? 's' : ''}</div>` +
+        `<div class="rvd-grid">${items.map(logItem).join('')}</div>`;
+      $('#rvd-back').addEventListener('click', () => { logSession = null; render(); });
+    }
+
+    // ---- All Entries: tabular log of every change, with the AI prompt ----
+    function renderEntries() {
+      const rs = roots();
+      $('#rvd-empty').hidden = rs.length > 0;
+      if (!rs.length) { $('#rvd-entries').innerHTML = ''; return; }
+      $('#rvd-entries').innerHTML =
+        `<div class="rvd-entrieshead"><h2>All Entries <span style="font-weight:500;color:var(--color-text-secondary,#6b6b6b)">(${rs.length})</span></h2></div>` +
+        `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
+        `<th>When</th><th>Page</th><th>Element</th><th>Team</th><th>Reviewer</th><th>Status</th><th>Prompt</th>` +
+        `</tr></thead><tbody>` +
+        rs.map((c) => {
+          const a = c.anchor || {};
+          const el = a.snippet ? '“' + esc(a.snippet.slice(0, 40)) + '”' : esc(a.tag || '—');
+          const resolved = c.status === 'resolved';
+          return `<tr>` +
+            `<td>${esc(fmt(c.createdAt))}</td>` +
+            `<td><a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(c.page.path)}</a></td>` +
+            `<td>${el}</td>` +
+            `<td>${teamChip(c.team) || '—'}</td>` +
+            `<td>${esc(c.name || 'anonymous')}</td>` +
+            `<td><span class="rvd-chip ${resolved ? 'resolved' : 'open'}">${resolved ? 'Resolved' : 'Open'}</span></td>` +
+            `<td><button class="rvd-prompt-btn" data-id="${esc(c.id)}">View prompt</button></td>` +
+          `</tr>`;
+        }).join('') +
+        `</tbody></table></div>`;
+      $('#rvd-entries').querySelectorAll('.rvd-prompt-btn').forEach((b) =>
+        b.addEventListener('click', () => openPrompt(all.find((x) => x.id === b.dataset.id))));
+    }
+
+    // AI change-prompt overlay (precise, ready-to-hand-to-a-dev instruction)
+    function openPrompt(c) {
+      if (!c) return;
+      const a = c.anchor || {};
+      const el = document.createElement('div'); el.className = 'rvd-prompt';
+      const body = c.aiPrompt
+        ? `<div class="rvd-prompt-box">${esc(c.aiPrompt)}</div>` +
+          `<div class="rvd-prompt-actions"><button class="rvd-prompt-copy">Copy prompt</button></div>`
+        : `<div class="rvd-prompt-box rvd-prompt-gen">Generating the AI prompt — usually ready within seconds of submit. This view auto-refreshes; reopen in a moment.</div>`;
+      el.innerHTML =
+        `<div class="rvd-prompt-card">` +
+          `<div class="rvd-prompt-head"><div class="rvd-prompt-title">AI Change Prompt</div>` +
+          `<button class="rvd-prompt-x" aria-label="Close">×</button></div>` +
+          `<div class="rvd-prompt-meta">${teamChip(c.team)}<span>${esc(c.name || 'anonymous')}</span><span>·</span>` +
+            `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">${esc(c.page.path)}</a>` +
+            (a.tag ? `<span>·</span><span>${esc(a.tag)}</span>` : '') + `</div>` +
+          body +
+        `</div>`;
+      document.body.appendChild(el);
+      const close = () => el.remove();
+      el.querySelector('.rvd-prompt-x').addEventListener('click', close);
+      el.addEventListener('click', (e) => { if (e.target === el) close(); });
+      const copy = el.querySelector('.rvd-prompt-copy');
+      if (copy) copy.addEventListener('click', () => {
+        navigator.clipboard.writeText(c.aiPrompt || '').then(() => {
+          copy.textContent = 'Copied ✓'; setTimeout(() => { copy.textContent = 'Copy prompt'; }, 1500);
+        }).catch(() => {});
+      });
+    }
+
+    function render() {
+      // left-panel view: Dashboard / Master Log / All Entries
+      $('#rvd-view-entries').hidden = view !== 'entries';
+      $('#rvd-view-dash').hidden = view === 'entries'; // dash container also hosts the log list
+      if (view === 'entries') { renderEntries(); return; }
+
+      // Master Log lives in the left panel now: hide the dash tabs + team chips.
+      if (view === 'log') {
+        $('#rvd-tabs').style.display = 'none';
+        $('#rvd-teamchips').style.display = 'none';
+        logSession ? renderSessionDetail() : renderLog();
+        return;
+      }
+      $('#rvd-tabs').style.display = 'flex';
+      $('#rvd-teamchips').style.display = 'flex';
+
+      const host = $('#rvd-list');
+      let rs = roots();
+      if (tab === 'open') rs = rs.filter((c) => c.status !== 'resolved');
+      if (tab === 'closed') rs = rs.filter((c) => c.status === 'resolved');
+      if (teamFilter) rs = rs.filter((c) => c.team === teamFilter);
+
+      if (tab === 'page') {
+        const paths = [...new Set(rs.map((c) => c.page.path))].sort();
+        host.innerHTML = paths.map((p) => {
+          const group = rs.filter((c) => c.page.path === p);
+          return `<div class="rvd-group"><h2 class="rvd-gh">` +
+            `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(p)}</a><span>${group.length} change${group.length > 1 ? 's' : ''}</span></h2>` +
+            `<div class="rvd-grid">${group.map(card).join('')}</div></div>`;
+        }).join('');
+      } else {
+        host.innerHTML = `<div class="rvd-grid">${rs.map(card).join('')}</div>`;
+      }
+      $('#rvd-empty').hidden = rs.length > 0;
+      bindActions();
+    }
+
+    function bindActions() {
+      $('#rvd-list').querySelectorAll('.resolve').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const rec = all.find((c) => c.id === btn.dataset.id); if (!rec) return;
+          const next = rec.status === 'resolved' ? 'open' : 'resolved';
+          btn.disabled = true;
+          try { const updated = await store.resolve(rec, next); rec.status = updated.status; counts(); render(); }
+          catch (e) { btn.disabled = false; alert('Could not update — ' + e.message); }
+        });
+      });
+      $('#rvd-list').querySelectorAll('.delete').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const rec = all.find((c) => c.id === btn.dataset.id); if (!rec) return;
+          if (!confirm('Delete this whole thread (comment + all replies)? This cannot be undone.')) return;
+          btn.disabled = true;
+          try {
+            await store.del(rec);
+            all = all.filter((c) => c.id !== rec.id && c.parentId !== rec.id);
+            counts(); render();
+          } catch (e) { btn.disabled = false; alert('Could not delete — ' + e.message); }
+        });
+      });
+    }
+
+    document.querySelector('.rvd-side').addEventListener('click', (e) => {
+      const b = e.target.closest('.rvd-nav'); if (!b) return;
+      view = b.dataset.view; logSession = null; // reset log drill-down when switching views
+      document.querySelectorAll('.rvd-nav').forEach((n) => n.classList.toggle('is-active', n === b));
+      render();
+    });
+
+    $('#rvd-tabs').addEventListener('click', (e) => {
+      const b = e.target.closest('.rvd-tab'); if (!b) return;
+      tab = b.dataset.tab; logSession = null;
+      $('#rvd-tabs').querySelectorAll('.rvd-tab').forEach((t) => t.classList.toggle('is-active', t === b));
+      render();
+    });
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    $('#rvd-refresh').addEventListener('click', async () => {
+      const btn = $('#rvd-refresh');
+      if (btn.classList.contains('is-refreshing')) return; // ignore rapid re-clicks
+      btn.classList.remove('is-done');
+      btn.classList.add('is-refreshing');
+      const t0 = Date.now();
+      try {
+        await loadData();
+        await wait(Math.max(0, 650 - (Date.now() - t0))); // keep the spin visible for instant local loads
+        btn.classList.remove('is-refreshing');
+        btn.classList.add('is-done');       // tick morphs in
+        setTimeout(() => {
+          btn.classList.add('is-resetting');  // ring pulses out + tick morphs back to refresh
+          btn.classList.remove('is-done');
+          setTimeout(() => btn.classList.remove('is-resetting'), 550);
+        }, 1100);
+      } catch (e) {
+        btn.classList.remove('is-refreshing');
+        alert('Could not refresh — ' + e.message);
+      }
+    });
+    buildTeamChips();
+    init();
+  })();
+</script>

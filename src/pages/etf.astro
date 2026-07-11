@@ -8,7 +8,9 @@
  * .cat-grid, .bullets, check-cards and FaqAccordion).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -53,14 +55,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'ETFs' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>ETF in India — Trade Smarter, Invest Wiser</h1>
-      <p class="lead">Invest in ETFs across equity, gold, debt, and thematic categories, with live prices, zero account-opening charges, and expert support from Shriram Financial Services. Whether you are just starting or scaling a portfolio, your ETF journey begins here.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start Investing</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'ETFs' }]}
+    cta={{ label: 'Start Investing', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">ETF in India — Trade Smarter, Invest Wiser</Fragment>
+    <Fragment slot="lead">Invest in ETFs across equity, gold, debt, and thematic categories, with live prices, zero account-opening charges, and expert support from Shriram Financial Services. Whether you are just starting or scaling a portfolio, your ETF journey begins here.</Fragment>
+  </Hero>
 
   <!-- ================= EXCHANGE-TRADED FUNDS: DIVERSIFIED INVESTING ================= -->
   <section class="section stack sec-light" id="sec-intro" data-section="intro" style="gap:56px;justify-content:center" data-enter="2">
@@ -86,32 +87,15 @@ const seo = {
       <p class="sec-lead" style="color:var(--color-text-secondary)">An ETF maintains price efficiency and liquidity through a sophisticated 5-step creation and redemption mechanism involving Authorised Participants (APs), the AMC, and the stock exchange. This process prevents the ETF's market price from drifting far from the real value of its underlying assets.</p>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Here is how the process works, step by step:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Authorised Participant (AP) Assembles the Basket</h4><p>The AP, typically a large financial institution or market maker, purchases a pre-defined basket of securities that exactly mirrors the ETF's target index (for example, all 50 stocks of the Nifty 50 in their exact index weights).</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Units Are Created with the AMC</h4><p>The AP delivers this security basket to the Asset Management Company (AMC), which in turn issues a block of new ETF units, known as a Creation Unit, to the AP.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>ETF Units Are Listed on the Exchange</h4><p>These newly issued ETF units are listed on NSE and BSE, where retail and institutional investors can buy and sell them throughout market hours at live, exchange-quoted prices.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Investors Buy and Sell on Exchange</h4><p>An investor with a demat account purchases ETF units on the exchange through the broker (Shriram Financial Services) at the prevailing market price.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Redemption When Required</h4><p>When the AP wishes to exit, it accumulates a sufficient block of ETF units, returns them to the AMC, and gets back the underlying basket of securities. This mechanism keeps the ETF's market price aligned with its iNAV — the real-time estimated value of the underlying portfolio.</p></div>
-      </div>
-    </div>
+    <StepsRow
+      steps={[
+        { icon: 'portfolio', title: 'Authorised Participant (AP) Assembles the Basket', desc: "The AP, typically a large financial institution or market maker, purchases a pre-defined basket of securities that exactly mirrors the ETF's target index (for example, all 50 stocks of the Nifty 50 in their exact index weights)." },
+        { icon: 'coins', title: 'Units Are Created with the AMC', desc: 'The AP delivers this security basket to the Asset Management Company (AMC), which in turn issues a block of new ETF units, known as a Creation Unit, to the AP.' },
+        { icon: 'chart', title: 'ETF Units Are Listed on the Exchange', desc: 'These newly issued ETF units are listed on NSE and BSE, where retail and institutional investors can buy and sell them throughout market hours at live, exchange-quoted prices.' },
+        { icon: 'trade', title: 'Investors Buy and Sell on Exchange', desc: 'An investor with a demat account purchases ETF units on the exchange through the broker (Shriram Financial Services) at the prevailing market price.' },
+        { icon: 'withdraw', title: 'Redemption When Required', desc: "When the AP wishes to exit, it accumulates a sufficient block of ETF units, returns them to the AMC, and gets back the underlying basket of securities. This mechanism keeps the ETF's market price aligned with its iNAV — the real-time estimated value of the underlying portfolio." },
+      ]}
+    />
   </section>
 
   <!-- ================= TYPES OF ETFs AVAILABLE IN INDIA ================= -->
@@ -120,7 +104,7 @@ const seo = {
       <h2 class="sec-title">What are the Types of ETFs Available in India?</h2>
       <p class="sec-lead">India's Exchange-Traded Fund market has evolved substantially since the country's first ETF. Today, investors can access seven distinct categories of ETFs on NSE and BSE, spanning asset classes, geographies, and investment strategies. Here is a definitive overview of every type of ETF available in India:</p>
     </div>
-    <div class="cat-grid cat-grid-3" data-reveal-row>
+    <div class="etf-bento" data-reveal-row>
       <div class="cat"><h4>Equity ETF</h4><p>Tracks a stock market index such as the Nifty 50 or Sensex, giving you exposure to a diversified basket of large, liquid companies in a single trade.</p></div>
       <div class="cat"><h4>Gold &amp; Silver ETF</h4><p>Commodity-based ETFs backed by physical gold or silver held in secure vaults, letting you invest in precious metals without the storage, purity, or making-charge concerns of physical bullion.</p></div>
       <div class="cat"><h4>Debt/Bond ETF</h4><p>Invests in government securities, treasury bills, or corporate bonds, offering relatively stable, income-oriented exposure to fixed income markets.</p></div>
@@ -175,39 +159,19 @@ const seo = {
       <p class="sec-lead">Buying an ETF in India requires a demat account and a trading account with a SEBI-registered broker. Shriram Financial Services makes the entire process fully digital, via the Antara app, and completes onboarding in a few minutes.</p>
       <p class="sec-lead">Here is how to invest in ETFs with Shriram Financial Services:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Open a demat account via Antara</h4><p>Visit the Shriram Financial Services website or download the Antara app. Complete your KYC using PAN, Aadhaar, and bank details — the process typically takes only a few minutes.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Activate your trading account</h4><p>Complete the online verification process to link your bank account and activate your real-time exchange trading access. Add investment capital to your account instantly using UPI or Net Banking,</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Search for the ETF ticker on NSE/BSE</h4><p>Search for your preferred ETF by name or ticker symbol (e.g., 'NIFTYBEES' for the Nippon Nifty 50 ETF on NSE).</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Place a buy order</h4><p>Choose a market order (executes at the current price) or a limit order (executes only at your specified price), and enter the quantity.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Units are credited T+1</h4><p>Once your order is executed, ETF units are credited to your demat account on a T+1 settlement basis, in line with exchange rules.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">6</div>
-        <div class="st-body"><h4>Track your holdings via the app</h4><p>Monitor live prices, NAV, and portfolio performance anytime through the Antara Mobile app.</p></div>
-      </div>
-    </div>
+    <StepsRows
+      perRow={3}
+      steps={[
+        { icon: 'account', title: 'Open a demat account via Antara', desc: 'Visit the Shriram Financial Services website or download the Antara app. Complete your KYC using PAN, Aadhaar, and bank details — the process typically takes only a few minutes.' },
+        { icon: 'activate', title: 'Activate your trading account', desc: 'Complete the online verification process to link your bank account and activate your real-time exchange trading access. Add investment capital to your account instantly using UPI or Net Banking,' },
+        { icon: 'search', title: 'Search for the ETF ticker on NSE/BSE', desc: "Search for your preferred ETF by name or ticker symbol (e.g., 'NIFTYBEES' for the Nippon Nifty 50 ETF on NSE)." },
+        { icon: 'trade', title: 'Place a buy order', desc: 'Choose a market order (executes at the current price) or a limit order (executes only at your specified price), and enter the quantity.' },
+        { icon: 'settle', title: 'Units are credited T+1', desc: 'Once your order is executed, ETF units are credited to your demat account on a T+1 settlement basis, in line with exchange rules.' },
+        { icon: 'chart', title: 'Track your holdings via the app', desc: 'Monitor live prices, NAV, and portfolio performance anytime through the Antara Mobile app.' },
+      ]}
+    />
     <p class="sec-lead" style="width:100%">For regular investors, Shriram Financial Services supports a manual ETF SIP mechanism (predefined ETF basket), enabling you to schedule recurring purchases aligned with your investment cadence.</p>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Buying ETFs</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Buying ETFs</a>
   </section>
 
   <!-- ================= SIP IN ETFs ================= -->
@@ -260,7 +224,7 @@ const seo = {
       <div class="cell tb"><p class="k">International ETF</p></div><div class="cell tb"><p class="v">Treated as debt funds for tax (post-Apr 2023 Finance Act)</p></div><div class="cell tb"><p class="v">Income slab rate — regardless of holding period</p></div><div class="cell tb"><p class="v">No LTCG benefit post-Apr 2023</p></div>
     </div></div>
     <p class="sec-lead" style="color:var(--color-text-secondary)">Note: Tax rates cited are for FY 2025-26 as per Budget 2024. Rates are subject to change. Consult a SEBI-registered tax advisor for personalised guidance.</p>
-    <a class="btn-gold" href="/contact-us" style="align-self:flex-start">Speak to our Advisor/RM</a>
+    <a class="btn btn-primary" href="/contact-us" style="align-self:flex-start">Speak to our Advisor/RM</a>
   </section>
 
   <!-- ================= TOP ETFs TO CONSIDER ================= -->
@@ -278,7 +242,7 @@ const seo = {
       <div class="cell tb"><p class="k">IT ETF</p></div><div class="cell tb"><p class="v">Tracks the Nifty IT index</p></div><div class="cell tb"><p class="v">Moderate AUM · Low expense ratio</p></div>
     </div></div>
     <p class="sec-lead">Before investing in any ETF, we recommend reviewing the scheme's factsheet for current AUM, tracking error, and portfolio composition.</p>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:flex-start">Invest in ETFs</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:flex-start">Invest in ETFs</a>
   </section>
 
   <!-- ================= HOW TO BUILD AN ETF PORTFOLIO ================= -->
@@ -287,27 +251,14 @@ const seo = {
       <h2 class="sec-title">How to Build an ETF Portfolio?</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Building an ETF portfolio in India involves the following steps:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Define your goal and horizon</h4><p>Are you building a retirement corpus (15+ years), saving for a child's education (10 years), or creating an emergency buffer (3–5 years)? Your goal sets your equity, debt, and gold split.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Choose your asset allocation</h4><p>Use the model approaches, shared below, as a starting point. Adjust based on your risk tolerance — higher equity for longer horizons, more debt/gold for shorter timelines.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Select ETFs within each category</h4><p>For each allocation bucket, choose the highest AUM, lowest expense ratio ETF available.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Invest regularly and review annually</h4><p>Set up scheduled recurring orders for your monthly SIP amount. Review allocations once a year or after major life events, not in response to market movements.</p></div>
-      </div>
-    </div>
+    <StepsRow
+      steps={[
+        { icon: 'target', title: 'Define your goal and horizon', desc: "Are you building a retirement corpus (15+ years), saving for a child's education (10 years), or creating an emergency buffer (3–5 years)? Your goal sets your equity, debt, and gold split." },
+        { icon: 'select', title: 'Choose your asset allocation', desc: 'Use the model approaches, shared below, as a starting point. Adjust based on your risk tolerance — higher equity for longer horizons, more debt/gold for shorter timelines.' },
+        { icon: 'search', title: 'Select ETFs within each category', desc: 'For each allocation bucket, choose the highest AUM, lowest expense ratio ETF available.' },
+        { icon: 'growth', title: 'Invest regularly and review annually', desc: 'Set up scheduled recurring orders for your monthly SIP amount. Review allocations once a year or after major life events, not in response to market movements.' },
+      ]}
+    />
     <p class="sec-lead" style="color:var(--color-text-secondary);width:100%">ETFs are versatile building blocks for a low-cost, diversified portfolio. Here are two model approaches, from simple to more advanced:</p>
     <div class="row-2" data-reveal-row style="width:100%">
       <div class="card">
@@ -330,7 +281,7 @@ const seo = {
     </div>
     <p class="sec-lead" style="color:var(--color-text-secondary);width:100%">Regardless of which model you start with, the core principle of ETF portfolio construction is consistency over complexity: choose low-cost, high-AUM ETFs, invest regularly via a disciplined SIP cadence, and review allocations annually (or after major life events) rather than reacting to short-term market movements.</p>
     <p class="sec-lead" style="color:var(--color-text-secondary);width:100%">Note: The ETF portfolio strategies shared above are for informational purposes only, intended to help investors understand different approaches to portfolio building, and do not assure any specific outcome. Investors should evaluate their financial goals, risk appetite, and investment horizon before making any investment decision.</p>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Build Your Portfolio</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Build Your Portfolio</a>
   </section>
 
   <!-- ================= RISKS OF INVESTING IN ETFs ================= -->
@@ -389,7 +340,7 @@ const seo = {
         <li><strong>Minors:</strong> They can invest through a guardian-operated account.</li>
       </ul>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Invest in ETF</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:flex-start">Invest in ETF</a>
   </section>
 
   <!-- ================= FAQ (Got Questions?) ================= -->
@@ -406,9 +357,36 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* ETF-types BENTO (7 cards): 4-col grid with the FIRST card double-wide
+     (grid-column: span 2) → 1 double + 6 single = 8 cells = a clean 4×2, no
+     lonely last card. Cards are self-contained (own border + radius) since the
+     gap replaces the connected-grid dividers. Reflows 2-up on tablet and 1-up
+     on phones, matching the site's other card grids (rule 15 fluid band). */
+  .etf-bento {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .etf-bento .cat {
+    border: 1px solid var(--color-border-card);
+    border-radius: 24px;
+  }
+  .etf-bento .cat:first-child { grid-column: span 2; }
+
+  @media (max-width: 1023.98px) {
+    .etf-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .etf-bento .cat:first-child { grid-column: span 2; }
+  }
+  @media (max-width: 640px) {
+    .etf-bento { grid-template-columns: 1fr; }
+    .etf-bento .cat:first-child { grid-column: span 1; }
+  }
+</style>

@@ -6,7 +6,7 @@
  * products/equity.astro. Content is the compliance-approved Mutual Fund doc, verbatim.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 import { calcHref } from '../data/calculators';
@@ -69,14 +69,13 @@ const seo = {
 ---
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Mutual Funds' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Mutual Funds: A Smarter Way to Build <span class="g">Long-Term Wealth</span></h1>
-      <p class="lead">Whether you are starting your first SIP, planning for retirement, building wealth, or seeking tax-efficient investment options, Shriram Financial Services offers a wide range of mutual fund solutions through a trusted investment experience.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start SIP</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Mutual Funds' }]}
+    cta={{ label: 'Start SIP', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Mutual Funds: A Smarter Way to Build <span class="g">Long-Term Wealth</span></Fragment>
+    <Fragment slot="lead">Whether you are starting your first SIP, planning for retirement, building wealth, or seeking tax-efficient investment options, Shriram Financial Services offers a wide range of mutual fund solutions through a trusted investment experience.</Fragment>
+  </Hero>
 
   <!-- ===== Expert-Managed Portfolios ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px;justify-content:center" data-enter="2">
@@ -121,7 +120,7 @@ const seo = {
       <div class="cell tb"><p class="k">Exit load</p></div><div class="cell tb"><p class="v">Fee on redemption before a specified period</p></div>
       <div class="cell tb"><p class="k">Units</p></div><div class="cell tb"><p class="v">Portions of the fund you own after investing</p></div>
     </div></div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Investing</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Investing</a>
   </section>
 
   <!-- ===== Types of Mutual Funds in India ===== -->
@@ -221,7 +220,7 @@ const seo = {
       <div class="cell tb"><p class="k">Invested (20 years)</p></div><div class="cell tb"><p class="v">₹12L</p></div>
       <div class="cell tb"><p class="k">Estimated Returns</p></div><div class="cell tb"><p class="v">₹ 46 L (approx.)</p></div>
     </div></div>
-    <a class="btn-gold" href="/sip-calculator" style="align-self:center">Calculate Now</a>
+    <a class="btn btn-primary" href="/sip-calculator" style="align-self:center">Calculate Now</a>
   </section>
 
   <!-- ===== SWP, STP, and Lump Sum ===== -->
@@ -254,7 +253,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

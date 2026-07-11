@@ -6,7 +6,9 @@
  * Built on the shared calculator UI in global.css; page carries content + maths.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -51,13 +53,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero hero-compact" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators' }, { name: 'SWP Calculator' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>SWP Calculator – Plan Your <span class="g">Monthly Withdrawals Instantly</span></h1>
-      <p class="lead">Find out how much you can withdraw while keeping your investments growing with Shriram Financial Services.</p>
-    </div>
-  </section>
+  <Hero
+    compact
+    breadcrumb={[{ name: 'Calculators', href: '/calculators' }, { name: 'SWP Calculator' }]}
+  >
+    <Fragment slot="title">SWP Calculator – Plan Your <span class="g">Monthly Withdrawals Instantly</span></Fragment>
+    <Fragment slot="lead">Find out how much you can withdraw while keeping your investments growing with Shriram Financial Services.</Fragment>
+  </Hero>
 
   <!-- ===== SWP Calculator ===== -->
   <section class="section stack sec-light" id="sec-calc" data-section="calc" style="gap:24px" data-enter="2">
@@ -195,27 +197,12 @@ const seo = {
       <h2 class="sec-title">How to Use the SWP Calculator</h2>
       <p class="sec-lead">Using the SWP Calculator takes under a minute. Follow the four steps below and the calculator will instantly display your estimated final corpus, total withdrawal amount, and a sustainability signal.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Step 1</h4><p>Enter your total mutual fund investment amount.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Step 2</h4><p>Add the monthly amount you want to withdraw.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Step 3</h4><p>Select an expected annual return.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Step 4</h4><p>Choose the withdrawal tenure in years.</p></div>
-      </div>
-    </div>
+    <StepsRow steps={[
+      { icon: 'rupee', title: 'Step 1', desc: 'Enter your total mutual fund investment amount.' },
+      { icon: 'withdraw', title: 'Step 2', desc: 'Add the monthly amount you want to withdraw.' },
+      { icon: 'percent', title: 'Step 3', desc: 'Select an expected annual return.' },
+      { icon: 'calendar', title: 'Step 4', desc: 'Choose the withdrawal tenure in years.' },
+    ]} />
     <p class="sec-lead" style="width:100%">The calculator then shows total withdrawal, final corpus and a sustainability signal.</p>
     <div class="t-scroll" style="width:100%"><div class="product-page_table t2 bordered" style="grid-template-columns:repeat(2,minmax(0,1fr))">
       <div class="cell th"><p>Signal</p></div><div class="cell th"><p>Meaning</p></div>
@@ -346,37 +333,14 @@ const seo = {
       <h2 class="sec-title">How to Start an SWP</h2>
       <p class="sec-lead">Setting up a Systematic Withdrawal Plan (SWP) is quick and straightforward if you already have an active mutual fund investment in your folio or Demat account. Simply follow these six steps to get started:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Step 1</h4><p>Choose a suitable mutual fund and invest a lump sum.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Step 2</h4><p>Complete KYC, if not already done.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Step 3</h4><p>Log in to the AMC, distributor or investment platform.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Step 4</h4><p>Select the SWP option.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Step 5</h4><p>Enter amount, frequency, date and tenure.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">6</div>
-        <div class="st-body"><h4>Step 6</h4><p>Confirm the bank account for credit.</p></div>
-      </div>
-    </div>
+    <StepsRows perRow={3} steps={[
+      { icon: 'fund', title: 'Step 1', desc: 'Choose a suitable mutual fund and invest a lump sum.' },
+      { icon: 'kyc', title: 'Step 2', desc: 'Complete KYC, if not already done.' },
+      { icon: 'account', title: 'Step 3', desc: 'Log in to the AMC, distributor or investment platform.' },
+      { icon: 'select', title: 'Step 4', desc: 'Select the SWP option.' },
+      { icon: 'calendar', title: 'Step 5', desc: 'Enter amount, frequency, date and tenure.' },
+      { icon: 'bank', title: 'Step 6', desc: 'Confirm the bank account for credit.' },
+    ]} />
     <div class="card" style="width:100%"><p class="card-p">Note: Minimum SWP amounts vary by AMC and scheme. Check the latest scheme terms before setting up withdrawals.</p></div>
   </section>
 
@@ -394,7 +358,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -425,7 +389,7 @@ const seo = {
         <span class="xc-cta">Calculate Now <span class="arr" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span>
       </a>
     </div>
-    <a class="btn-gold" href="/calculators" style="align-self:center">Explore All Calculators</a>
+    <a class="btn btn-primary" href="/calculators" style="align-self:center">Explore All Calculators</a>
   </section>
 
   <!-- ===== Final CTA ===== -->
@@ -444,7 +408,7 @@ const seo = {
         <div class="check-row"><span class="ck" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5 8 14l7.5-7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><p class="tx">Zero commission platform</p></div>
       </div>
     </div>
-    <div class="cta" style="align-self:flex-start"><a class="btn-gold" href="/open-demat-account">Start SWP Now</a></div>
+    <div class="cta" style="align-self:flex-start"><a class="btn btn-primary" href="/open-demat-account">Start SWP Now</a></div>
   </section>
 </BaseLayout>
 

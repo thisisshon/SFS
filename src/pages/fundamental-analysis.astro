@@ -9,7 +9,7 @@
  * binds to a token (rule 9).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -62,14 +62,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Fundamental Research' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Fundamental <span class="g">Research</span></h1>
-      <p class="lead">We look past the candle and into the company — earnings, debt, margins, and what management is actually telling shareholders.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Fundamental Research' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Fundamental <span class="g">Research</span></Fragment>
+    <Fragment slot="lead">We look past the candle and into the company — earnings, debt, margins, and what management is actually telling shareholders.</Fragment>
+  </Hero>
 
   <!-- ================= WHAT IS FUNDAMENTAL RESEARCH ================= -->
   <section class="section stack sec-light" id="sec-what" data-section="what" style="gap:56px;justify-content:center" data-enter="2">
@@ -100,7 +99,7 @@ const seo = {
         ))}
       </div>
     </div>
-    <div style="display:flex"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
+    <div style="display:flex"><a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a></div>
   </section>
 
   <!-- ================= TODAY'S FUNDAMENTAL NOTE - gated ================= -->
@@ -112,8 +111,8 @@ const seo = {
       <h3>Today’s Fundamental Note is ready.</h3>
       <p>Log in to read the full report and analyst rating, or open a demat account to get started.</p>
       <div class="gate-cta">
-        <a class="btn-ghost" href="#">Login</a>
-        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
+        <a class="btn btn-secondary" href="#">Login</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a>
       </div>
     </div>
   </section>
@@ -133,8 +132,8 @@ const seo = {
         <p>Open your Demat account and get free, unlimited access to every fundamental report, analyst rating and model portfolio we publish.</p>
       </div>
       <div class="unlock-cta">
-        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
-        <a class="btn-outline" href="#">Login to Existing Account</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a>
+        <a class="btn btn-secondary-inverse" href="#">Login to Existing Account</a>
       </div>
     </div>
   </section>
@@ -156,7 +155,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let’s get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -198,14 +197,14 @@ const seo = {
   .unlock-tx { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
   .unlock-tx h3 { font-weight: 500; font-size: 28px; color: var(--color-white); }
   .unlock-tx p { font-weight: 400; font-size: 16px; color: var(--color-text-on-dark-lead); }
-  /* .unlock-cta buttons use the shared .btn-gold + .btn-outline (global.css). */
+  /* .unlock-cta buttons use the shared .btn .btn-primary + .btn-secondary-inverse (global.css). */
   .unlock-cta { display: flex; gap: 16px; flex-wrap: wrap; }
 
   /* ===== responsive ===== */
   @media (max-width: 768px) {
     .unlock-tx h3 { font-size: clamp(22px, 5.6vw, 28px); }
     .unlock-cta { width: 100%; }
-    .unlock-cta .btn-gold, .unlock-cta .btn-outline { width: 100%; flex: 1 1 100%; }
-    .gate-cta .btn-ghost, .gate-cta .btn-gold { width: 100%; }
+    .unlock-cta .btn { width: 100%; flex: 1 1 100%; min-width: 0; }
+    .gate-cta .btn { width: 100%; min-width: 0; }
   }
 </style>

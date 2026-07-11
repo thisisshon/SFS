@@ -10,6 +10,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumb from '../components/site/Breadcrumb.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import { faqPageSchema } from '../lib/seo';
 
 // General Questions - compliance-approved doc content verbatim, same order.
@@ -45,7 +46,7 @@ const seo = {
       <h1>Partner with Us. <span class="g">Your Network. Our Products. Unlimited Earning Potential.</span></h1>
       <p class="lead">Join India's fastest-growing financial partner network and turn your contacts, your community, or your client base into a steady, scalable income stream — with zero investment and full support from day one.</p>
       <div class="cta">
-        <a class="btn-gold" href="#sec-apply">Learn More</a>
+        <a class="btn btn-primary" href="#sec-apply">Learn More</a>
       </div>
     </div>
   </section>
@@ -92,16 +93,15 @@ const seo = {
       <h2 class="sec-title">How It Works</h2>
       <p class="sec-lead">Four steps stand between you and your first commission:</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step"><span class="num">01</span><div class="st-body"><h4>Register Online</h4><p>Share your basic details through a short sign-up form Our team will reach out to you.</p></div></div>
-      <div class="step-div" aria-hidden="true"></div>
-      <div class="step"><span class="num">02</span><div class="st-body"><h4>Document Verification</h4><p>Submit your KYC documents — our team clears them within 48 hours.</p></div></div>
-      <div class="step-div" aria-hidden="true"></div>
-      <div class="step"><span class="num">03</span><div class="st-body"><h4>Get Activated</h4><p>Receive your Partner ID and step into the partner portal, where you'll track every referral and every rupee earned.</p></div></div>
-      <div class="step-div" aria-hidden="true"></div>
-      <div class="step"><span class="num">04</span><div class="st-body"><h4>Start Earning</h4><p>Refer clients, and earn commission every time they trade. Grow your network, and your income grows alongside it.</p></div></div>
-    </div>
-    <div class="cta-center"><a class="btn-gold" href="#sec-eligibility">Check Eligibility</a></div>
+    <StepsRow
+      steps={[
+        { icon: 'account', title: 'Register Online', desc: 'Share your basic details through a short sign-up form Our team will reach out to you.' },
+        { icon: 'kyc', title: 'Document Verification', desc: 'Submit your KYC documents — our team clears them within 48 hours.' },
+        { icon: 'activate', title: 'Get Activated', desc: "Receive your Partner ID and step into the partner portal, where you'll track every referral and every rupee earned." },
+        { icon: 'growth', title: 'Start Earning', desc: 'Refer clients, and earn commission every time they trade. Grow your network, and your income grows alongside it.' },
+      ]}
+    />
+    <div class="cta-center"><a class="btn btn-primary" href="#sec-eligibility">Check Eligibility</a></div>
   </section>
 
   <!-- ================= PRODUCT PORTFOLIO ================= -->
@@ -165,7 +165,7 @@ const seo = {
             <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             <span class="ec-label">0 of 3 - Please tick what's valid to you:</span>
           </span>
-          <a class="btn-gold" href="#sec-apply" id="ecCta" aria-disabled="true">Become a Partner</a>
+          <a class="btn btn-primary" href="#sec-apply" id="ecCta" aria-disabled="true">Become a Partner</a>
         </div>
       </div>
       <div class="elig-div" aria-hidden="true"></div>
@@ -236,8 +236,8 @@ const seo = {
       </div>
       <div class="hf-actions">
         <div class="cta-actions">
-          <button class="btn-ghost" type="button" disabled>Back</button>
-          <button class="btn-gold" type="submit">Next</button>
+          <button class="btn btn-secondary" type="button" disabled>Back</button>
+          <button class="btn btn-primary btn-xl" type="submit">Next</button>
         </div>
       </div>
       <div class="hf-success" role="status" aria-live="polite">
@@ -292,7 +292,7 @@ const seo = {
             <h3>Have More Questions?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer anything about the Partner Program. Our team will walk you through earnings, onboarding and the Antara dashboard.</p>
           </div>
-          <a class="btn-gold" href="#sec-apply">Talk to Our Team</a>
+          <a class="btn btn-primary" href="#sec-apply">Talk to Our Team</a>
         </div>
       </div>
     </div>
@@ -421,7 +421,7 @@ const seo = {
     color: var(--color-text-muted);
     font-weight: 400;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .port-tab:hover {
     color: var(--color-text-heading-dark);
   }
@@ -658,13 +658,12 @@ const seo = {
     background: var(--color-green-100); /* #dbf0e2 */
     color: var(--color-success-strong); /* #067a45 */
   }
-  .elig-check .btn-gold {
-    width: 220px;
+  .elig-check .btn-primary {
     opacity: 0.45; /* decorative dim of disabled CTA - legacy rule-5 violation, kept verbatim */
     pointer-events: none;
     transition: opacity 0.25s ease;
   }
-  .elig-check.ready .btn-gold {
+  .elig-check.ready .btn-primary {
     opacity: 1;
     pointer-events: auto;
   }
@@ -717,10 +716,6 @@ const seo = {
     color: var(--color-sage-700); /* #6b6f5e */
     text-align: center;
     max-width: 640px;
-  }
-  .apply-form .btn-gold {
-    width: 220px;
-    height: 48px;
   }
   /* success state - .hf-success shared-extraction candidate (form done panel) */
   .hf-success {
@@ -813,21 +808,6 @@ const seo = {
     gap: 16px;
     justify-content: center;
   }
-  .cta-actions .btn-gold,
-  .cta-actions .btn-ghost {
-    transition: filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .cta-actions .btn-gold:hover {
-    filter: brightness(0.96);
-  }
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .cta-actions .btn-ghost:hover {
-    background: #383838; /* page-local ghost-hover - Tier-2 candidate (charcoal-650) */
-    border-color: var(--color-white);
-  }
-  }
 
   /* ---------- responsive ---------- */
   @media (max-width: 1024px) {
@@ -880,8 +860,9 @@ const seo = {
       flex-direction: column;
       align-items: stretch;
     }
-    .elig-check .btn-gold {
+    .elig-check .btn-primary {
       width: 100%;
+      min-width: 0; /* full-width mobile CTA: exempt from the 220px footprint */
     }
     /* Three nowrap tabs don't fit ~375px wide - let the rail scroll
        horizontally in its own container so no tab is clipped/unreachable

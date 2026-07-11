@@ -7,21 +7,22 @@
  * Content is the compliance-approved LAMF doc, word-for-word.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
-// How does LAMF Work? - nine steps, doc verbatim.
+// How does LAMF Work? - nine steps, doc verbatim (desc); short derived titles.
 const STEPS = [
-  { p: 'Check your eligibility, credit limit, and interest rates' },
-  { p: 'Select mutual fund units to pledge' },
-  { p: 'Complete your KYC verification' },
-  { p: 'Pledge your selected mutual fund units' },
-  { p: 'Your loan amount is approved, and a Sanction Letter with Key Fact Statement (KFS) is issued' },
-  { p: 'e-Sign the loan agreement' },
-  { p: 'Your loan account is ready to use' },
-  { p: 'Withdraw funds as needed' },
-  { p: 'Repay the loan at your convenience and regain complete control of your mutual fund holdings' },
+  { icon: 'search', title: 'Check Eligibility', desc: 'Check your eligibility, credit limit, and interest rates' },
+  { icon: 'select', title: 'Select Units', desc: 'Select mutual fund units to pledge' },
+  { icon: 'kyc', title: 'Complete KYC', desc: 'Complete your KYC verification' },
+  { icon: 'pledge', title: 'Pledge Units', desc: 'Pledge your selected mutual fund units' },
+  { icon: 'verify', title: 'Loan Approved', desc: 'Your loan amount is approved, and a Sanction Letter with Key Fact Statement (KFS) is issued' },
+  { icon: 'signature', title: 'e-Sign Agreement', desc: 'e-Sign the loan agreement' },
+  { icon: 'activate', title: 'Account Ready', desc: 'Your loan account is ready to use' },
+  { icon: 'withdraw', title: 'Withdraw Funds', desc: 'Withdraw funds as needed' },
+  { icon: 'rupee', title: 'Repay & Regain Control', desc: 'Repay the loan at your convenience and regain complete control of your mutual fund holdings' },
 ];
 
 // LAMF, Personal Loan, and Selling Mutual Funds - comparison, doc verbatim.
@@ -111,14 +112,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Loan Against Mutual Funds' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Loan Against Mutual Fund: Unlock the Value of Your Mutual Fund Portfolio</h1>
-      <p class="lead">Get quick access to funds by leveraging your mutual fund portfolio while your investments remain intact.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Check Eligibility</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Loan Against Mutual Funds' }]}
+    cta={{ label: 'Check Eligibility', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Loan Against Mutual Fund: Unlock the Value of Your Mutual Fund Portfolio</Fragment>
+    <Fragment slot="lead">Get quick access to funds by leveraging your mutual fund portfolio while your investments remain intact.</Fragment>
+  </Hero>
 
   <!-- ===== Access Funds While Your Investments Grow ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px;justify-content:center" data-enter="2">
@@ -134,33 +134,8 @@ const seo = {
       <h2 class="sec-title">How does LAMF Work?</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Here is a step-by-step breakdown of how your mutual fund portfolio provides you access to quick funds:</p>
     </div>
-    <div class="stack" style="gap:32px;width:100%">
-      <div class="steps" data-reveal-row>
-        {STEPS.slice(0, 3).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 1}</div><div class="st-body"><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-      <div class="steps" data-reveal-row>
-        {STEPS.slice(3, 6).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 4}</div><div class="st-body"><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-      <div class="steps" data-reveal-row>
-        {STEPS.slice(6).map((s, i) => (
-          <>
-            {i > 0 && <div class="step-div" />}
-            <div class="step"><div class="num">{i + 7}</div><div class="st-body"><p>{s.p}</p></div></div>
-          </>
-        ))}
-      </div>
-    </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Apply Now</a>
+    <StepsRows steps={STEPS} perRow={5} />
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Apply Now</a>
   </section>
 
   <!-- ===== Interest Rates for Loan Against Mutual Fund ===== -->
@@ -184,7 +159,7 @@ const seo = {
       </ul>
       <p class="sec-lead">Note: Rates are indicative and subject to periodic revision. All rates are annualised at monthly rests. Interest is levied only on the drawn overdraft amount and not on the full sanctioned limit. Actual rate offered may vary based on various factors.</p>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Apply Now</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Apply Now</a>
   </section>
 
   <!-- ===== LAMF Eligibility Criteria ===== -->
@@ -202,7 +177,7 @@ const seo = {
       <div class="cell tb"><p class="k">Minimum Portfolio Value</p></div><div class="cell tb"><p class="v">Mutual fund holdings must meet our minimum eligible threshold.</p></div>
       <div class="cell tb"><p class="k">Fund Eligibility</p></div><div class="cell tb"><p class="v">Only schemes on our approved fund list qualify. ELSS and close-ended funds, and any fund which has underlying assets such as Gold/Silver, are not eligible.</p></div>
     </div></div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Apply Now</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Apply Now</a>
   </section>
 
   <!-- ===== Documents Required for Loan Against Mutual Fund ===== -->
@@ -218,7 +193,7 @@ const seo = {
       <div class="cell tb"><p class="k">Bank Account Proof</p></div><div class="cell tb"><p class="v">Cancelled cheque, bank passbook, or net banking statement for disbursal account verification</p></div>
       <div class="cell tb"><p class="k">Mutual Fund Folio Details</p></div><div class="cell tb"><p class="v">Auto-fetched via PAN — no physical statement required in most cases</p></div>
     </div></div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Apply Now</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Apply Now</a>
   </section>
 
   <!-- ===== What is the Loan-to-Value Ratio and How Much Can You Borrow? ===== -->
@@ -239,7 +214,7 @@ const seo = {
         <p class="sub-lead" style="color:var(--color-text-secondary)">Debt mutual funds invest in fixed-income instruments like government bonds and corporate paper. Their NAV is relatively stable, which allows lenders to extend a higher LTV without disproportionate collateral risk.</p>
       </div>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Apply Now</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Apply Now</a>
   </section>
 
   <!-- ===== Mutual Funds Eligible for LAMF ===== -->
@@ -268,7 +243,7 @@ const seo = {
         <p class="sub-lead">If you are unsure whether your investments qualify, simply apply online, and our team will help you verify the eligibility of your mutual fund portfolio.</p>
       </div>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Apply Now</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Apply Now</a>
   </section>
 
   <!-- ===== What are the Benefits of Loan Against Mutual Fund? ===== -->
@@ -334,7 +309,7 @@ const seo = {
       <h2 class="sec-title">Risks to Consider Before Applying for LAMF</h2>
       <p class="sec-lead">While a Loan Against Mutual Fund offers several advantages, it is important to understand the associated risks and responsibilities before applying.</p>
     </div>
-    <div class="risks" data-reveal-row>
+    <div class="risks risks-4" data-reveal-row>
       {RISKS.map((r) => (
         <div class="risk"><h4>{r.h}</h4><p>{r.p}</p></div>
       ))}
@@ -355,7 +330,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help you weigh a pledge against redeeming and show what a dedicated, research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -368,7 +343,7 @@ const seo = {
         <h3>Loan Against Mutual Fund: Access Funds While Your Investments Grow</h3>
         <p class="ct-sub">Pledge eligible mutual fund units as collateral, apply online and get your funds, while your investments remain invested.</p>
       </div>
-      <a class="btn-gold" href="/open-demat-account">Apply for LAMF in 2 Mins</a>
+      <a class="btn btn-primary" href="/open-demat-account">Apply for LAMF in 2 Mins</a>
     </div>
   </section>
 </BaseLayout>

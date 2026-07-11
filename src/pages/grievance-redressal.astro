@@ -4,7 +4,7 @@
  * Body rebuilt to the compliance-approved "Grievance Redressal" doc (word-for-word).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 
 const seo = {
   title: 'Grievance Redressal Process',
@@ -72,24 +72,21 @@ const ESCALATIONS = [
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Grievance Redressal' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Grievance Redressal Portal</h1>
-      <p class="lead">How can we help you?</p>
-      <p class="hero-subline">Reach our support team across multiple channels. We are here from Monday to Friday: 8:30 AM – 5:30 PM, Saturday:10 am to 1pm.<br />Closed on Public Holiday.</p>
-      <div class="hero-contacts">
-        <a class="ct-pill" href="tel:08047185579">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
-          080-47185579 | 080-43676869 Extn.825/831
-        </a>
-        <a class="ct-pill" href="mailto:support@shriramfs.com">
-          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
-          support@shriramfs.com
-        </a>
-      </div>
+  <Hero breadcrumb={[{ name: 'Grievance Redressal' }]}>
+    <Fragment slot="title">Grievance Redressal Portal</Fragment>
+    <Fragment slot="lead">How can we help you?</Fragment>
+    <p class="hero-subline">Reach our support team across multiple channels. We are here from Monday to Friday: 8:30 AM – 5:30 PM, Saturday:10 am to 1pm.<br />Closed on Public Holiday.</p>
+    <div class="hero-contacts">
+      <a class="ct-pill" href="tel:08047185579">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+        080-47185579 | 080-43676869 Extn.825/831
+      </a>
+      <a class="ct-pill" href="mailto:support@shriramfs.com">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+        support@shriramfs.com
+      </a>
     </div>
-  </section>
+  </Hero>
 
   <!-- ================= BODY ================= -->
   <section class="section stack sec-light" id="sec-body" data-section="body" style="gap:56px;justify-content:center" data-enter="2">
@@ -110,7 +107,7 @@ const ESCALATIONS = [
       <div class="policy-tx">
         <h3>Grievance Redressal Policy Download</h3>
       </div>
-      <a class="btn-gold" href="#" download>Download</a>
+      <a class="btn btn-primary" href="#" download>Download</a>
     </div>
 
     <div class="t-scroll">
@@ -175,7 +172,7 @@ const ESCALATIONS = [
     font-size: 14px;
     transition: background 0.2s ease, border-color 0.2s ease;
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .ct-pill:hover {
     background: #42443e; /* page-local - Tier-2 */
     border-color: var(--color-sage-700); /* #6d6e6a (Tier-1: absorbed by sage-700) */
@@ -232,7 +229,7 @@ const ESCALATIONS = [
     font-size: 18px;
     color: var(--color-text-primary);
   }
-  .policy-card .btn-gold {
+  .policy-card .btn-primary {
     flex: none;
   }
 

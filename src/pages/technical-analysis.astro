@@ -12,7 +12,7 @@
  * template scales to thousands of report instances - the scale North Star.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -102,14 +102,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= SECTION 1 - HERO (standardised, rule 7) ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Technical Research' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Technical <span class="g">Research</span></h1>
-      <p class="lead">Where price is the only fundamental that matters today.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Research Centre', href: '/research-hub' }, { name: 'Technical Research' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Technical <span class="g">Research</span></Fragment>
+    <Fragment slot="lead">Where price is the only fundamental that matters today.</Fragment>
+  </Hero>
 
   <!-- ================= SECTION 2 - WHAT IS TECHNICAL RESEARCH? ================= -->
   <section class="section stack sec-light" id="sec-what" data-section="what" style="gap:56px;justify-content:center" data-enter="2">
@@ -153,8 +152,8 @@ const seo = {
       <h3>Today's Technical Note Is Ready.</h3>
       <p>Log in to read live levels and trade ideas, or open a Shriram demat account to get started.</p>
       <div class="gate-cta">
-        <a class="btn-ghost" href="#">Login</a>
-        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
+        <a class="btn btn-secondary" href="#">Login</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a>
       </div>
     </div>
   </section>
@@ -222,8 +221,8 @@ const seo = {
         <p>Open your Shriram demat account and get free, unlimited access to all research PDFs, pivot tables, analyst webinars, and model portfolios — all produced by SEBI-registered analysts.</p>
       </div>
       <div class="unlock-cta">
-        <a class="btn-gold" href="/open-demat-account">Open Demat Account</a>
-        <a class="btn-outline" href="#">Login to Existing Account</a>
+        <a class="btn btn-primary" href="/open-demat-account">Open Demat Account</a>
+        <a class="btn btn-secondary-inverse" href="#">Login to Existing Account</a>
       </div>
     </div>
   </section>
@@ -246,7 +245,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help map your wealth mix and show what a dedicated research-led plan would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>
@@ -315,7 +314,7 @@ const seo = {
   .rcard-foot { margin-top: auto; padding-top: 8px; display: flex; align-items: flex-end; justify-content: flex-end; gap: 16px; }
   .rcard-link { display: inline-flex; align-items: center; gap: 8px; flex: none; font-weight: 500; font-size: 12px; color: var(--color-link); }
   .rcard-link svg { width: 16px; height: 16px; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .rcard-link:hover { text-decoration: underline; }
   }
 
@@ -324,7 +323,7 @@ const seo = {
   .rcard-action svg { width: 16px; height: 16px; flex: none; }
   /* nudge the trailing arrow on hover (matches the site's .appr / .pcard language) */
   .rcard-action svg:last-child { transition: transform 0.25s ease; }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .rcard-action:hover svg:last-child { transform: translateX(4px); }
   }
 
@@ -339,9 +338,9 @@ const seo = {
   .unlock-tx { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
   .unlock-tx h3 { font-weight: 500; font-size: 28px; color: var(--color-white); }
   .unlock-tx p { font-weight: 400; font-size: 16px; color: var(--color-text-on-dark-lead); }
-  /* .unlock-cta buttons use the shared .btn-gold + .btn-outline (global.css);
-     both already size to var(--cta-w), so no width rule is needed here. */
-  .unlock-cta { display: flex; gap: 16px; flex-wrap: wrap; }
+  /* .unlock-cta buttons use the shared .btn .btn-primary + .btn .btn-secondary-inverse
+     (global.css); the .btn base hugs its content, so no width rule is needed here. */
+  .unlock-cta { display: flex; justify-content: flex-end; gap: clamp(16px, 4vw, 40px); flex-wrap: wrap; }
 
   /* ===== responsive ===== */
   @media (max-width: 1024px) {
@@ -351,8 +350,8 @@ const seo = {
     .unlock-tx h3 { font-size: clamp(22px, 5.6vw, 28px); }
     .rcard-title { font-size: 16px; }
     .unlock-cta { width: 100%; }
-    .unlock-cta .btn-gold, .unlock-cta .btn-outline { width: 100%; flex: 1 1 100%; }
-    .gate-cta .btn-ghost, .gate-cta .btn-gold { width: 100%; }
+    .unlock-cta .btn { width: 100%; flex: 1 1 100%; min-width: 0; }
+    .gate-cta .btn { width: 100%; min-width: 0; }
     /* bump the publisher badge off 10px for readability on phones -
        raise the pair together so the eyebrow/reg hierarchy is preserved */
     .rcard-pub b, .rcard-pub small { font-size: 12px; }

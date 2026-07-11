@@ -2,13 +2,14 @@
 /**
  * Equity Derivatives (F&O) - /derivatives/
  * Long-form F&O guide. Built entirely from shared design-system components in
- * global.css (hero, .section/.sec-title, .card, .cat-grid, StepFlow, .product-page_table,
+ * global.css (hero, .section/.sec-title, .card, .cat-grid, StepsRow/StepsRows, .product-page_table,
  * .risks, FaqAccordion, .cta-box). Content is the compliance-approved doc, verbatim.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
-import StepFlow from '../components/sections/StepFlow.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
+import StepsRows from '../components/sections/StepsRows.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
 
 // Advantages of Derivatives - numbered list rendered as a cat-grid.
@@ -95,14 +96,13 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ===== Hero ===== -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Equity Derivatives' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Derivatives Trading in India — Futures &amp; Options Made Simple</h1>
-      <p class="lead">Access real-time market data, advanced charts, Option Chain insights, and powerful trading tools to navigate the derivatives market with ease.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Start Trading Futures &amp; Options</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Equity Derivatives' }]}
+    cta={{ label: 'Start Trading Futures & Options', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Derivatives Trading in India — Futures &amp; Options Made Simple</Fragment>
+    <Fragment slot="lead">Access real-time market data, advanced charts, Option Chain insights, and powerful trading tools to navigate the derivatives market with ease.</Fragment>
+  </Hero>
 
   <!-- ===== Derivatives Trading: Expand Your Trading Opportunities ===== -->
   <section class="section stack sec-light" id="sec-expand" data-section="expand" data-enter="2" style="gap:56px;justify-content:center">
@@ -123,27 +123,14 @@ const seo = {
       <h2 class="sec-title">How does Derivative Trading Works?</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">Derivatives trading allows traders to take positions based on the expected price movement of an underlying asset, such as a stock or index.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Select an instrument</h4><p>Choose a stock or index F&amp;O to trade.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Set Contract terms</h4><p>Decide on expiry date, stock price, and a lot size</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Margin Deposit</h4><p>Pay a fraction of contract value as initial margin.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Exit or Settle</h4><p>Contract is settled in cash or via physical delivery</p></div>
-      </div>
-    </div>
+    <StepsRow
+      steps={[
+        { icon: 'select', title: 'Select an instrument', desc: 'Choose a stock or index F&O to trade.' },
+        { icon: 'contract', title: 'Set Contract terms', desc: 'Decide on expiry date, stock price, and a lot size' },
+        { icon: 'coins', title: 'Margin Deposit', desc: 'Pay a fraction of contract value as initial margin.' },
+        { icon: 'settle', title: 'Exit or Settle', desc: 'Contract is settled in cash or via physical delivery' },
+      ]}
+    />
   </section>
 
   <!-- ===== Types of Derivatives ===== -->
@@ -191,7 +178,7 @@ const seo = {
       <h2 class="sec-title">How to Start Trading Derivatives?</h2>
       <p class="sec-lead" style="color:var(--color-text-secondary)">A simple step by step journey to start trading Futures and Options.</p>
     </div>
-    <StepFlow
+    <StepsRows
       perRow={4}
       steps={[
         { icon: 'account', title: 'Open a Trading & Demat Account', desc: 'Complete your KYC digitally (PAN, Aadhaar, bank details) and select the option to activate the F&O trading segment.' },
@@ -203,7 +190,7 @@ const seo = {
         { icon: 'settle', title: 'Expiry & Settlement', desc: 'In-the-money (ITM) options are settled on expiry. Futures can be rolled over or cash-settled for index contracts.' },
       ]}
     />
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Open Demat Account</a>
   </section>
 
   <!-- ===== Futures Vs Options Comparisons ===== -->
@@ -271,7 +258,7 @@ const seo = {
             <h3>Need A Clearer Direction?</h3>
             <p>Let's get in touch on a 15-minute call where we can answer any questions you may have. Our advisor will help you understand margins, expiry and risk management so you trade F&amp;O with a plan.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

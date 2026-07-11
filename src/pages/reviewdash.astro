@@ -1,0 +1,25 @@
+---
+/**
+ * /reviewdash - route shim for Proofkit (admin dashboard).
+ *
+ * All logic lives in the package: src/plugins/proofkit/. This file only registers
+ * the URL (Astro requires route files under src/pages/) and gates it on the single
+ * PROOFKIT_ENABLED switch. When the tool is off, the route renders a bare noindex
+ * stub. See src/plugins/proofkit/README.md.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProofkitDashboard from '../plugins/proofkit/Dashboard.astro';
+import { PROOFKIT_ENABLED, dashSeo } from '../plugins/proofkit/config';
+
+const offSeo = { title: 'Not Found', description: 'Not available.', path: '/reviewdash', noindex: true };
+---
+
+{PROOFKIT_ENABLED ? (
+  <BaseLayout seo={dashSeo} footer="custom" chrome={false}>
+    <ProofkitDashboard />
+  </BaseLayout>
+) : (
+  <BaseLayout seo={offSeo} footer="custom">
+    <section class="section"><p>Not available.</p></section>
+  </BaseLayout>
+)}

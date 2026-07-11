@@ -10,7 +10,7 @@
  *  - .stat   - legal/restricted status pills (token-bound to success/danger)
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -54,14 +54,13 @@ const seo = {
 ---
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Products', href: '/products' }, { name: 'Currency' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>Currency Trading in India</h1>
-      <p class="lead">Shriram Financial Services offers SEBI‑regulated access to currency derivatives on NSE/BSE. Trade major currency pairs — USD/INR, EUR/INR, GBP/INR, and JPY/INR — with transparent pricing, low margins, and trusted settlement.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open Demat Account</a></div>
-    </div>
-  </section>
+  <Hero
+    breadcrumb={[{ name: 'Products', href: '/products' }, { name: 'Currency' }]}
+    cta={{ label: 'Open Demat Account', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">Currency Trading in India</Fragment>
+    <Fragment slot="lead">Shriram Financial Services offers SEBI‑regulated access to currency derivatives on NSE/BSE. Trade major currency pairs — USD/INR, EUR/INR, GBP/INR, and JPY/INR — with transparent pricing, low margins, and trusted settlement.</Fragment>
+  </Hero>
 
   <!-- ===== Currency Trading: Explore Global Market Opportunities ===== -->
   <section class="section stack sec-light" id="sec-about" data-section="about" data-enter="2" style="gap:56px;justify-content:center">
@@ -157,7 +156,7 @@ const seo = {
       <p class="sub-lead" style="color:var(--color-text-secondary)">A Call Option gives the buyer the right to buy a currency pair at a predetermined strike price before expiry, while a Put Option gives the right to sell. Traders buy calls when they expect the currency pair to rise. Traders buy puts when they expect the pair to fall.</p>
       <p class="sub-lead" style="color:var(--color-text-secondary)">As expiry approaches, options can lose value due to time decay, making option buying and option selling suitable for different risk and reward objectives. Option buyers benefit from early directional moves; option sellers profit from time decay when markets stay range-bound.</p>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Options Trading</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:flex-start">Start Options Trading</a>
   </section>
 
   <!-- ===== Is Currency Trading Legal in India? ===== -->
@@ -232,7 +231,7 @@ const seo = {
         </div>
       </div>
     </div>
-    <a class="btn-gold" href="/open-demat-account" style="align-self:center">Start Currency Trading</a>
+    <a class="btn btn-primary" href="/open-demat-account" style="align-self:center">Start Currency Trading</a>
   </section>
 
   <!-- ===== Currency Trading Strategies for Beginners ===== -->
@@ -296,7 +295,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="/contact-us">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="/contact-us">Book A Discovery Call</a>
         </div>
       </div>
     </div>

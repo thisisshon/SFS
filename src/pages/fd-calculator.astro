@@ -7,7 +7,8 @@
  * /fixed-deposit - this is the calculator tool.)
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
+import Hero from '../components/sections/Hero.astro';
+import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema } from '../lib/seo';
 
@@ -52,14 +53,14 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero hero-compact" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Calculators', href: '/calculators' }, { name: 'FD Calculator' }]} />
-    <div class="hero-inner" data-enter>
-      <h1>FD Calculator – Calculate Fixed Deposit Interest &amp; <span class="g">Maturity Amount Instantly</span></h1>
-      <p class="lead">Estimate your FD returns in seconds and plan your savings with confidence.</p>
-      <div class="cta"><a class="btn-gold" href="/open-demat-account">Open FD Online Now</a><a class="btn-ghost" href="/fixed-deposit">Compare FD Rates</a></div>
-    </div>
-  </section>
+  <Hero
+    compact
+    breadcrumb={[{ name: 'Calculators', href: '/calculators' }, { name: 'FD Calculator' }]}
+    cta={{ label: 'Open FD Online Now', href: '/open-demat-account' }}
+  >
+    <Fragment slot="title">FD Calculator – Calculate Fixed Deposit Interest &amp; <span class="g">Maturity Amount Instantly</span></Fragment>
+    <Fragment slot="lead">Estimate your FD returns in seconds and plan your savings with confidence.</Fragment>
+  </Hero>
 
   <!-- ===== FD Calculator ===== -->
   <section class="section stack sec-light" id="sec-calc" data-section="calc" style="gap:24px" data-enter="2">
@@ -203,32 +204,15 @@ const seo = {
       <h2 class="sec-title">How to Use the FD Calculator</h2>
       <p class="sec-lead">Use the FD Calculator to quickly estimate your maturity amount and interest earned by entering your investment amount, interest rate, tenure, and payout preferences.</p>
     </div>
-    <div class="steps" data-reveal-row>
-      <div class="step">
-        <div class="num">1</div>
-        <div class="st-body"><h4>Step 1</h4><p>Enter the amount you want to invest.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="st-body"><h4>Step 2</h4><p>Add the annual interest rate offered by your chosen bank or NBFC.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="st-body"><h4>Step 3</h4><p>Select the tenure in years and months.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="st-body"><h4>Step 4</h4><p>Choose the compounding frequency or simple interest option.</p></div>
-      </div>
-      <div class="step-div"></div>
-      <div class="step">
-        <div class="num">5</div>
-        <div class="st-body"><h4>Select Regular or Senior Citizen and view results instantly.</h4></div>
-      </div>
-    </div>
+    <StepsRow
+      steps={[
+        { icon: 'rupee', title: 'Step 1', desc: 'Enter the amount you want to invest.' },
+        { icon: 'percent', title: 'Step 2', desc: 'Add the annual interest rate offered by your chosen bank or NBFC.' },
+        { icon: 'calendar', title: 'Step 3', desc: 'Select the tenure in years and months.' },
+        { icon: 'select', title: 'Step 4', desc: 'Choose the compounding frequency or simple interest option.' },
+        { icon: 'verify', title: 'Step 5', desc: 'Select Regular or Senior Citizen and view results instantly.' },
+      ]}
+    />
   </section>
 
   <!-- ===== Cumulative vs Non-Cumulative FD ===== -->
@@ -302,7 +286,7 @@ const seo = {
             <h3>Need A Clearer Direction? </h3>
             <p>Let's get in touch on a 15-Minute call where we would be able to answer any questions you may have. Our Advisor will additionally help map your wealth mix and demonstrate what a dedicated advisor would do differently.</p>
           </div>
-          <a class="btn-gold" href="#">Book A Discovery Call</a>
+          <a class="btn btn-primary" href="#">Book A Discovery Call</a>
         </div>
       </div>
     </div>

@@ -114,7 +114,7 @@ const seo = {
             </div>
           </div>
           <div class="hero-box-6">
-            <a href="/antara" class="hero-link" style="width:220px">Explore Antara</a>
+            <a href="/antara" class="btn hero-antara btn-xl" style="width:220px">Explore Antara</a>
           </div>
         </div>
         <!-- Right: glass Open Demat card -->
@@ -162,12 +162,13 @@ const seo = {
                 <a
                   id="hero-get-started"
                   href="https://signup.way2wealth.com/way2wealth/individual_new"
-                  class="hero-link-2"
+                  class="btn btn-primary btn-xl"
+                  style="width:100%"
                 >
                   Get Started Now
                 </a>
                 <p class="hero-text-3">
-                  Already a part of us? <a href="#" class="hero-link-3"
+                  Already a part of us? <a href="#" class="btn-link"
                     >Login Here</a
                   >
                 </p>
@@ -383,7 +384,7 @@ const seo = {
                 build a personalised, easy-to-follow wealth plan for your future.
               </p>
             </div>
-            <a href="/contact-us" class="advisory-link-2">Schedule a Call</a>
+            <a href="/contact-us" class="btn btn-primary btn-xl advisory-link-2">Schedule a Call</a>
           </div>
         </div>
       </div>
@@ -406,9 +407,9 @@ const seo = {
                 money is right here.
               </p>
             </div>
-            <a href="/products" class="product-link">
+            <a href="/products" class="btn-link btn-link-inverse product-link">
               View All Our Products
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:middle;margin-left:8px"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
           </div>
           <div class="product-box-4" id="products-grid">
@@ -945,24 +946,6 @@ const seo = {
                 />
                 <p class="antara-text-2">Download Now on Android or iOS</p>
               </div>
-              <!-- app-store buttons (mweb only - a QR is pointless on a phone) -->
-              <div class="antara-stores">
-                <a class="store-btn" href="#" aria-label="Get it on Google Play">
-                  <svg class="store-ico" viewBox="0 0 512 512" fill="none" aria-hidden="true">
-                    <path fill="#34A853" d="M50 24c-6 3-10 9-10 17v430c0 8 4 14 10 17l250-232z"/>
-                    <path fill="#EA4335" d="M50 24l250 232 76-70z"/>
-                    <path fill="#4285F4" d="M50 488l250-232 76 70z"/>
-                    <path fill="#FBBC04" d="M376 186 300 256l76 70 88-52c14-8 14-36 0-44z"/>
-                  </svg>
-                  <span class="store-txt"><small>GET IT ON</small><strong>Google Play</strong></span>
-                </a>
-                <a class="store-btn" href="#" aria-label="Download on the App Store">
-                  <svg class="store-ico" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fill="#111" d="M17.05 12.04c-.03-2.6 2.13-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.89-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.88 2.65 3.22 2.6 1.29-.05 1.78-.83 3.34-.83 1.56 0 2 .83 3.37.81 1.39-.03 2.27-1.27 3.12-2.53.98-1.45 1.39-2.85 1.41-2.92-.03-.01-2.71-1.04-2.74-4.13M14.62 4.33c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44"/>
-                  </svg>
-                  <span class="store-txt"><small>Download on the</small><strong>App Store</strong></span>
-                </a>
-              </div>
             </div>
           </div>
           <!-- Bottom: full-width pricing stats bar -->
@@ -980,6 +963,57 @@ const seo = {
               <span class="antara-label-2">For Buy And Sell Transactions</span>
               <span class="antara-label-3">For Trading and Demat Accounts</span>
             </div>
+          </div>
+          <!-- Official store badges, below the pricing bar. Text is set in the
+               platform system-font stack (ruled exception to the one-font rule);
+               swap in Apple's / Google's official SVGs here for exact brand art. -->
+          <div class="antara-stores">
+            <!-- Apple App Store - official black badge: Apple mark + "Download on the"
+                 over "App Store". -->
+            <a class="store-btn" href="#" aria-label="Download on the App Store">
+              <svg class="store-ico" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+                <path d="M17.05 12.04c-.03-2.6 2.13-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.89-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.88 2.65 3.22 2.6 1.29-.05 1.78-.83 3.34-.83 1.56 0 2 .83 3.37.81 1.39-.03 2.27-1.27 3.12-2.53.98-1.45 1.39-2.85 1.41-2.92-.03-.01-2.71-1.04-2.74-4.13M14.62 4.33c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44"/>
+              </svg>
+              <span class="store-txt"><small>Download on the</small><strong>App Store</strong></span>
+            </a>
+            <!-- Google Play - official black badge: the modern play triangle rendered
+                 with its official multi-stop colour gradients (blue spine, green / red
+                 wings, gold point) + "GET IT ON" over "Google Play". -->
+            <a class="store-btn" href="#" aria-label="Get it on Google Play">
+              <svg class="store-ico" viewBox="0 0 512 512" aria-hidden="true">
+                <defs>
+                  <linearGradient id="gp-blue" x1=".5" y1="0" x2=".5" y2="1">
+                    <stop offset="0" stop-color="#00A0FF"/>
+                    <stop offset=".26" stop-color="#00BEFF"/>
+                    <stop offset=".51" stop-color="#00D2FF"/>
+                    <stop offset=".76" stop-color="#00DFFD"/>
+                    <stop offset="1" stop-color="#00E3FF"/>
+                  </linearGradient>
+                  <linearGradient id="gp-gold" x1="0" y1=".5" x2="1" y2=".5">
+                    <stop offset="0" stop-color="#FFE000"/>
+                    <stop offset=".41" stop-color="#FFBD00"/>
+                    <stop offset=".77" stop-color="#FFA500"/>
+                    <stop offset="1" stop-color="#FF9C00"/>
+                  </linearGradient>
+                  <linearGradient id="gp-red" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#FF3A44"/>
+                    <stop offset="1" stop-color="#C31162"/>
+                  </linearGradient>
+                  <linearGradient id="gp-green" x1="0" y1="1" x2="1" y2="0">
+                    <stop offset="0" stop-color="#32A071"/>
+                    <stop offset=".07" stop-color="#2DA771"/>
+                    <stop offset=".48" stop-color="#15CF74"/>
+                    <stop offset=".8" stop-color="#06E775"/>
+                    <stop offset="1" stop-color="#00F076"/>
+                  </linearGradient>
+                </defs>
+                <path fill="url(#gp-blue)" d="M47.6 24.7C43 29.5 40.4 37 40.4 46.6v418.7c0 9.7 2.6 17.1 7.4 21.9l1.4 1.3 234.6-234.6v-5.5L49.1 23.4l-1.5 1.3z"/>
+                <path fill="url(#gp-gold)" d="M361.9 344.5l-78.2-78.2v-5.5l78.2-78.2 1.8 1L456.5 238c26.4 15 26.4 39.6 0 54.6l-92.8 52.7-1.8 1.2z"/>
+                <path fill="url(#gp-red)" d="M363.7 343.3L283.7 263.4 47.6 499.6c8.7 9.2 23.1 10.4 39.3 1.2l276.8-157.5z"/>
+                <path fill="url(#gp-green)" d="M363.7 169.7L86.9 12.3C70.7 3 56.3 4.3 47.6 13.5l236.1 236.1 80-79.9z"/>
+              </svg>
+              <span class="store-txt"><small>GET IT ON</small><strong>Google Play</strong></span>
+            </a>
           </div>
         </div>
       </div>
@@ -1008,7 +1042,7 @@ const seo = {
                 doubts, help you understand your risk comfort, and show you how a dedicated advisor can
                 fast-track your wealth creation.
               </p>
-              <a href="/contact-us" class="faq-link">
+              <a href="/contact-us" class="btn btn-primary btn-xl faq-link">
                 Book a Discovery Call
               </a>
             </div>
@@ -1120,7 +1154,7 @@ const seo = {
     font-weight: 700;
   }
   .hero-text {
-    margin-top: 20px;
+    margin-top: 40px; /* H1 -> subheading/trust-factor block */
     font-size: 16px;
   }
   .hero-box-4 {
@@ -1149,28 +1183,15 @@ const seo = {
     display: inline-block;
   }
   .hero-box-6 {
-    margin-top: 32px;
+    margin-top: 40px; /* trust-factor block -> button */
   }
-  .hero-link {
-    display: inline-flex;
-    height: 48px;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border-radius: 4px;
-    background-color: #2e3914; /* --color-olive-900 */
-    padding-inline: 24px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-white);
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .hero-link:hover {
-      background-color: #1a2010; /* --color-olive-950 (#1b2010 absorbs #1a2010, Tier-1) */
-    }
+  /* Homepage-hero exception: "Explore Antara" is the brand dark-green (olive)
+     solid button - the one sanctioned deviation from the .btn variant palette,
+     scoped to this hero only (like the homepage FAQ exception). Geometry/8px/
+     size come from the global .btn .btn-xl; only the fill is page-local. */
+  .hero-antara { background: var(--color-olive-900); color: var(--color-white); border-color: transparent; }
+  @media (min-width: 1024px) and (hover: hover) {
+    .hero-antara:hover { background: var(--color-olive-950); }
   }
   .hero-box-7 {
     display: flex; /* mweb: card is visible and left-aligned under the text (right-aligned ≥1024) */
@@ -1181,7 +1202,7 @@ const seo = {
   .hero-box-8 {
     width: 100%;
     max-width: 560px;
-    padding: 32px;
+    padding: clamp(32px, calc(3.333vw - 8px), 40px); /* 32 at ≤1200 → 40 by 1440, no step */
     -webkit-backdrop-filter: blur(20px) saturate(1.6);
     backdrop-filter: blur(20px) saturate(1.6);
     background: #ffffffd9; /* Tier-2: rule-5 (alpha) - parity-preserved (glass over video) */
@@ -1299,40 +1320,13 @@ const seo = {
     font-weight: 500;
     color: #333; /* fork n900 */
   }
-  .hero-link-2 {
-    display: inline-flex;
-    height: 48px;
-    width: 220px;
-    align-items: center;
-    justify-content: center;
-    align-self: flex-start;
-    border-radius: 4px;
-    background-color: #f3b83f; /* --color-gold-400 */
-    font-size: 12px;
-    font-weight: 500;
-    color: #202318; /* --color-charcoal-825 (home gold-button ink) */
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .hero-link-2:hover {
-      background-color: #d4982a; /* --color-gold-600 */
-    }
-  }
+  /* .hero-link-2 migrated to global .btn .btn-primary .btn-xl (width/align inline). */
   .hero-text-3 {
     font-size: 12px;
     font-weight: 500;
     color: #333; /* fork n900 */
   }
-  .hero-link-3 {
-    color: #2f7ef4; /* --color-blue-500 */
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .hero-link-3:hover {
-      text-decoration-line: underline;
-    }
-  }
+  /* .hero-link-3 migrated to global .btn-link (blue hyperlink). */
 
   /* ---- Section shells (fork sets the #fffcf3 bg on these - the .home wrapper
      also carries it, so alternating sections stay seamless) ---- */
@@ -1611,8 +1605,11 @@ const seo = {
     padding-block: 16px;
   }
   .advisory-img {
-    height: 120px;
-    width: 120px;
+    /* Desktop icon scales with the 2-col card as the viewport narrows - full 120px
+       design at 1920 down to ~0.72x (86.4px) at the 1024 desktop-band floor, same
+       idiom as the product-card icons. Mobile keeps 40px (mweb block below). */
+    height: clamp(86.4px, calc(3.75vw + 48px), 120px);
+    width: clamp(86.4px, calc(3.75vw + 48px), 120px);
     flex-shrink: 0;
     object-fit: contain;
   }
@@ -1681,32 +1678,9 @@ const seo = {
     font-size: 14px;
     color: #666; /* --color-gray-650 (home muted) */
   }
-  .advisory-link-2 {
-    flex-shrink: 0;
-    background-color: #f3b83f; /* --color-gold-400 (fork --color-brand) */
-    color: #202318; /* --color-charcoal-825 */
-    width: 100%; /* mobile: full-width CTA (fixed 220px restored ≥640px) */
-    height: 48px;
-    border-radius: 6px; /* home button radius - off-scale (Tier-2) */
-    cursor: pointer;
-    white-space: nowrap;
-    border: none;
-    justify-content: center;
-    align-items: center;
-    gap: 6px; /* off-grid - parity (Tier-2) */
-    padding: 0 20px;
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background-color 0.15s, transform 0.15s;
-    display: inline-flex;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .advisory-link-2:hover {
-    background-color: #d4982a; /* --color-gold-600 (fork --color-brand-hover) */
-    transform: translateY(-1px);
-  }
-  }
+  /* .advisory-link-2 migrated to global .btn .btn-primary .btn-xl; class kept as
+     the responsive-width hook only (full-width mobile -> 220px at >=640px). */
+  .advisory-link-2 { flex-shrink: 0; width: 100%; min-width: 0; } /* full-width mobile (→ 220px at ≥640); exempt from the base 220px floor so it can't overflow narrow phones */
   /* ── mweb (≤1023px) - Strategic Advisory: single-column stack; each card puts a
      40px icon + uppercase title on one row with a full-width description below
      (Figma 1119:13399). .advisory-box-5 dissolves so its title/desc become grid
@@ -1763,17 +1737,9 @@ const seo = {
     font-size: 16px;
     color: #ffffff8c; /* Tier-2: rule-5 (alpha) - parity-preserved (over dark gradient) */
   }
-  .product-link {
-    flex-shrink: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #fdf4dc; /* --color-cream-450 (fork --color-brand-light) */
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .product-link:hover {
-      color: var(--color-white);
-    }
-  }
+  /* .product-link migrated to global .btn-link .btn-link-inverse (cream->white on
+     the dark products band); class kept as a no-shrink hook. */
+  .product-link { flex-shrink: 0; }
   .product-box-4 {
     margin-top: 40px;
     display: grid;
@@ -1824,7 +1790,7 @@ const seo = {
     margin-top: 40px;
     transition: margin-top var(--pc-dur) var(--pc-ease);
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover .product-copy {
       margin-top: 32px; /* 8px tighter to the icon on hover */
     }
@@ -1835,7 +1801,7 @@ const seo = {
   .product-text-2 {
     color: #ffffff80; /* Tier-2: rule-5 (alpha) - parity-preserved (over dark card) */
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover .product-text-2 {
       color: #ffffffb3; /* Tier-2: rule-5 (alpha) - parity-preserved */
     }
@@ -1850,6 +1816,18 @@ const seo = {
     --pc-dur: 0.9s;
     --pc-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --pc-delay: 0s;
+    /* Icon / circle / arrow dimensions and the reveal geometry are driven off
+       these vars so they scale together. Base = mobile design; the desktop band
+       (>=1024) overrides them with clamp()s that ramp down to ~0.72x at 1024 so
+       the icons + hover animation proportionally shrink as the card narrows.
+       The transform-based animations (scale 1.2 / 0.375->1) are ratios, so they
+       scale with these base sizes automatically. */
+    --pc-icon: 40px;
+    --pc-circle: 64px;
+    --pc-circle-pos: 20px;
+    --pc-arrow: 26px;
+    --pc-corner: 60px;
+    --pc-label-gap: 40px;
     position: relative;
     display: flex;
     height: 284px;
@@ -1859,7 +1837,7 @@ const seo = {
     padding: 32px;
     background-color: #2e3914; /* --color-olive-900 (revealed base) */
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover {
       --pc-delay: 0.1s;
       background-color: #2e3914; /* --color-olive-900 */
@@ -1872,18 +1850,18 @@ const seo = {
     inset: 0;
     z-index: 1;
     background-color: #2b2c2b; /* charcoal overlay - page-local literal (Tier-2) */
-    clip-path: circle(150% at calc(100% - 60px) 60px);
+    clip-path: circle(150% at calc(100% - var(--pc-corner)) var(--pc-corner));
     transition: clip-path var(--pc-dur) var(--pc-ease);
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover::before {
-      clip-path: circle(0% at calc(100% - 60px) 60px);
+      clip-path: circle(0% at calc(100% - var(--pc-corner)) var(--pc-corner));
     }
   }
   /* icon scales from its left edge - grows rightward, not from centre */
   .product-img {
-    width: 40px;
-    height: 40px;
+    width: var(--pc-icon);
+    height: var(--pc-icon);
     flex-shrink: 0;
     object-fit: contain;
     color: #d7d7cd; /* page-local literal (Tier-2) */
@@ -1894,7 +1872,7 @@ const seo = {
     stroke: currentColor;
     transition: stroke-width var(--pc-dur) var(--pc-ease);
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover .product-img {
       transform: scale(1.2); /* 40px → 48px */
       color: var(--color-white);
@@ -1927,9 +1905,9 @@ const seo = {
     transition: opacity var(--pc-dur) var(--pc-ease), transform var(--pc-dur) var(--pc-ease),
       max-height var(--pc-dur) var(--pc-ease), margin-top var(--pc-dur) var(--pc-ease);
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover .product-label {
-      margin-top: 40px;
+      margin-top: var(--pc-label-gap);
       max-height: 24px;
       opacity: 1;
       transform: translateY(0);
@@ -1937,10 +1915,10 @@ const seo = {
   }
   .product-card-circle {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 64px;
-    height: 64px;
+    top: var(--pc-circle-pos);
+    right: var(--pc-circle-pos);
+    width: var(--pc-circle);
+    height: var(--pc-circle);
     border-radius: 50%;
     z-index: 5;
     display: flex;
@@ -1952,7 +1930,7 @@ const seo = {
     transform: scale(0.375); /* 24px at rest → 64px on hover */
     transition: opacity var(--pc-dur) var(--pc-ease), transform var(--pc-dur) var(--pc-ease);
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover .product-card-circle {
       opacity: 1;
       transform: scale(1);
@@ -1961,14 +1939,14 @@ const seo = {
   /* arrow points right (→) while hidden, then rotates up to aim at the
      top-right corner (↗) as it reveals */
   .product-card-circle svg {
-    width: 26px; /* Tier-2: off-scale icon (parity) */
-    height: 26px;
+    width: var(--pc-arrow); /* Tier-2 base 26px; scales with the card in the >=1024 block */
+    height: var(--pc-arrow);
     color: #202318; /* --color-charcoal-825 */
     stroke: #202318;
     transform: rotate(45deg);
     transition: transform var(--pc-dur) var(--pc-ease);
   }
-  @media (min-width: 1200px) and (hover: hover) {
+  @media (min-width: 1024px) and (hover: hover) {
     .product-link-2:hover .product-card-circle svg {
       transform: rotate(0deg);
     }
@@ -1980,6 +1958,21 @@ const seo = {
   .product-card-circle svg,
   .product-label {
     transition-delay: var(--pc-delay);
+  }
+  /* Desktop band (1024-1920): the 4-col cards narrow as the viewport shrinks, so
+     scale the icon / gold circle / arrow / reveal geometry down with it - full
+     design at 1920, ~0.72x at 1024 - keeping the icons and hover animation in
+     proportion with the card instead of staying a fixed, oversized px at 1024.
+     Mobile (<=1023) keeps the base sizes (and the mweb block's own overrides). */
+  @media (min-width: 1024px) {
+    .product-link-2 {
+      --pc-icon: clamp(28.8px, calc(1.25vw + 16px), 40px);
+      --pc-circle: clamp(46.08px, calc(2vw + 25.6px), 64px);
+      --pc-circle-pos: clamp(14.4px, calc(0.625vw + 8px), 20px);
+      --pc-arrow: clamp(18.72px, calc(0.8125vw + 10.4px), 26px);
+      --pc-corner: clamp(43.2px, calc(1.875vw + 24px), 60px);
+      --pc-label-gap: clamp(28.8px, calc(1.25vw + 16px), 40px);
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .product-link-2::before,
@@ -2010,7 +2003,7 @@ const seo = {
     .product-box-2 {
       padding: 48px 16px;
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       /* Remove the hover animation entirely on mweb - hold every layer at its
        resting value even while :hover matches (it does in a desktop browser at
        mobile width, which is why the animation still fired). No animation, no
@@ -2019,39 +2012,39 @@ const seo = {
       clip-path: circle(150% at calc(100% - 60px) 60px);
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-card-circle {
       opacity: 0;
       transform: scale(0.375);
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-card-circle svg {
       transform: rotate(45deg);
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-img {
       transform: none;
       color: #d7d7cd;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-img [stroke] {
       stroke-width: 2.5;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-copy {
       margin-top: 40px;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-label {
       margin-top: 16px;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-text-2 {
       color: #ffffff80; /* Tier-2: rule-5 (alpha) - parity-preserved (over dark card) */
     }
@@ -2158,26 +2151,37 @@ const seo = {
     color: #fff6; /* Tier-2: rule-5 (alpha) - parity-preserved (#ffffff66) */
     text-transform: uppercase;
   }
-  /* App-store buttons - hidden by default (desktop shows the QR card); the mweb
-     block below reveals them and hides the QR. */
+  /* Official app-store badges - sit centred below the pricing bar, shown at every
+     width. RULED FONT EXCEPTION (CLAUDE.md rule 3): the badge label is the ONLY
+     text on the site not set in Outfit - it uses the platform system-font stack
+     (SF on Apple, Roboto/Segoe elsewhere) so the badges read as the official Apple
+     / Google artwork. Swap in Apple's / Google's official SVG assets here for
+     pixel-exact brand compliance. */
   .antara-stores {
-    display: none;
-    width: 100%;
+    display: flex;
+    justify-content: center; /* badge pair centred horizontally in the card */
+    align-items: center;
+    flex-wrap: wrap;
     gap: 16px;
+    /* Symmetric vertical spacing so the pair sits centred in the gap between the
+       pricing bar and the card's bottom border: this top margin mirrors the card's
+       own bottom padding (.product-box-2) - 48px on mweb, 64px on desktop below. */
+    margin-top: 48px;
+    width: 100%;
   }
   .store-btn {
-    flex: 1;
-    min-width: 0;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
-    height: 56px;
-    padding-inline: 12px;
-    border-radius: 10px;
-    background-color: var(--color-white);
-    color: #111; /* dark ink on white badge */
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #a6a6a6; /* the thin grey keyline on the official black badge */
+    color: var(--color-white);
     text-decoration: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* ruled exception - official badge type */
+    transition: background-color 0.25s ease;
   }
   .store-ico {
     width: 24px;
@@ -2187,16 +2191,21 @@ const seo = {
   .store-txt {
     display: flex;
     flex-direction: column;
-    line-height: 1.2;
+    line-height: 1.1;
+    text-align: left;
   }
   .store-txt small {
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
   }
   .store-txt strong {
-    font-size: 15px;
+    font-size: 19px;
     font-weight: 600;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.01em;
+  }
+  @media (min-width: 1024px) and (hover: hover) {
+    .store-btn:hover { background-color: #1a1a1a; }
   }
 
   /* ---- FAQ (shared FaqAccordion; only the grid + side card are page-scoped) ---- */
@@ -2245,27 +2254,9 @@ const seo = {
     font-size: 14px;
     color: #fffc; /* Tier-2: rule-5 (alpha) - parity-preserved (#ffffffcc over olive) */
   }
-  .faq-link {
-    margin-top: 24px;
-    display: inline-flex;
-    height: 48px;
-    width: 220px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    background-color: #f3b83f; /* --color-gold-400 */
-    font-size: 14px;
-    font-weight: 600;
-    color: #2e3914; /* --color-olive-900 */
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
-  }
-  @media (min-width: 1200px) and (hover: hover) {
-    .faq-link:hover {
-      background-color: #d4982a; /* --color-gold-600 */
-    }
-  }
+  /* .faq-link migrated to global .btn .btn-primary .btn-xl; class kept for the
+     side-card top gap + fixed 220px width. */
+  .faq-link { margin-top: 24px; width: 220px; }
 
   /* =====================================================================
      RESPONSIVE - ported verbatim from home.css (Tailwind min-width variants
@@ -2318,6 +2309,11 @@ const seo = {
     .el-sec {
       min-height: max(560px, 100vh - 80px);
     }
+    /* Desktop card padding is 64px (.product-box-2) - mirror it above the badges so
+       the store pair stays vertically centred in the gap on desktop too. */
+    .antara-stores {
+      margin-top: 64px;
+    }
     .hero-box-2 {
       min-height: max(560px, 100vh - 80px);
       flex-direction: row;
@@ -2346,19 +2342,23 @@ const seo = {
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 40px;
-      padding-inline: 40px;
+      /* Fluidly scale the roomy 1920 spacing down to the compact 1200 value -
+         continuous across the whole desktop band (no 1280 step). Reaches the
+         design gap/padding by 1440, then holds. */
+      gap: clamp(40px, calc(20vw - 200px), 88px);
+      padding-inline: clamp(40px, calc(30vw - 320px), 112px);
       padding-block: 0;
     }
     .why-box-7 {
       min-width: 0;
       flex: 1;
+      max-width: 648px; /* design cap; inactive below ~1280, so no visible step */
     }
     .why-title {
       font-size: 40px;
     }
     .why-text {
-      font-size: 16px;
+      font-size: clamp(16px, calc(0.8333vw + 6px), 18px);
     }
     .why-box-8 {
       height: 100%;
@@ -2432,13 +2432,13 @@ const seo = {
   /* Hero two-column: scale the text column proportionally so the Demat card never
      starves between 1200-1440px. Legacy snapped the text column to a fixed 690px at
      1280px, which crushed the card (heading wrapped, badges reflowed) until ~1440px.
-     Instead ramp the text max-width fluidly from its ~44% width at 1200px up to the
-     690px design width at 1440px - continuous at both ends - so the hero stays a
-     balanced horizontal rectangle across the whole range. Below 1200px the existing
-     44% rule governs; at/above 1440px the 690px design resumes.
+     Instead ramp the card max-width fluidly up to the 690px design width at 1440px -
+     continuous across the whole desktop band (1024-1440) so the hero stays a balanced
+     horizontal rectangle and never steps at 1200. Below 1024px (mobile) the base rule
+     governs; at/above 1440px the 690px design resumes.
      Responsive fluid scaling: sanctioned exception to the 8px grid, same idiom as
      the clamp()-based --pad / hero sizing. */
-  @media (min-width: 1200px) and (max-width: 1439.98px) {
+  @media (min-width: 1024px) and (max-width: 1439.98px) {
     .hero-box-3 {
       max-width: clamp(465px, calc(93.75vw - 660px), 690px);
     }
@@ -2446,25 +2446,6 @@ const seo = {
   @media (min-width: 1440px) {
     .hero-box-3 {
       max-width: 690px;
-    }
-    .hero-box-8 {
-      padding: 40px;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .why-box-6 {
-      gap: 88px;
-      padding-inline: 112px;
-    }
-    .why-box-7 {
-      max-width: 648px;
-    }
-    .why-text {
-      font-size: 18px;
-    }
-    .why-box-8 {
-      width: 580px;
     }
   }
 
@@ -2575,29 +2556,29 @@ const seo = {
       color: var(--color-white);
       stroke: var(--color-white);
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       /* neutralise the desktop hover choreography on touch so a tap doesn't animate */
     .product-link-2:hover .product-img {
       transform: none;
       color: #d7d7cd;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-img [stroke] {
       stroke-width: 2.5;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-copy {
       margin-top: 0;
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-card-circle {
       transform: translateY(-50%);
     }
     }
-    @media (min-width: 1200px) and (hover: hover) {
+    @media (min-width: 1024px) and (hover: hover) {
       .product-link-2:hover .product-card-circle svg {
       transform: rotate(45deg);
     }
@@ -2605,12 +2586,10 @@ const seo = {
 
     /* (How Soon mweb vertical timeline now lives in the <HowSoon /> component.) */
 
-    /* Antara (mweb) - swap the QR card for app-store buttons (Figma 1111:11828). */
-    .antara-box-5 {
+    /* Antara (mweb) - a QR is pointless on a phone, so hide the QR card entirely;
+       the official store badges below the pricing bar are the download entry point. */
+    .antara-box-4 {
       display: none;
-    }
-    .antara-stores {
-      display: flex;
     }
 
     /* Products (mweb) - the updated Figma uses a small 16px arrow (was 32px). */
