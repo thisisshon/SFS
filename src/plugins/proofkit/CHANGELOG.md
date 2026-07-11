@@ -6,6 +6,17 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 1.6.5 — 2026-07-12 — roomier overlay login
+
+- Overlay login made larger and more relaxed: card 400→480px wide, padding 40→56px; taller
+  56px inputs + Sign in button (15px text); more breathing room between brand / title / subtitle
+  / fields / actions / footer. Style-only, `Overlay.astro`.
+
+## 1.6.4 — 2026-07-12 — overlay login spacing
+
+- Overlay login: 16px gap between the "Review this page" title and the subheading
+  (`.rv-login-sub` margin-top 8px → 16px). Style-only, `Overlay.astro`.
+
 ## 1.6.3 — 2026-07-12 — overlay login copy trim
 
 - Overlay login subtitle: dropped "on the Testing Environment" → "Please select the Team Name and
