@@ -39,6 +39,7 @@ const seo = {
       <button class="rvd-tab" data-tab="open">Open Changes</button>
       <button class="rvd-tab" data-tab="closed">Closed Changes</button>
       <button class="rvd-tab" data-tab="page">By Page</button>
+      <button class="rvd-tab" data-tab="log">Master Log</button>
     </div>
 
     <div class="rvd-teamchips" id="rvd-teamchips"></div>
@@ -115,12 +116,27 @@ const seo = {
   .rvd .rvd-rtxt{font-size:14px;color:var(--color-text-primary,#1d1d1d)}
   .rvd .rvd-rmeta{font-size:12px;color:var(--color-text-secondary,#6b6b6b)}
   .rvd .rvd-empty{margin:48px 0;text-align:center;color:var(--color-text-secondary,#6b6b6b)}
+  /* Master Log: session table */
+  .rvd .rvd-logwrap{overflow-x:auto;border:1px solid var(--color-cream-500,#e4ddcb);border-radius:12px}
+  .rvd .rvd-log{width:100%;border-collapse:collapse;font-size:14px;background:var(--color-cream-400)}
+  .rvd .rvd-log th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--color-text-secondary,#9a9384);padding:12px 14px;white-space:nowrap;
+    border-bottom:1px solid var(--color-cream-500,#e4ddcb)}
+  .rvd .rvd-log td{padding:12px 14px;border-bottom:1px solid var(--color-cream-500,#e4ddcb);vertical-align:middle}
+  .rvd .rvd-log tbody tr:last-child td{border-bottom:none}
+  .rvd .rvd-logrow{cursor:pointer;transition:background .12s}
+  .rvd .rvd-log td.num{font-weight:600;text-align:center}
+  .rvd .rvd-log .rvd-team-chip{margin-right:4px}
+  .rvd .rvd-back{margin-bottom:16px;background:none;border:none;cursor:pointer;padding:0;
+    font:600 13px/1 Outfit;color:var(--color-text-primary,#1d1d1d);text-decoration:underline}
+  .rvd .rvd-detailhead{font-size:14px;color:var(--color-text-secondary,#6b6b6b);margin-bottom:16px}
   @media (max-width:640px){
     .rvd .rvd-line{flex-wrap:wrap}
     .rvd .rvd-acts{width:100%}
   }
   @media (min-width:1200px) and (hover:hover){
     .rvd .rvd-a:hover,.rvd .rvd-openpin:hover,.rvd .rvd-del:hover{opacity:.8}
+    .rvd .rvd-logrow:hover{background:var(--color-cream-450,#efe7d6)}
   }
 </style>
 
@@ -192,7 +208,31 @@ const seo = {
       return `<span class="rvd-team-chip" style="background:${c[0]};color:${c[1]}">${esc(team)}</span>`;
     };
     const TEAMS = ['Product', 'SEO', 'Marketing', 'Content'];
-    let all = [], tab = 'all', teamFilter = '';
+    let all = [], tab = 'all', teamFilter = '', logSession = null;
+
+    // group every comment/reply by its review session (one sitting)
+    function sessions() {
+      const map = new Map();
+      all.forEach((c) => {
+        const sid = c.sessionId || '(legacy)';
+        if (!map.has(sid)) map.set(sid, []);
+        map.get(sid).push(c);
+      });
+      return [...map.entries()].map(([sid, items]) => {
+        const times = items.map((i) => i.createdAt).sort();
+        const roots = items.filter((i) => !i.parentId);
+        return {
+          sid, items,
+          start: times[0], end: times[times.length - 1],
+          names: [...new Set(items.map((i) => i.name).filter(Boolean))],
+          teams: [...new Set(items.map((i) => i.team).filter(Boolean))],
+          pages: [...new Set(items.map((i) => i.page.path))],
+          changes: roots.length,
+          total: items.length,
+          open: roots.filter((r) => r.status !== 'resolved').length,
+        };
+      }).sort((a, b) => (a.start < b.start ? 1 : -1)); // newest session first
+    }
 
     function buildTeamChips() {
       const one = (label, team) => {
@@ -259,7 +299,64 @@ const seo = {
       );
     }
 
+    function renderLog() {
+      const ss = sessions();
+      $('#rvd-empty').hidden = ss.length > 0;
+      $('#rvd-list').innerHTML = !ss.length ? '' :
+        `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
+        `<th>When</th><th>Reviewer</th><th>Team</th><th>Changes</th><th>Comments</th><th>Pages</th><th>Open</th>` +
+        `</tr></thead><tbody>` +
+        ss.map((s) =>
+          `<tr class="rvd-logrow" data-sid="${esc(s.sid)}">` +
+            `<td>${esc(fmt(s.start))}</td>` +
+            `<td>${esc(s.names.join(', ') || '—')}</td>` +
+            `<td>${s.teams.map(teamChip).join('') || '—'}</td>` +
+            `<td class="num">${s.changes}</td>` +
+            `<td class="num">${s.total}</td>` +
+            `<td class="num">${s.pages.length}</td>` +
+            `<td class="num">${s.open}</td>` +
+          `</tr>`).join('') +
+        `</tbody></table></div>`;
+      $('#rvd-list').querySelectorAll('.rvd-logrow').forEach((tr) =>
+        tr.addEventListener('click', () => { logSession = tr.dataset.sid; render(); }));
+    }
+
+    function logItem(c) {
+      const a = c.anchor || {};
+      const isReply = !!c.parentId;
+      return `<article class="rvd-item">` +
+        `<div class="rvd-line">` +
+          (isReply ? `<span class="rvd-chip resolved">Reply</span>`
+                   : `<span class="rvd-chip ${c.status === 'resolved' ? 'resolved' : 'open'}">${c.status === 'resolved' ? 'Resolved' : 'Open'}</span>`) +
+          `<div class="rvd-headline"><div class="rvd-comment">${esc(c.comment)}</div>` +
+            (a.snippet ? `<div class="rvd-snip">on “${esc(a.snippet)}”</div>` : '') + `</div>` +
+          `<a class="rvd-openpin" href="${esc(c.page.path)}?review=1#c=${esc(c.parentId || c.id)}" target="_blank" rel="noopener">Open Pin</a>` +
+        `</div>` +
+        (c.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(c.changeTo)}</div></div>` : '') +
+        `<div class="rvd-meta">${teamChip(c.team)}<span class="rvd-by">${esc(c.name || 'anonymous')}</span>` +
+          `<a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(c.page.path)}</a>` +
+          `<span class="rvd-time">${esc(fmt(c.createdAt))}</span></div>` +
+      `</article>`;
+    }
+
+    function renderSessionDetail() {
+      const s = sessions().find((x) => x.sid === logSession);
+      if (!s) { logSession = null; return renderLog(); }
+      $('#rvd-empty').hidden = true;
+      const items = s.items.slice().sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      $('#rvd-list').innerHTML =
+        `<button class="rvd-back" id="rvd-back">← Back to log</button>` +
+        `<div class="rvd-detailhead">Session · ${esc(fmt(s.start))} · ${esc(s.names.join(', ') || 'anonymous')}` +
+          ` · ${s.total} comment${s.total > 1 ? 's' : ''} across ${s.pages.length} page${s.pages.length > 1 ? 's' : ''}</div>` +
+        `<div class="rvd-grid">${items.map(logItem).join('')}</div>`;
+      $('#rvd-back').addEventListener('click', () => { logSession = null; render(); });
+    }
+
     function render() {
+      // team chips filter comments, not sessions -> hide them on the log tab
+      $('#rvd-teamchips').style.display = tab === 'log' ? 'none' : 'flex';
+      if (tab === 'log') { logSession ? renderSessionDetail() : renderLog(); return; }
+
       const host = $('#rvd-list');
       let rs = roots();
       if (tab === 'open') rs = rs.filter((c) => c.status !== 'resolved');
@@ -317,7 +414,7 @@ const seo = {
 
     $('#rvd-tabs').addEventListener('click', (e) => {
       const b = e.target.closest('.rvd-tab'); if (!b) return;
-      tab = b.dataset.tab;
+      tab = b.dataset.tab; logSession = null;
       $('#rvd-tabs').querySelectorAll('.rvd-tab').forEach((t) => t.classList.toggle('is-active', t === b));
       render();
     });

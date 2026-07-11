@@ -52,6 +52,7 @@ export default {
           createdAt: new Date().toISOString(),
           status: 'open',
           parentId: b.parentId || null, // set on replies -> threads a comment
+          sessionId: b.sessionId ? String(b.sessionId).slice(0, 64) : '', // groups a review sitting
           team: b.team ? String(b.team).slice(0, 40) : '',
           name: String(b.name || 'anonymous').slice(0, 80),
           comment: comment.slice(0, 4000),

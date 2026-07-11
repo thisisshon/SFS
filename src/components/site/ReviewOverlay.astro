@@ -29,7 +29,15 @@
     'use strict';
 
     // ---- arm gate --------------------------------------------------------
-    const KEY = 'reviewMode', PASS_KEY = 'reviewPass', NAME_KEY = 'reviewName', TEAM_KEY = 'reviewTeam';
+    const KEY = 'reviewMode', PASS_KEY = 'reviewPass', NAME_KEY = 'reviewName', TEAM_KEY = 'reviewTeam',
+      SESSION_KEY = 'reviewSessionId';
+    // A review session = one sitting in the tab; id persists across page nav and
+    // comments, and is cleared on Save/exit so the next entry logs separately.
+    function sessionId() {
+      let s = sessionStorage.getItem(SESSION_KEY);
+      if (!s) { s = 'S' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36); sessionStorage.setItem(SESSION_KEY, s); }
+      return s;
+    }
     const TEAMS = ['Product', 'SEO', 'Marketing', 'Content'];
     const TEAM_COLORS = {
       Product: ['#e7f0fb', '#1b5fa8'], SEO: ['#e7f7ee', '#1d7a46'],
@@ -274,6 +282,7 @@
       nav.style.display = 'none';
       backdrop.remove(); closePop();
       pinEls.forEach((el) => el.remove()); pinEls.clear(); activeId = null;
+      sessionStorage.removeItem(SESSION_KEY); // end this review session -> next entry logs separately
     }
 
     // ---- pins ------------------------------------------------------------
@@ -417,6 +426,7 @@
       try {
         const rec = await store.add({
           team, name, comment, changeTo: team === 'Content' ? changeTo : '', anchor,
+          sessionId: sessionId(),
           page: { path: location.pathname, url: location.href, title: document.title, slug: slugFromPath() },
         });
         comments.push(rec); renderPins(); closePop();
@@ -504,7 +514,7 @@
       try {
         const rec = await store.add({
           team, name, comment: txt, changeTo: team === 'Content' ? changeTo : '',
-          parentId: root.id, anchor: root.anchor, page: root.page,
+          sessionId: sessionId(), parentId: root.id, anchor: root.anchor, page: root.page,
         });
         comments.push(rec); renderPins(); openThread(root);
       } catch (e) {
