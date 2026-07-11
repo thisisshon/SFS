@@ -29,6 +29,10 @@ jobs:
         uses: withastro/action@v6
         with:
           node-version: 22
+        env:
+          # Public (non-secret) URL of the content-review Cloudflare Worker.
+          # Baked into the client build so /review + the overlay use the shared store.
+          PUBLIC_REVIEW_WORKER_URL: https://shriram-review.shonydjjv.workers.dev
 
   deploy:
     needs: build

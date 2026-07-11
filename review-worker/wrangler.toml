@@ -5,14 +5,14 @@ compatibility_date = "2024-11-01"
 [vars]
 # The exact origin your live site is served from (CORS lock). For GitHub Pages
 # this is typically "https://OWNER.github.io". Use "*" only while testing.
-ALLOW_ORIGIN = "https://OWNER.github.io"
+ALLOW_ORIGIN = "https://thisisshon.github.io"
 
 # KV store for comments. Create it once with:
 #   wrangler kv namespace create COMMENTS
 # then paste the printed id below.
 [[kv_namespaces]]
 binding = "COMMENTS"
-id = "PASTE_KV_NAMESPACE_ID_HERE"
+id = "324f355edd5e4c71b29d3e5e7424d9f5"
 
 # The passcode is a secret, NOT stored here. Set it once with:
 #   wrangler secret put REVIEW_PASS
