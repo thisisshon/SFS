@@ -31,10 +31,14 @@ All commands run from this `review-worker/` folder.
 3. **Set the site origin** in `wrangler.toml` → `ALLOW_ORIGIN`
    (e.g. `https://owner.github.io`). This locks the Worker to your site.
 
-4. **Set the passcode** (the content team types this once per browser tab)
+4. **Set the two passwords** (two access tiers)
    ```bash
-   wrangler secret put REVIEW_PASS
+   wrangler secret put REVIEW_PASS   # Team ID: reviewers, to comment on pages
+   wrangler secret put ADMIN_PASS    # Admin: to open the /review dashboard
    ```
+   - `REVIEW_PASS` (Team ID) → add comments + read a page's pins.
+   - `ADMIN_PASS` → read ALL comments (dashboard), resolve, delete. Admin is a
+     superset of reviewer.
 
 5. **Deploy**
    ```bash
@@ -75,7 +79,9 @@ KV store instead of local browser storage.
 | `POST` | `/resolve` | set a comment open/resolved |
 | `POST` | `/delete` | delete a whole thread (root + replies) |
 
-All require header `X-Review-Pass: <REVIEW_PASS>`.
+Auth via header `X-Review-Pass`. `POST /comments` + `GET /comments?path=` accept
+the Team ID (`REVIEW_PASS`) or admin; `GET /comments` (all), `/resolve`, `/delete`
+require admin (`ADMIN_PASS`).
 
 ## Retiring the tool
 

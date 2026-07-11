@@ -116,6 +116,21 @@ const seo = {
   .rvd .rvd-rtxt{font-size:14px;color:var(--color-text-primary,#1d1d1d)}
   .rvd .rvd-rmeta{font-size:12px;color:var(--color-text-secondary,#6b6b6b)}
   .rvd .rvd-empty{margin:48px 0;text-align:center;color:var(--color-text-secondary,#6b6b6b)}
+  /* login overlay (admin password gate for the dashboard) */
+  .rvd-login{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .rvd-login-card{width:360px;max-width:100%;background:#fff;color:var(--color-text-primary,#1d1d1d);border-radius:18px;
+    padding:28px;box-shadow:0 24px 64px rgba(0,0,0,.4);font:400 14px/1.5 Outfit;box-sizing:border-box}
+  .rvd-login-title{font-size:20px;font-weight:700}
+  .rvd-login-sub{font-size:14px;color:var(--color-text-secondary,#6b6b6b);margin:6px 0 20px}
+  .rvd-login-input{width:100%;height:48px;padding:0 14px;border:1px solid var(--color-cream-500,#d8d2c4);border-radius:10px;
+    font:inherit;color:inherit;background:#fff;box-sizing:border-box}
+  .rvd-login-input:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
+  .rvd-login-err{margin-top:8px;font-size:13px;font-weight:600;color:#a12626}
+  .rvd-login-actions{display:flex;justify-content:flex-end;margin-top:20px}
+  .rvd-login-btn{height:44px;padding:0 24px;border:none;border-radius:10px;background:var(--color-olive-900,#2e3914);
+    color:#fff;font:600 14px/1 Outfit;cursor:pointer}
+  .rvd-login-btn:disabled{opacity:.6;cursor:default}
   /* Master Log: session table */
   .rvd .rvd-logwrap{overflow-x:auto;border:1px solid var(--color-cream-500,#e4ddcb);border-radius:12px}
   .rvd .rvd-log{width:100%;border-collapse:collapse;font-size:14px;background:var(--color-cream-400)}
@@ -144,7 +159,7 @@ const seo = {
   (() => {
     const WORKER_URL = import.meta.env.PUBLIC_REVIEW_WORKER_URL || '';
     const LOCAL = !WORKER_URL;
-    const PASS_KEY = 'reviewPass';
+    const PASS_KEY = 'reviewAdminPass'; // admin password for the dashboard (separate from reviewer Team ID)
 
     async function apiFetch(path, opts = {}) {
       const headers = { 'Content-Type': 'application/json' };
@@ -188,11 +203,61 @@ const seo = {
           del: (rec) => apiFetch('/delete', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path }) }),
         };
 
-    async function ensurePass() {
-      if (LOCAL) return true;
-      if (sessionStorage.getItem(PASS_KEY)) return true;
-      const p = prompt('Review passcode:'); if (!p) return false;
-      sessionStorage.setItem(PASS_KEY, p); return true;
+    let loginEl = null, refreshTimer = null;
+
+    async function loadData() { all = await store.all(); counts(); render(); }
+
+    // Keep the review page current: submits land in the DB instantly; poll so the
+    // dashboard reflects new comments without a manual Refresh.
+    function startAutoRefresh() {
+      if (refreshTimer) return;
+      refreshTimer = setInterval(() => { if (!document.hidden) loadData().catch(() => {}); }, 30000);
+      window.addEventListener('focus', () => loadData().catch(() => {}));
+    }
+
+    function showLogin() {
+      if (!loginEl) {
+        loginEl = document.createElement('div'); loginEl.className = 'rvd-login';
+        loginEl.innerHTML =
+          '<div class="rvd-login-card" role="dialog" aria-modal="true">' +
+          '<div class="rvd-login-title">Content Review</div>' +
+          '<div class="rvd-login-sub">Enter the review password to open the dashboard.</div>' +
+          '<input class="rvd-login-input" type="password" placeholder="Password" autocomplete="current-password">' +
+          '<div class="rvd-login-err" hidden></div>' +
+          '<div class="rvd-login-actions"><button type="button" class="rvd-login-btn">Login</button></div>' +
+          '</div>';
+        const input = loginEl.querySelector('.rvd-login-input');
+        const go = () => tryLogin(input);
+        loginEl.querySelector('.rvd-login-btn').addEventListener('click', go);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      }
+      document.body.appendChild(loginEl);
+      loginEl.querySelector('.rvd-login-input').focus();
+    }
+    function hideLogin() { loginEl && loginEl.remove(); }
+
+    async function tryLogin(input) {
+      const id = input.value.trim(); if (!id) { input.focus(); return; }
+      const err = loginEl.querySelector('.rvd-login-err');
+      const btn = loginEl.querySelector('.rvd-login-btn');
+      sessionStorage.setItem(PASS_KEY, id);
+      btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
+      try { await loadData(); hideLogin(); startAutoRefresh(); }
+      catch (e) {
+        sessionStorage.removeItem(PASS_KEY);
+        btn.disabled = false; btn.textContent = 'Login';
+        err.textContent = e.message === 'unauthorized' ? 'Incorrect password. Please try again.' : ('Could not connect — ' + e.message);
+        err.hidden = false; input.focus(); input.select();
+      }
+    }
+
+    function init() {
+      if (sessionStorage.getItem(PASS_KEY)) {
+        loadData().then(startAutoRefresh).catch((e) => {
+          if (e.message === 'unauthorized') { sessionStorage.removeItem(PASS_KEY); showLogin(); }
+          else { $('#rvd-empty').hidden = false; $('#rvd-empty').textContent = 'Could not load — ' + e.message; }
+        });
+      } else showLogin();
     }
 
     const $ = (s) => document.querySelector(s);
@@ -402,24 +467,14 @@ const seo = {
       });
     }
 
-    async function load() {
-      if (!(await ensurePass())) { $('#rvd-empty').hidden = false; $('#rvd-empty').textContent = 'Passcode required.'; return; }
-      try { all = await store.all(); }
-      catch (e) {
-        if (e.message === 'unauthorized') { $('#rvd-empty').hidden = false; $('#rvd-empty').textContent = 'Wrong passcode — reload to retry.'; return; }
-        $('#rvd-empty').hidden = false; $('#rvd-empty').textContent = 'Could not load — ' + e.message; return;
-      }
-      counts(); render();
-    }
-
     $('#rvd-tabs').addEventListener('click', (e) => {
       const b = e.target.closest('.rvd-tab'); if (!b) return;
       tab = b.dataset.tab; logSession = null;
       $('#rvd-tabs').querySelectorAll('.rvd-tab').forEach((t) => t.classList.toggle('is-active', t === b));
       render();
     });
-    $('#rvd-refresh').addEventListener('click', load);
+    $('#rvd-refresh').addEventListener('click', () => loadData().catch((e) => alert('Could not refresh — ' + e.message)));
     buildTeamChips();
-    load();
+    init();
   })();
 </script>

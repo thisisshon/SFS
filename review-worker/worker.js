@@ -31,18 +31,23 @@ export default {
     };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
-    // ---- passcode gate (all methods) ----
-    if (!env.REVIEW_PASS || request.headers.get('X-Review-Pass') !== env.REVIEW_PASS) {
-      return json({ error: 'unauthorized' }, 401, cors);
-    }
+    // ---- two-tier auth (header X-Review-Pass) ----
+    //   Team ID (REVIEW_PASS) -> reviewers: add a comment, read a page's pins.
+    //   Admin   (ADMIN_PASS)  -> the /review dashboard: read ALL, resolve, delete.
+    //   Admin is a superset of reviewer.
+    const pass = request.headers.get('X-Review-Pass') || '';
+    const isAdmin = !!env.ADMIN_PASS && pass === env.ADMIN_PASS;
+    const isReviewer = isAdmin || (!!env.REVIEW_PASS && pass === env.REVIEW_PASS);
+    const deny = () => json({ error: 'unauthorized' }, 401, cors);
 
     const url = new URL(request.url);
     const kv = env.COMMENTS;
     const keyFor = (path) => 'page:' + encodeURIComponent(path || '/');
 
     try {
-      // ---- add a comment ----
+      // ---- add a comment (reviewer) ----
       if (request.method === 'POST' && url.pathname === '/comments') {
+        if (!isReviewer) return deny();
         const b = await request.json();
         const comment = String(b.comment || '').trim();
         if (!comment) return json({ error: 'empty comment' }, 400, cors);
@@ -75,10 +80,11 @@ export default {
       if (request.method === 'GET' && url.pathname === '/comments') {
         const path = url.searchParams.get('path');
         if (path) {
+          if (!isReviewer) return deny(); // one page's pins (reviewer)
           const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
           return json(arr, 200, cors);
         }
-        // all comments, for the dashboard
+        if (!isAdmin) return deny(); // ALL comments = dashboard (admin only)
         const out = [];
         let cursor;
         do {
@@ -93,8 +99,9 @@ export default {
         return json(out, 200, cors);
       }
 
-      // ---- delete a whole thread (dashboard admin) ----
+      // ---- delete a whole thread (admin) ----
       if (request.method === 'POST' && url.pathname === '/delete') {
+        if (!isAdmin) return deny();
         const b = await request.json();
         const path = b.path || '/';
         let arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
@@ -104,8 +111,9 @@ export default {
         return json({ ok: true, removed: before - arr.length }, 200, cors);
       }
 
-      // ---- resolve / reopen (dashboard admin) ----
+      // ---- resolve / reopen (admin) ----
       if (request.method === 'POST' && url.pathname === '/resolve') {
+        if (!isAdmin) return deny();
         const b = await request.json();
         const path = b.path || '/';
         const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
