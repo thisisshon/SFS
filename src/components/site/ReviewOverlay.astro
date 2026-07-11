@@ -81,13 +81,58 @@
           add: (rec) => apiFetch('/comments', { method: 'POST', body: JSON.stringify(rec) }),
         };
 
-    async function ensurePass() {
-      if (LOCAL) return true;
-      if (sessionStorage.getItem(PASS_KEY)) return true;
-      const p = prompt('Review passcode:');
-      if (!p) return false;
-      sessionStorage.setItem(PASS_KEY, p);
-      return true;
+    // ---- Team ID login gate ---------------------------------------------
+    // Clicking Comment opens an in-page login overlay (not a browser prompt).
+    // The Team ID is validated against the Worker before review mode starts.
+    let loginEl = null;
+    function startReview() {
+      if (sessionStorage.getItem(PASS_KEY)) return enter(); // already logged in this tab
+      showLogin();
+    }
+    function showLogin() {
+      if (!loginEl) {
+        loginEl = document.createElement('div'); loginEl.className = 'rv-login';
+        loginEl.innerHTML =
+          '<div class="rv-login-card" role="dialog" aria-modal="true">' +
+          '<div class="rv-login-title">Content Review</div>' +
+          '<div class="rv-login-sub">Enter your Team ID to start commenting.</div>' +
+          '<input class="rv-login-input" type="text" placeholder="Team ID" autocomplete="off" spellcheck="false">' +
+          '<div class="rv-login-err" hidden></div>' +
+          '<div class="rv-login-actions">' +
+          '<button type="button" class="rv-login-cancel">Cancel</button>' +
+          '<button type="button" class="rv-login-btn">Login</button>' +
+          '</div></div>';
+        const input = loginEl.querySelector('.rv-login-input');
+        const go = () => tryLogin(input, loginEl);
+        loginEl.querySelector('.rv-login-btn').addEventListener('click', go);
+        loginEl.querySelector('.rv-login-cancel').addEventListener('click', hideLogin);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+        loginEl.addEventListener('click', (e) => { if (e.target === loginEl) hideLogin(); });
+      }
+      loginEl.querySelector('.rv-login-err').hidden = true;
+      const inp = loginEl.querySelector('.rv-login-input'); inp.value = '';
+      document.body.appendChild(loginEl); inp.focus();
+    }
+    function hideLogin() { loginEl && loginEl.remove(); }
+    async function tryLogin(input, el) {
+      const id = input.value.trim();
+      if (!id) { input.focus(); return; }
+      const err = el.querySelector('.rv-login-err');
+      const btn = el.querySelector('.rv-login-btn');
+      sessionStorage.setItem(PASS_KEY, id);
+      btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
+      try {
+        if (!LOCAL) await store.list(location.pathname); // validate Team ID against the Worker
+        hideLogin();
+        enter();
+      } catch (e) {
+        sessionStorage.removeItem(PASS_KEY);
+        btn.disabled = false; btn.textContent = 'Login';
+        err.textContent = e.message === 'unauthorized'
+          ? 'Incorrect Team ID. Please try again.'
+          : ('Could not connect — ' + e.message);
+        err.hidden = false; input.focus(); input.select();
+      }
     }
 
     // ---- styles (injected once, only in review mode) ---------------------
@@ -178,6 +223,22 @@
       .rv-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483004;
         max-width:calc(100vw - 32px);padding:12px 16px;border-radius:12px;background:#1d1d1d;color:#fff;
         font:500 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+      .rv-login{position:fixed;inset:0;z-index:2147483090;display:flex;align-items:center;justify-content:center;
+        padding:16px;background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+      .rv-login-card{width:360px;max-width:100%;background:#fff;color:#1d1d1d;border-radius:18px;padding:28px;
+        box-shadow:0 24px 64px rgba(0,0,0,.4);font:400 14px/1.5 Outfit,system-ui,sans-serif;box-sizing:border-box}
+      .rv-login-title{font-size:20px;font-weight:700}
+      .rv-login-sub{font-size:14px;color:#6b6b6b;margin:6px 0 20px}
+      .rv-login-input{width:100%;height:48px;padding:0 14px;border:1px solid #d8d2c4;border-radius:10px;
+        font:inherit;color:inherit;background:#fff;box-sizing:border-box}
+      .rv-login-input:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
+      .rv-login-err{margin-top:8px;font-size:13px;font-weight:600;color:#a12626}
+      .rv-login-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+      .rv-login-cancel{height:44px;padding:0 18px;border:none;border-radius:10px;background:transparent;
+        color:#6b6b6b;font:600 14px/1 Outfit,system-ui,sans-serif;cursor:pointer}
+      .rv-login-btn{height:44px;padding:0 24px;border:none;border-radius:10px;background:#2e3914;color:#fff;
+        font:600 14px/1 Outfit,system-ui,sans-serif;cursor:pointer}
+      .rv-login-btn:disabled{opacity:.6;cursor:default}
     `;
     const styleEl = document.createElement('style');
     styleEl.textContent = css;
@@ -247,7 +308,7 @@
       fab.innerHTML = (on ? ICON_CHECK : ICON_CHAT) + '<span>' + (on ? 'Save' : 'Comment') + '</span>';
     }
     setFab(false);
-    fab.addEventListener('click', () => (reviewOn ? exit() : enter()));
+    fab.addEventListener('click', () => (reviewOn ? exit() : startReview()));
 
     dock.appendChild(nav);
     dock.appendChild(fab);
@@ -257,7 +318,6 @@
     const backdrop = document.createElement('div'); backdrop.className = 'rv-backdrop';
 
     async function enter() {
-      if (!(await ensurePass())) return;
       reviewOn = true;
       setFab(true);
       nav.style.display = 'flex';
@@ -540,6 +600,6 @@
     }
 
     // deep link from the dashboard (#c=<id>) auto-enters review mode
-    if (/[#&]c=/.test(location.hash)) enter();
+    if (/[#&]c=/.test(location.hash)) startReview();
   })();
 </script>
