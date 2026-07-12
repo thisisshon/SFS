@@ -6,6 +6,11 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 1.7.1 — 2026-07-12 — copy
+
+- Dashboard H1 "Review Dashboard" → "Review and Bug Testing" (`Dashboard.astro`).
+- Overlay login title "Review this page" → "Let’s review this page" (`Overlay.astro`).
+
 ## 1.7.0 — 2026-07-12 — crisp, stackable AI prompts
 
 - Worker AI change-prompt (`worker/worker.js` → `genPrompt`) no longer includes reviewer/team
