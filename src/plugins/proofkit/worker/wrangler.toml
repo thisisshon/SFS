@@ -18,5 +18,14 @@ id = "324f355edd5e4c71b29d3e5e7424d9f5"
 [ai]
 binding = "AI"
 
-# The passcode is a secret, NOT stored here. Set it once with:
-#   wrangler secret put REVIEW_PASS
+# --- AI change-prompt provider (pluggable, all optional) ---
+# Override the Workers AI model:
+#   AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+# OR switch to Anthropic (Claude) by setting the secret
+#   wrangler secret put ANTHROPIC_API_KEY
+# and optionally the model:
+#   ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
+
+# The passcodes are secrets, NOT stored here. Set them once with:
+#   wrangler secret put REVIEW_PASS      # Team ID (reviewers)
+#   wrangler secret put ADMIN_PASS       # dashboard admin

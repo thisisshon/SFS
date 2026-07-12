@@ -31,13 +31,13 @@
 
 {/* Bundled + deferred module - one shared cached file, dormant for real visitors. */}
 <script>
-  import { TEAMS, TEAM_COLORS, WORKER_URL, HIDE_SELECTORS, PROOFKIT_ENABLED } from './config';
+  import { TEAMS, TEAM_COLORS, WORKER_URL, HIDE_SELECTORS, PROOFKIT_ENABLED, themeVars } from './config';
   (() => {
     'use strict';
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts) - tool off => never loads
 
     // ---- arm gate --------------------------------------------------------
-    const KEY = 'reviewMode', PASS_KEY = 'reviewPass', NAME_KEY = 'reviewName', TEAM_KEY = 'reviewTeam',
+    const KEY = 'reviewMode', PASS_KEY = 'reviewPass', TEAM_KEY = 'reviewTeam',
       SESSION_KEY = 'reviewSessionId';
     // A review session = one sitting in the tab; id persists across page nav and
     // comments, and is cleared on Save/exit so the next entry logs separately.
@@ -119,8 +119,8 @@
         loginEl.innerHTML =
           '<div class="rv-login-card" role="dialog" aria-modal="true">' +
           '<div class="rv-login-brand"><span class="rv-login-mark"></span>ProofKit</div>' +
-          '<div class="rv-login-title">Let’s review this page</div>' +
-          '<div class="rv-login-sub">Please select the Team Name and Enter Key to start marking comments.</div>' +
+          '<div class="rv-login-title">Let’s Review.</div>' +
+          '<div class="rv-login-sub">Please select your Team and enter the provided key to start marking comments.</div>' +
           '<label class="rv-login-label" for="rv-login-team">Team</label>' +
           '<select id="rv-login-team" class="rv-login-input rv-login-select">' +
           '<option value="" disabled selected>Select Team</option>' + teamOpts +
@@ -178,7 +178,7 @@
     // ---- styles (injected once, only in review mode) ---------------------
     // Host-page elements to hide while armed (e.g. a back-to-top FAB); see ./config.
     const hideCss = HIDE_SELECTORS.map((s) => `html.rv-armed ${s}{display:none !important}`).join('');
-    const css = hideCss + `
+    const css = ':root{' + themeVars + '}' + hideCss + `
       /* Dock sits ABOVE popovers/toasts so its buttons are always clickable,
          even when a comment popover would otherwise overlap the bottom-right. */
       .rv-dock{position:fixed;right:24px;bottom:24px;z-index:2147483040;
@@ -186,11 +186,11 @@
       .rv-fab{display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border:none;
         border-radius:24px;background:#1d1d1d;color:#fff;cursor:pointer;
         font:600 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.28)}
-      .rv-fab[data-on="1"]{background:#2e3914}
+      .rv-fab[data-on="1"]{background:var(--pk-red)}
       .rv-fab svg{width:20px;height:20px;flex:none}
       .rv-backdrop{position:fixed;inset:0;z-index:2147480000;pointer-events:none;
         backdrop-filter:grayscale(1);-webkit-backdrop-filter:grayscale(1);
-        box-shadow:inset 0 0 0 3px #b58a2e}
+        box-shadow:inset 0 0 0 3px var(--pk-red)}
       .rv-nav{display:flex;align-items:center;gap:14px;height:48px;padding:0 2px;border-radius:24px;
         background:#1d1d1d;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.28)}
       .rv-nav button{width:44px;height:44px;padding:0;border:none;border-radius:22px;
@@ -205,60 +205,62 @@
       }
       .rv-pin{position:fixed;z-index:2147483000;min-width:26px;height:26px;padding:0 7px;
         transform:translate(-50%,-100%);display:flex;align-items:center;justify-content:center;
-        border-radius:14px;border:2px solid #fff;background:#b58a2e;color:#fff;cursor:pointer;
+        border-radius:14px;border:2px solid #fff;background:var(--pk-red);color:#fff;cursor:pointer;
         font:700 12px/1 Outfit,system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.35)}
-      .rv-pin.resolved{background:#6b6b6b}
+      .rv-pin.resolved{background:var(--pk-muted)}
       .rv-pin.active{background:#1d1d1d;transform:translate(-50%,-100%) scale(1.12)}
-      .rv-pop{position:fixed;z-index:2147483003;width:320px;max-width:calc(100vw - 32px);
-        background:#fff;color:#1d1d1d;border-radius:16px;overflow:hidden;
-        box-shadow:0 16px 48px rgba(0,0,0,.32);font:400 14px/1.5 Outfit,system-ui,sans-serif}
-      .rv-pop header{padding:14px 16px;background:#f6f3ec;display:flex;justify-content:space-between;
-        align-items:flex-start;gap:8px}
-      .rv-pop header .t{font-weight:600}
-      .rv-snip{font-weight:400;font-size:12px;color:#6b6b6b;margin-top:2px;max-width:230px;
+      .rv-pop{position:fixed;z-index:2147483003;width:344px;max-width:calc(100vw - 32px);
+        background:var(--pk-card);color:var(--pk-ink);border:1px solid var(--pk-hair);border-radius:0;overflow:hidden;
+        box-shadow:0 24px 64px rgba(0,0,0,.6);font:400 14px/1.5 Outfit,system-ui,sans-serif}
+      .rv-pop header{padding:20px 22px 16px;background:var(--pk-elev);border-bottom:1px solid var(--pk-hair);
+        display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+      .rv-pop header .t{font-weight:600;font-size:15px;letter-spacing:-.01em}
+      .rv-snip{font-weight:400;font-size:12px;color:var(--pk-muted);margin-top:5px;max-width:250px;
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .rv-body{padding:16px;display:flex;flex-direction:column;gap:8px}
-      .rv-pop input,.rv-pop textarea,.rv-pop select{width:100%;padding:8px 12px;border:1px solid #d8d2c4;
-        border-radius:8px;font:inherit;color:inherit;background:#fff;box-sizing:border-box}
-      .rv-pop select{height:38px;cursor:pointer}
-      .rv-pop textarea{min-height:84px;resize:vertical}
-      .rv-pop input:focus,.rv-pop textarea:focus,.rv-pop select:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
-      .rv-change,.rv-rchange{border-color:#b58a2e !important;background:#fffdf7 !important}
+      .rv-body{padding:22px;display:flex;flex-direction:column;gap:14px}
+      .rv-pop input,.rv-pop textarea,.rv-pop select{width:100%;padding:11px 14px;border:1px solid var(--pk-hair);
+        border-radius:4px;font:inherit;color:var(--pk-ink);background:var(--pk-input);box-sizing:border-box}
+      .rv-pop input::placeholder,.rv-pop textarea::placeholder{color:var(--pk-muted)}
+      .rv-pop select{height:44px;cursor:pointer}
+      .rv-pop textarea{min-height:96px;resize:vertical}
+      .rv-pop input:focus,.rv-pop textarea:focus,.rv-pop select:focus{outline:2px solid var(--pk-red);border-color:var(--pk-red)}
+      .rv-change,.rv-rchange{border-color:var(--pk-red) !important;background:#241a10 !important}
       .rv-team-chip{padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;
         text-transform:uppercase;letter-spacing:.02em}
-      .rv-change-view{margin-top:2px;padding:8px 10px;border-radius:8px;background:#fffaf0;border:1px solid #f0e2c0}
+      .rv-change-view{margin-top:2px;padding:8px 10px;border-radius:8px;background:#241a10;border:1px solid #4a3417}
       .rv-change-view>span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;
-        color:#8a5a00;letter-spacing:.04em;margin-bottom:2px}
-      .rv-ctxt{white-space:pre-wrap;font-size:14px;color:#1d1d1d}
-      .rv-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
-      .rv-btn{height:40px;padding:0 16px;border-radius:8px;border:none;cursor:pointer;
-        font:600 14px/1 Outfit,system-ui,sans-serif}
-      .rv-btn.primary{background:#1d1d1d;color:#fff}
-      .rv-btn.ghost{background:transparent;color:#6b6b6b}
-      .rv-x{border:none;background:none;cursor:pointer;font-size:20px;line-height:1;color:#6b6b6b}
-      .rv-read{padding:12px 16px 0}
+        color:var(--pk-amber);letter-spacing:.04em;margin-bottom:2px}
+      .rv-ctxt{white-space:pre-wrap;font-size:14px;color:var(--pk-ink)}
+      .rv-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
+      .rv-btn{height:44px;padding:0 22px;border-radius:0;border:none;cursor:pointer;
+        font:700 12px/1 Outfit,system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase}
+      .rv-btn.primary{background:var(--pk-red);color:#fff}
+      .rv-btn.ghost{background:transparent;color:var(--pk-muted)}
+      .rv-x{border:none;background:none;cursor:pointer;font-size:20px;line-height:1;color:var(--pk-muted)}
+      .rv-read{padding:16px 22px 0}
       /* thread = single-open accordion of past comments (collapsed to Team + Name) */
-      .rv-thread{max-height:280px;overflow:auto;padding:8px 16px;display:flex;flex-direction:column;gap:8px}
-      .rv-titem{border:1px solid #eee;border-radius:10px;overflow:hidden}
+      .rv-thread{max-height:300px;overflow:auto;padding:12px 22px;display:flex;flex-direction:column;gap:10px}
+      .rv-titem{border:1px solid var(--pk-hair);border-radius:10px;overflow:hidden}
       .rv-thead{width:100%;display:flex;align-items:center;gap:8px;padding:10px 12px;border:none;
-        background:#f6f3ec;cursor:pointer;font:inherit;color:inherit;text-align:left}
+        background:var(--pk-elev);cursor:pointer;font:inherit;color:inherit;text-align:left}
       .rv-tname{flex:1;min-width:0;font-weight:600;font-size:14px;
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .rv-tchev{width:16px;height:16px;flex:none;transition:transform .15s}
       .rv-titem.open .rv-tchev{transform:rotate(180deg)}
       .rv-tbody{padding:12px;display:flex;flex-direction:column;gap:8px}
       .rv-titem:not(.open) .rv-tbody{display:none}
-      .rv-tmeta{font-size:12px;color:#6b6b6b}
-      .rv-reply{padding:12px 16px 16px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:8px}
-      .rv-reply input,.rv-reply textarea{width:100%;padding:8px 12px;border:1px solid #d8d2c4;border-radius:8px;
-        font:inherit;color:inherit;background:#fff;box-sizing:border-box}
+      .rv-tmeta{font-size:12px;color:var(--pk-muted)}
+      .rv-reply{padding:18px 22px 22px;border-top:1px solid var(--pk-hair);display:flex;flex-direction:column;gap:12px}
+      .rv-reply input,.rv-reply textarea{width:100%;padding:11px 14px;border:1px solid var(--pk-hair);border-radius:4px;
+        font:inherit;color:var(--pk-ink);background:var(--pk-input);box-sizing:border-box}
       .rv-reply textarea{min-height:64px;resize:vertical}
-      .rv-reply input:focus,.rv-reply textarea:focus{outline:2px solid #b58a2e;border-color:#b58a2e}
-      .rv-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b6b6b}
+      .rv-reply input:focus,.rv-reply textarea:focus{outline:2px solid var(--pk-red);border-color:var(--pk-red)}
+      .rv-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--pk-muted)}
       .rv-chip{padding:2px 8px;border-radius:10px;font-weight:600;font-size:11px}
-      .rv-chip.open{background:#fdecc8;color:#8a5a00}
-      .rv-chip.resolved{background:#e3e3e3;color:#555}
-      .rv-txt{white-space:pre-wrap;color:#1d1d1d}
+      .rv-chip.open{background:#3a2a12;color:var(--pk-amber)}
+      .rv-chip.resolved{background:#16281c;color:var(--pk-green)}
+      .rv-chip.closed{background:#2a2a2a;color:var(--pk-muted)}
+      .rv-txt{white-space:pre-wrap;color:var(--pk-ink)}
       .rv-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483004;
         max-width:calc(100vw - 32px);padding:12px 16px;border-radius:12px;background:#1d1d1d;color:#fff;
         font:500 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.28)}
@@ -404,8 +406,8 @@
         toast('Could not load comments — ' + e.message); comments = [];
       }
       renderPins();
-      // deep link: #c=<id> opens that comment
-      const m = location.hash.match(/c=([^&]+)/);
+      // deep link: #c=<id> opens that comment (hash captured before the URL rewrite)
+      const m = DEEP_HASH.match(/c=([^&]+)/);
       if (m) {
         const c = comments.find((x) => x.id === m[1]);
         const root = c && (c.parentId ? comments.find((x) => x.id === c.parentId) : c);
@@ -431,11 +433,21 @@
       return { x: (a.pageX || 0) - window.scrollX, y: (a.pageY || 0) - window.scrollY };
     }
     const roots = () => comments.filter((c) => !c.parentId);
+    // On-page pins show ONLY unresolved comments — resolved/closed ones are hidden
+    // from the website. A dashboard "Open Pin" (#c=<id>) still force-shows its target.
+    // Capture the deep-link hash NOW: enter() rewrites the address bar (dropping #c=).
+    const DEEP_HASH = location.hash;
+    const isUnresolvedC = (c) => c.status !== 'resolved' && c.status !== 'closed';
+    function deepRootId() {
+      const m = DEEP_HASH.match(/c=([^&]+)/); if (!m) return null;
+      const c = comments.find((x) => x.id === m[1]); return c ? (c.parentId || c.id) : null;
+    }
+    const pinRoots = () => { const d = deepRootId(); return comments.filter((c) => !c.parentId && (isUnresolvedC(c) || c.id === d)); };
     const repliesOf = (id) => comments.filter((c) => c.parentId === id)
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
     function renderPins() {
       pinEls.forEach((el) => el.remove()); pinEls.clear();
-      roots().forEach((rec, i) => {
+      pinRoots().forEach((rec, i) => {
         const pin = document.createElement('button');
         pin.className = 'rv-pin' + (rec.status === 'resolved' ? ' resolved' : '');
         pin.type = 'button'; pin.textContent = String(i + 1);
@@ -447,7 +459,7 @@
     }
     // ---- comment navigator (banner: count + prev/next) ------------------
     function updateNav() {
-      const total = roots().length;
+      const total = pinRoots().length;
       const label = nav.querySelector('.rv-nav-label');
       const prev = nav.querySelector('.rv-prev'), next = nav.querySelector('.rv-next');
       if (!label) return;
@@ -459,14 +471,14 @@
       if (next) next.disabled = total === 0;
     }
     function gotoNav(delta) {
-      const rs = roots(); if (!rs.length) return;
+      const rs = pinRoots(); if (!rs.length) return;
       navIdx = (navIdx + delta + rs.length) % rs.length;
       const r = rs[navIdx];
       scrollToComment(r);
       openThread(r);
     }
     function positionPins() {
-      roots().forEach((rec) => {
+      pinRoots().forEach((rec) => {
         const pin = pinEls.get(rec.id); if (!pin) return;
         const { x, y } = pinPos(rec);
         const off = x < -40 || y < -40 || x > innerWidth + 40 || y > innerHeight + 40;
@@ -518,25 +530,22 @@
         '<header><div><div class="t">Add a comment</div><div class="rv-snip"></div></div>' +
         '<button class="rv-x" aria-label="Close">×</button></header>' +
         '<div class="rv-body">' +
-        '<input class="rv-name" placeholder="Your name *" autocomplete="name">' +
         '<textarea class="rv-text" placeholder="What should change here? (⌘/Ctrl+Enter to save)"></textarea>' +
         '<textarea class="rv-change" placeholder="Change it to… (the new content)" hidden></textarea>' +
         '<div class="rv-actions"><button class="rv-btn ghost rv-cancel">Cancel</button>' +
         '<button class="rv-btn primary rv-send">Send</button></div></div>';
-      pop.querySelector('.rv-snip').textContent = anchor.snippet ? '“' + anchor.snippet + '”' : anchor.tag;
+      pop.querySelector('.rv-snip').textContent = anchor.snippet ? 'Selected - “' + anchor.snippet + '”' : 'Selected - ' + anchor.tag;
       document.body.appendChild(pop);
       placePop(pop, cx, cy);
 
-      const nameI = pop.querySelector('.rv-name');
       const textI = pop.querySelector('.rv-text'), changeI = pop.querySelector('.rv-change');
       const team = localStorage.getItem(TEAM_KEY) || ''; // session-global team, chosen at login
-      nameI.value = localStorage.getItem(NAME_KEY) || '';
       // Content is the only team that suggests replacement copy -> reveal 2nd field.
       changeI.hidden = team !== 'Content';
       placePop(pop, cx, cy);
-      (!nameI.value ? nameI : textI).focus();
+      textI.focus();
 
-      const submit = () => send(pop, nameI, textI, changeI, anchor);
+      const submit = () => send(pop, textI, changeI, anchor);
       pop.querySelector('.rv-x').addEventListener('click', closePop);
       pop.querySelector('.rv-cancel').addEventListener('click', closePop);
       pop.querySelector('.rv-send').addEventListener('click', submit);
@@ -545,18 +554,16 @@
       changeI.addEventListener('keydown', onKey);
     }
 
-    async function send(pop, nameI, textI, changeI, anchor) {
+    async function send(pop, textI, changeI, anchor) {
       const team = localStorage.getItem(TEAM_KEY) || ''; // session-global team from login
-      const name = nameI.value.trim(), comment = textI.value.trim();
+      const comment = textI.value.trim();
       const changeTo = changeI.value.trim();
-      if (!name) { nameI.focus(); toast('Please enter your name.'); return; }
       if (!comment) { textI.focus(); return; }
       if (team === 'Content' && !changeTo) { changeI.focus(); toast('Add the suggested content change.'); return; }
-      localStorage.setItem(NAME_KEY, name);
       const btn = pop.querySelector('.rv-send'); btn.disabled = true; btn.textContent = 'Sending…';
       try {
         const rec = await store.add({
-          team, name, comment, changeTo: team === 'Content' ? changeTo : '', anchor,
+          team, comment, changeTo: team === 'Content' ? changeTo : '', anchor,
           sessionId: sessionId(),
           page: { path: pagePath(), url: location.href, title: document.title, slug: slugFromPath() },
         });
@@ -573,7 +580,7 @@
       closePop();
       activeId = root.id;
       pinEls.forEach((el, id) => el.classList.toggle('active', id === root.id));
-      const idx = roots().findIndex((c) => c.id === root.id) + 1;
+      const idx = pinRoots().findIndex((c) => c.id === root.id) + 1;
       navIdx = idx - 1; updateNav();
       const thread = [root, ...repliesOf(root.id)];
       const pop = document.createElement('div'); pop.className = 'rv-pop';
@@ -582,10 +589,9 @@
         (thread.length > 1 ? ' comments' : ' comment') + '</div><div class="rv-snip"></div></div>' +
         '<button class="rv-x" aria-label="Close">×</button></header>' +
         '<div class="rv-read"><span class="rv-chip ' + (root.status || 'open') + '">' +
-        (root.status === 'resolved' ? 'Resolved' : 'Open') + '</span></div>' +
+        (root.status === 'resolved' ? 'Resolved' : root.status === 'closed' ? 'Closed' : 'Unresolved') + '</span></div>' +
         '<div class="rv-thread"></div>' +
         '<div class="rv-reply">' +
-        '<input class="rv-rname" placeholder="Your name *" autocomplete="name">' +
         '<textarea class="rv-rtext" placeholder="Add another comment… (⌘/Ctrl+Enter)"></textarea>' +
         '<textarea class="rv-rchange" placeholder="Change it to… (the new content)" hidden></textarea>' +
         '<div class="rv-actions"><button class="rv-btn primary rv-radd">Add Comment</button></div></div>';
@@ -594,12 +600,12 @@
         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
       const list = pop.querySelector('.rv-thread');
       thread.forEach((c, i) => {
-        // collapsed header = just Team + Name; body reveals on expand (one open at a time)
+        // collapsed header = Team + timestamp; body reveals on expand (one open at a time)
         const item = document.createElement('div'); item.className = 'rv-titem' + (i === 0 ? ' open' : '');
         item.innerHTML =
           '<button type="button" class="rv-thead">' + teamChip(c.team) +
-          '<b class="rv-tname">' + escapeHtml(c.name || 'anonymous') + '</b>' + CHEV + '</button>' +
-          '<div class="rv-tbody"><div class="rv-tmeta">' + fmtTime(c.createdAt) + '</div>' +
+          '<b class="rv-tname">' + escapeHtml(fmtTime(c.createdAt)) + '</b>' + CHEV + '</button>' +
+          '<div class="rv-tbody">' +
           '<div class="rv-txt"></div>' +
           (c.changeTo ? '<div class="rv-change-view"><span>Change to</span><div class="rv-ctxt"></div></div>' : '') +
           '</div>';
@@ -614,10 +620,9 @@
       });
       document.body.appendChild(pop);
       const p = pinPos(root); placePop(pop, p.x, p.y);
-      // The team is session-global (chosen at login); each reply asks only for a name.
+      // The team is session-global (chosen at login); replies are team-tagged, no name.
       const rteam = localStorage.getItem(TEAM_KEY) || '';
       const rchange = pop.querySelector('.rv-rchange');
-      pop.querySelector('.rv-rname').value = localStorage.getItem(NAME_KEY) || '';
       rchange.hidden = rteam !== 'Content'; // Content team reveals the "change to…" field
       placePop(pop, p.x, p.y);
       pop.querySelector('.rv-x').addEventListener('click', () => { closePop(); pinEls.forEach((el) => el.classList.remove('active')); });
@@ -629,17 +634,14 @@
 
     async function addReply(pop, root) {
       const team = localStorage.getItem(TEAM_KEY) || ''; // session-global team from login
-      const name = pop.querySelector('.rv-rname').value.trim();
       const txt = pop.querySelector('.rv-rtext').value.trim();
       const changeTo = pop.querySelector('.rv-rchange').value.trim();
-      if (!name) { pop.querySelector('.rv-rname').focus(); toast('Please enter your name.'); return; }
       if (!txt) { pop.querySelector('.rv-rtext').focus(); return; }
       if (team === 'Content' && !changeTo) { pop.querySelector('.rv-rchange').focus(); toast('Add the suggested content change.'); return; }
-      localStorage.setItem(NAME_KEY, name);
       const btn = pop.querySelector('.rv-radd'); btn.disabled = true; btn.textContent = 'Adding…';
       try {
         const rec = await store.add({
-          team, name, comment: txt, changeTo: team === 'Content' ? changeTo : '',
+          team, comment: txt, changeTo: team === 'Content' ? changeTo : '',
           sessionId: sessionId(), parentId: root.id, anchor: root.anchor, page: root.page,
         });
         comments.push(rec); renderPins(); openThread(root);
@@ -661,7 +663,7 @@
     function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function teamChip(team) {
       if (!team) return '';
-      const c = TEAM_COLORS[team] || ['#eee', '#555'];
+      const c = TEAM_COLORS[team] || ['var(--pk-hair)', 'var(--pk-green)'];
       return '<span class="rv-team-chip" style="background:' + c[0] + ';color:' + c[1] + '">' + escapeHtml(team) + '</span>';
     }
 

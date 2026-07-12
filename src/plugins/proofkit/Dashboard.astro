@@ -12,9 +12,13 @@
  * (./config.ts). Keeps its own admin-password gate so hitting /reviewdash
  * directly still requires the password.
  */
+import { themeVars } from './config';
 ---
 
-<section class="section rvd">
+{/* Active theme's --pk-* tokens (config.ts THEME); reskins dashboard + overlay. */}
+<style is:global set:html={`:root{${themeVars}}`}></style>
+
+<section class="rvd">
   <div class="rvd-app" data-enter>
     <!-- Brand top bar -->
     <header class="rvd-top">
@@ -24,7 +28,7 @@
           <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
         </svg>
         <span class="rvd-word">ProofKit</span>
-        <span class="rvd-tag">Content Review | Shriram Financial Services</span>
+        <span class="rvd-tag">Content Review | Shriram FS</span>
       </div>
       <div class="rvd-actions">
         <a class="rvd-btn rvd-btn-primary" href="/">Go to site</a>
@@ -60,10 +64,23 @@
       <div class="rvd-content">
         <!-- Dashboard View: all current info -->
         <div id="rvd-view-dash">
+          <div class="rvd-toolbar" id="rvd-toolbar">
+            <input id="rvd-search" class="rvd-search" type="search" placeholder="Search comments, pages, reviewers…" autocomplete="off" spellcheck="false" />
+            <select id="rvd-sort" class="rvd-sort" aria-label="Sort">
+              <option value="new">Newest first</option>
+              <option value="old">Oldest first</option>
+              <option value="page">Page A–Z</option>
+            </select>
+            <span class="rvd-toolbar-sp"></span>
+            <button id="rvd-copyall" class="rvd-tbtn" type="button" title="Copy every AI change-prompt in view, stacked">Copy prompts</button>
+            <button id="rvd-md" class="rvd-tbtn" type="button" title="Copy the changes in view as Markdown">Copy MD</button>
+            <button id="rvd-json" class="rvd-tbtn" type="button" title="Download all comments as JSON">JSON</button>
+          </div>
           <div class="rvd-tabs" id="rvd-tabs" role="tablist">
             <button class="rvd-tab is-active" data-tab="all">All</button>
             <button class="rvd-tab" data-tab="page">By Page</button>
-            <button class="rvd-tab" data-tab="open">Open</button>
+            <button class="rvd-tab" data-tab="open">Unresolved</button>
+            <button class="rvd-tab" data-tab="resolved">Resolved</button>
             <button class="rvd-tab" data-tab="closed">Closed</button>
           </div>
           <div class="rvd-teamchips" id="rvd-teamchips"></div>
@@ -78,6 +95,17 @@
         <p id="rvd-empty" class="rvd-empty" hidden>No comments yet.</p>
       </div>
     </div>
+
+    <!-- bulk-select action bar (shows when ≥1 comment is selected) -->
+    <div class="rvd-bulk" id="rvd-bulk" hidden>
+      <span class="rvd-bulk-n" id="rvd-bulk-n">0 selected</span>
+      <button class="rvd-bulk-a" type="button" data-act="resolve">Resolve</button>
+      <button class="rvd-bulk-a" type="button" data-act="unresolve">Unresolve</button>
+      <button class="rvd-bulk-a" type="button" data-act="close">Close</button>
+      <button class="rvd-bulk-a" type="button" data-act="copy">Copy prompts</button>
+      <button class="rvd-bulk-a danger" type="button" data-act="delete">Delete</button>
+      <button class="rvd-bulk-x" type="button" id="rvd-bulk-clear" aria-label="Clear selection">×</button>
+    </div>
   </div>
 </section>
 
@@ -85,20 +113,18 @@
     runtime and would not receive Astro's scoped-style attribute. The .rvd
     ancestor keeps these rules from leaking to any other page. */}
 <style is:global>
-  /* ===== ProofKit "Red Moon" theme — self-contained, no host tokens ===== */
+  /* ===== ProofKit theme — colour tokens injected from config (THEME); font here ===== */
   .rvd, .rvd-login, .rvd-prompt{
-    --pk-canvas:#181818; --pk-card:#1e1e1e; --pk-elev:#242424; --pk-input:#141414;
-    --pk-red:#da291c; --pk-red-2:#b01e0a;
-    --pk-ink:#ffffff; --pk-body:#a7a7a7; --pk-muted:#7d7d7d; --pk-hair:#333333;
-    --pk-amber:#f5a623; --pk-green:#3ddc84; --pk-softred:#ef5b50;
     --pk-font:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
-  /* page floor goes dark on the dashboard route only (this component ships only here) */
+  /* page floor goes dark on the dashboard route only (this component ships only here).
+     Self-sufficient reset so the route needs no host layout / global.css. */
   :root{color-scheme:dark}
+  html,body{margin:0}
   body:has(.rvd){background:#141414}
 
   .rvd{background:var(--pk-canvas);color:var(--pk-ink);font-family:var(--pk-font);
-    min-height:100vh;padding-top:40px;padding-bottom:96px}
+    min-height:100vh;padding:40px clamp(20px,5vw,48px) 96px}
   .rvd *{box-sizing:border-box}
   .rvd .rvd-app{max-width:1180px;margin:0 auto}
   @keyframes pk-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -149,14 +175,14 @@
 
   /* ---- stat tiles (spec-cell) ---- */
   .rvd .rvd-bar{margin:32px 0 8px}
-  .rvd #rvd-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  .rvd #rvd-counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;
     background:var(--pk-hair);border:1px solid var(--pk-hair)}
   .rvd #rvd-counts .rvd-count{background:var(--pk-canvas);padding:22px 24px;border-radius:0;
     display:flex;flex-direction:column;align-items:flex-start;gap:8px;
     font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-muted)}
   .rvd #rvd-counts .rvd-count b{font-size:clamp(30px,4vw,42px);font-weight:700;line-height:.95;
     letter-spacing:-.02em;color:var(--pk-ink);font-variant-numeric:tabular-nums}
-  .rvd #rvd-counts .rvd-count:first-child b{color:var(--pk-red)}
+  .rvd #rvd-counts .rvd-count:first-child b,.rvd #rvd-counts .rvd-count-new b{color:var(--pk-red)}
 
   /* ---- top-bar buttons: sharp corners, uppercase ---- */
   .rvd .rvd-actions{display:flex;align-items:center;gap:10px}
@@ -197,6 +223,41 @@
   .rvd .rvd-nav.is-active::before{background:var(--pk-red)}
   .rvd .rvd-content{flex:1;min-width:0}
 
+  /* ---- toolbar: search + sort + export/copy actions ---- */
+  .rvd .rvd-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px}
+  .rvd .rvd-toolbar-sp{flex:1 1 24px}
+  .rvd .rvd-search{flex:1 1 220px;min-width:180px;height:42px;padding:0 14px;border:1px solid var(--pk-hair);
+    border-radius:0;background:var(--pk-input);color:var(--pk-ink);font:400 14px/1.5 var(--pk-font)}
+  .rvd .rvd-search::placeholder{color:var(--pk-muted)}
+  .rvd .rvd-search:focus{outline:none;border-color:var(--pk-red)}
+  .rvd .rvd-sort{height:42px;padding:0 34px 0 12px;border:1px solid var(--pk-hair);border-radius:0;cursor:pointer;
+    background:var(--pk-input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237d7d7d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    color:var(--pk-ink);font:600 12px/1 var(--pk-font);letter-spacing:.04em;appearance:none;-webkit-appearance:none}
+  .rvd .rvd-sort:focus{outline:none;border-color:var(--pk-red)}
+  .rvd .rvd-sort option{background:#111;color:#fff}
+  .rvd .rvd-tbtn{height:42px;padding:0 14px;border:1px solid var(--pk-hair);border-radius:0;background:transparent;cursor:pointer;
+    color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;transition:border-color .15s,color .15s}
+  @media (max-width:640px){ .rvd .rvd-toolbar-sp{flex-basis:100%;height:0} }
+  /* per-page rollup + copy-prompts on By Page group headers */
+  .rvd .rvd-gh-rollup{font-size:12px;font-weight:500;color:var(--pk-muted);letter-spacing:0;text-transform:none}
+  .rvd .rvd-gh-actions{margin-left:auto;display:flex;gap:8px}
+  .rvd .rvd-gh-copy{height:28px;padding:0 10px;border:1px solid var(--pk-hair);border-radius:0;background:transparent;cursor:pointer;
+    color:var(--pk-body);font:700 10px/1 var(--pk-font);letter-spacing:.08em;text-transform:uppercase;transition:border-color .15s,color .15s}
+  /* "new since last visit" badge */
+  .rvd .rvd-chip.rvd-new{background:#3a1512;color:#ff8a7a}
+  /* bulk multi-select */
+  .rvd .rvd-sel{flex:none;width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--pk-red)}
+  .rvd .rvd-bulk{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;
+    display:flex;align-items:center;gap:8px;padding:10px 10px 10px 6px;background:var(--pk-card);
+    border:1px solid var(--pk-hair);box-shadow:0 16px 48px rgba(0,0,0,.55)}
+  .rvd .rvd-bulk[hidden]{display:none}
+  .rvd .rvd-bulk-n{font:700 11px/1 var(--pk-font);letter-spacing:.06em;text-transform:uppercase;color:var(--pk-body);padding:0 10px}
+  .rvd .rvd-bulk-a{height:34px;padding:0 14px;border:1px solid var(--pk-hair);border-radius:0;background:transparent;cursor:pointer;
+    color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;transition:border-color .15s,color .15s}
+  .rvd .rvd-bulk-a.danger{color:var(--pk-softred)}
+  .rvd .rvd-bulk-a:disabled{opacity:.5;cursor:default}
+  .rvd .rvd-bulk-x{width:34px;height:34px;border:none;background:transparent;color:var(--pk-muted);font-size:20px;line-height:1;cursor:pointer}
   /* ---- tabs ---- */
   .rvd .rvd-tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--pk-hair);margin-bottom:20px}
   .rvd .rvd-tab{height:46px;padding:0 16px;border:none;background:none;cursor:pointer;margin-bottom:-1px;
@@ -245,6 +306,7 @@
   .rvd .rvd-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
   .rvd .rvd-chip.open{background:#3a2a12;color:var(--pk-amber)}
   .rvd .rvd-chip.resolved{background:#16281c;color:var(--pk-green)}
+  .rvd .rvd-chip.closed{background:#2a2a2a;color:var(--pk-muted)}
   .rvd .rvd-team-chip{padding:4px 10px;border-radius:9999px;font-weight:700;font-size:10px;
     text-transform:uppercase;letter-spacing:.08em}
 
@@ -342,7 +404,9 @@
     .rvd .rvd-tab:hover{color:var(--pk-ink)}
     .rvd .rvd-tchip:hover{transform:translateY(-1px)}
     .rvd .rvd-item:hover{border-left-color:var(--pk-red);background:var(--pk-elev)}
-    .rvd .rvd-openpin:hover,.rvd .rvd-prompt-btn:hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd .rvd-openpin:hover,.rvd .rvd-prompt-btn:hover,.rvd .rvd-tbtn:hover,.rvd .rvd-gh-copy:hover,.rvd .rvd-bulk-a:hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd .rvd-bulk-a.danger:hover{border-color:var(--pk-softred);color:var(--pk-softred)}
+    .rvd .rvd-bulk-x:hover{color:var(--pk-ink)}
     .rvd .rvd-a:hover{border-color:var(--pk-ink);color:var(--pk-ink)}
     .rvd .rvd-del:hover{color:var(--pk-softred)}
     .rvd .rvd-slug:hover{color:var(--pk-red);border-color:var(--pk-red)}
@@ -361,7 +425,7 @@
 </style>
 
 <script>
-  import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword } from './config';
+  import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword, pageName } from './config';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     const LOCAL = !WORKER_URL;
@@ -417,7 +481,11 @@
 
     let loginEl = null, refreshTimer = null;
 
-    async function loadData() { all = await store.all(); counts(); render(); }
+    async function loadData() {
+      all = await store.all(); counts(); render();
+      // Mark "seen" once per dashboard open, so the NEW badges clear on the next visit.
+      if (!seenMarked) { seenMarked = true; try { localStorage.setItem(SEEN_KEY, new Date().toISOString()); } catch (e) {} }
+    }
 
     // Keep the review page current: submits land in the DB instantly; poll so the
     // dashboard reflects new comments without a manual Refresh.
@@ -493,7 +561,81 @@
       const s = teamStyle(team);
       return `<span class="rvd-team-chip" style="background:${s.bg};color:${s.fg};border:1px solid ${s.bd}">${esc(team)}</span>`;
     };
-    let all = [], tab = 'all', teamFilter = '', logSession = null, view = 'dash';
+    // Ticket lifecycle: open (=Unresolved, default) ⇄ resolved → closed (terminal).
+    const isUnresolved = (c) => c.status !== 'resolved' && c.status !== 'closed';
+    const statusChip = (c) => c.status === 'resolved'
+      ? `<span class="rvd-chip resolved">Resolved</span>`
+      : c.status === 'closed'
+        ? `<span class="rvd-chip closed">Closed</span>`
+        : `<span class="rvd-chip open">Unresolved</span>`;
+    let all = [], tab = 'all', teamFilter = '', logSession = null, view = 'dash', search = '', sort = 'new';
+    const sel = new Set(); // bulk-selected root ids
+
+    // ---- unread: comments arrived since the last dashboard visit ----
+    const SEEN_KEY = 'reviewLastSeen';
+    const seenAt = localStorage.getItem(SEEN_KEY) || '';
+    let seenMarked = false;
+    const isNew = (c) => !!seenAt && c.createdAt > seenAt;
+
+    // ---- search / sort ----
+    function matchesSearch(c) {
+      if (!search) return true;
+      const a = c.anchor || {};
+      return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, a.snippet, a.tag]
+        .filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase());
+    }
+    function sortRoots(rs) {
+      const s = rs.slice();
+      if (sort === 'old') s.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      else if (sort === 'page') s.sort((a, b) => a.page.path.localeCompare(b.page.path) || (a.createdAt < b.createdAt ? 1 : -1));
+      else s.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)); // newest
+      return s;
+    }
+    // Roots for the current Dashboard view (tab + team + search + sort) - shared by
+    // the list render and the toolbar's copy/export actions ("what's in view").
+    function currentRoots() {
+      let rs = roots();
+      if (tab === 'open') rs = rs.filter(isUnresolved);
+      if (tab === 'resolved') rs = rs.filter((c) => c.status === 'resolved');
+      if (tab === 'closed') rs = rs.filter((c) => c.status === 'closed');
+      if (teamFilter) rs = rs.filter((c) => c.team === teamFilter);
+      return sortRoots(rs.filter(matchesSearch));
+    }
+
+    // ---- AI prompt text (falls back to a deterministic instruction) ----
+    function localPrompt(c) {
+      if (c.aiPrompt) return c.aiPrompt;
+      const a = c.anchor || {};
+      const where = a.snippet ? `the “${a.snippet}” ${a.tag || 'element'}` : (a.tag || 'the element');
+      let s = `On page ${c.page.path}, in ${where}: ${c.comment}`;
+      if (c.changeTo) s += `\nChange the content to exactly (preserve casing/punctuation): “${c.changeTo}”`;
+      return s;
+    }
+    // Bulleted, stackable list of change-prompts (each prompt one bullet; wrapped
+    // lines indented under it) — ready to paste into a coding agent.
+    const promptsText = (list) => list.map((c) => '- ' + localPrompt(c).replace(/\n/g, '\n  ')).join('\n');
+    async function copyToClip(text, btn, okLabel) {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (btn) { const t = btn.textContent; btn.textContent = okLabel || 'Copied ✓'; setTimeout(() => { btn.textContent = t; }, 1400); }
+      } catch (e) { alert('Copy failed — ' + e.message); }
+    }
+    function mdExport(list) {
+      const lines = ['# Content review — ' + list.length + ' change' + (list.length === 1 ? '' : 's'), ''];
+      list.forEach((c) => {
+        const a = c.anchor || {};
+        lines.push(`- **${c.page.path}** — ${c.team || '—'} · ${c.status === 'resolved' ? 'Resolved' : 'Open'}`);
+        lines.push(`  - ${c.comment}${a.snippet ? ` _(on “${a.snippet}”)_` : ''}`);
+        if (c.changeTo) lines.push(`  - Change to: “${c.changeTo}”`);
+      });
+      return lines.join('\n');
+    }
+    function downloadJSON() {
+      const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const aEl = document.createElement('a'); aEl.href = url; aEl.download = 'proofkit-comments.json';
+      document.body.appendChild(aEl); aEl.click(); aEl.remove(); URL.revokeObjectURL(url);
+    }
 
     // group every comment/reply by its review session (one sitting)
     function sessions() {
@@ -514,7 +656,7 @@
           pages: [...new Set(items.map((i) => i.page.path))],
           changes: roots.length,
           total: items.length,
-          open: roots.filter((r) => r.status !== 'resolved').length,
+          open: roots.filter(isUnresolved).length,
         };
       }).sort((a, b) => (a.start < b.start ? 1 : -1)); // newest session first
     }
@@ -538,34 +680,36 @@
 
     function counts() {
       const rs = roots();
-      const open = rs.filter((c) => c.status !== 'resolved').length;
+      const open = rs.filter(isUnresolved).length;
+      const newN = rs.filter(isNew).length;
       $('#rvd-counts').innerHTML =
-        `<span class="rvd-count"><b>${open}</b> open</span>` +
+        `<span class="rvd-count"><b>${open}</b> unresolved</span>` +
         `<span class="rvd-count"><b>${rs.length}</b> changes</span>` +
-        `<span class="rvd-count"><b>${new Set(rs.map((c) => c.page.path)).size}</b> pages</span>`;
+        `<span class="rvd-count"><b>${new Set(rs.map((c) => c.page.path)).size}</b> pages</span>` +
+        (newN ? `<span class="rvd-count rvd-count-new"><b>${newN}</b> new</span>` : '');
     }
 
     function card(root) {
       const a = root.anchor || {};
-      const resolved = root.status === 'resolved';
       const replies = repliesOf(root.id);
       const repliesHtml = replies.length
         ? `<div class="rvd-replies">` + replies.map((r) =>
             `<div class="rvd-reply">${teamChip(r.team)}<div class="rvd-rtxt">${esc(r.comment)}</div>` +
             (r.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(r.changeTo)}</div></div>` : '') +
-            `<div class="rvd-rmeta">${esc(r.name || 'anonymous')} · ${esc(fmt(r.createdAt))}</div></div>`).join('') + `</div>`
+            `<div class="rvd-rmeta">${esc(fmt(r.createdAt))}</div></div>`).join('') + `</div>`
         : '';
       const meta =
         `<div class="rvd-meta">` +
           teamChip(root.team) +
-          `<span class="rvd-by">${esc(root.name || 'anonymous')}</span>` +
-          `<a class="rvd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(root.page.path)}</a>` +
+          `<a class="rvd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(pageName(root.page.path))}</a>` +
           `<span class="rvd-time">${esc(fmt(root.createdAt))}</span>` +
         `</div>`;
       return (
         `<article class="rvd-item">` +
           `<div class="rvd-line">` +
-            `<span class="rvd-chip ${resolved ? 'resolved' : 'open'}">${resolved ? 'Resolved' : 'Open'}</span>` +
+            `<input type="checkbox" class="rvd-sel" data-id="${esc(root.id)}"${sel.has(root.id) ? ' checked' : ''} aria-label="Select">` +
+            (isNew(root) ? `<span class="rvd-chip rvd-new">New</span>` : '') +
+            statusChip(root) +
             `<div class="rvd-headline">` +
               `<div class="rvd-comment">${esc(root.comment)}` +
                 (replies.length ? `<span class="rvd-count">${replies.length + 1} comments</span>` : '') + `</div>` +
@@ -573,7 +717,12 @@
             `</div>` +
             `<div class="rvd-acts">` +
               `<a class="rvd-openpin" href="${esc(root.page.path)}?review=1#c=${esc(root.id)}" target="_blank" rel="noopener">Open Pin</a>` +
-              `<button class="rvd-a resolve" data-id="${esc(root.id)}">${resolved ? 'Mark as Open' : 'Mark as Resolved'}</button>` +
+              (root.status === 'closed'
+                ? ''
+                : (isUnresolved(root)
+                    ? `<button class="rvd-a" data-id="${esc(root.id)}" data-status="resolved">Resolve</button>`
+                    : `<button class="rvd-a" data-id="${esc(root.id)}" data-status="open">Unresolve</button>`) +
+                  `<button class="rvd-a" data-id="${esc(root.id)}" data-status="closed">Close</button>`) +
               `<button class="rvd-del delete" data-id="${esc(root.id)}">Delete</button>` +
             `</div>` +
           `</div>` +
@@ -589,12 +738,11 @@
       $('#rvd-empty').hidden = ss.length > 0;
       $('#rvd-list').innerHTML = !ss.length ? '' :
         `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
-        `<th>When</th><th>Reviewer</th><th>Team</th><th>Changes</th><th>Comments</th><th>Pages</th><th>Open</th>` +
+        `<th>When</th><th>Team</th><th>Changes</th><th>Comments</th><th>Pages</th><th>Open</th>` +
         `</tr></thead><tbody>` +
         ss.map((s) =>
           `<tr class="rvd-logrow" data-sid="${esc(s.sid)}">` +
             `<td>${esc(fmt(s.start))}</td>` +
-            `<td>${esc(s.names.join(', ') || '—')}</td>` +
             `<td>${s.teams.map(teamChip).join('') || '—'}</td>` +
             `<td class="num">${s.changes}</td>` +
             `<td class="num">${s.total}</td>` +
@@ -611,15 +759,14 @@
       const isReply = !!c.parentId;
       return `<article class="rvd-item">` +
         `<div class="rvd-line">` +
-          (isReply ? `<span class="rvd-chip resolved">Reply</span>`
-                   : `<span class="rvd-chip ${c.status === 'resolved' ? 'resolved' : 'open'}">${c.status === 'resolved' ? 'Resolved' : 'Open'}</span>`) +
+          (isReply ? `<span class="rvd-chip resolved">Reply</span>` : statusChip(c)) +
           `<div class="rvd-headline"><div class="rvd-comment">${esc(c.comment)}</div>` +
             (a.snippet ? `<div class="rvd-snip">on “${esc(a.snippet)}”</div>` : '') + `</div>` +
           `<a class="rvd-openpin" href="${esc(c.page.path)}?review=1#c=${esc(c.parentId || c.id)}" target="_blank" rel="noopener">Open Pin</a>` +
         `</div>` +
         (c.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(c.changeTo)}</div></div>` : '') +
-        `<div class="rvd-meta">${teamChip(c.team)}<span class="rvd-by">${esc(c.name || 'anonymous')}</span>` +
-          `<a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(c.page.path)}</a>` +
+        `<div class="rvd-meta">${teamChip(c.team)}` +
+          `<a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a>` +
           `<span class="rvd-time">${esc(fmt(c.createdAt))}</span></div>` +
       `</article>`;
     }
@@ -631,7 +778,7 @@
       const items = s.items.slice().sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
       $('#rvd-list').innerHTML =
         `<button class="rvd-back" id="rvd-back">← Back to log</button>` +
-        `<div class="rvd-detailhead">Session · ${esc(fmt(s.start))} · ${esc(s.names.join(', ') || 'anonymous')}` +
+        `<div class="rvd-detailhead">Session · ${esc(fmt(s.start))}` +
           ` · ${s.total} comment${s.total > 1 ? 's' : ''} across ${s.pages.length} page${s.pages.length > 1 ? 's' : ''}</div>` +
         `<div class="rvd-grid">${items.map(logItem).join('')}</div>`;
       $('#rvd-back').addEventListener('click', () => { logSession = null; render(); });
@@ -645,19 +792,17 @@
       $('#rvd-entries').innerHTML =
         `<div class="rvd-entrieshead"><h2>All Entries <span style="font-weight:500;color:var(--color-text-secondary,#6b6b6b)">(${rs.length})</span></h2></div>` +
         `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
-        `<th>When</th><th>Page</th><th>Element</th><th>Team</th><th>Reviewer</th><th>Status</th><th>Prompt</th>` +
+        `<th>When</th><th>Page</th><th>Element</th><th>Team</th><th>Status</th><th>Prompt</th>` +
         `</tr></thead><tbody>` +
         rs.map((c) => {
           const a = c.anchor || {};
           const el = a.snippet ? '“' + esc(a.snippet.slice(0, 40)) + '”' : esc(a.tag || '—');
-          const resolved = c.status === 'resolved';
           return `<tr>` +
             `<td>${esc(fmt(c.createdAt))}</td>` +
-            `<td><a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(c.page.path)}</a></td>` +
+            `<td><a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a></td>` +
             `<td>${el}</td>` +
             `<td>${teamChip(c.team) || '—'}</td>` +
-            `<td>${esc(c.name || 'anonymous')}</td>` +
-            `<td><span class="rvd-chip ${resolved ? 'resolved' : 'open'}">${resolved ? 'Resolved' : 'Open'}</span></td>` +
+            `<td>${statusChip(c)}</td>` +
             `<td><button class="rvd-prompt-btn" data-id="${esc(c.id)}">View prompt</button></td>` +
           `</tr>`;
         }).join('') +
@@ -679,8 +824,8 @@
         `<div class="rvd-prompt-card">` +
           `<div class="rvd-prompt-head"><div class="rvd-prompt-title">AI Change Prompt</div>` +
           `<button class="rvd-prompt-x" aria-label="Close">×</button></div>` +
-          `<div class="rvd-prompt-meta">${teamChip(c.team)}<span>${esc(c.name || 'anonymous')}</span><span>·</span>` +
-            `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">${esc(c.page.path)}</a>` +
+          `<div class="rvd-prompt-meta">${teamChip(c.team)}` +
+            `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a>` +
             (a.tag ? `<span>·</span><span>${esc(a.tag)}</span>` : '') + `</div>` +
           body +
         `</div>`;
@@ -702,44 +847,64 @@
       $('#rvd-view-dash').hidden = view === 'entries'; // dash container also hosts the log list
       if (view === 'entries') { renderEntries(); return; }
 
-      // Master Log lives in the left panel now: hide the dash tabs + team chips.
+      // Master Log lives in the left panel now: hide the dash tabs + team chips + toolbar.
       if (view === 'log') {
+        $('#rvd-toolbar').style.display = 'none';
         $('#rvd-tabs').style.display = 'none';
         $('#rvd-teamchips').style.display = 'none';
         logSession ? renderSessionDetail() : renderLog();
         return;
       }
+      $('#rvd-toolbar').style.display = 'flex';
       $('#rvd-tabs').style.display = 'flex';
       $('#rvd-teamchips').style.display = 'flex';
 
       const host = $('#rvd-list');
-      let rs = roots();
-      if (tab === 'open') rs = rs.filter((c) => c.status !== 'resolved');
-      if (tab === 'closed') rs = rs.filter((c) => c.status === 'resolved');
-      if (teamFilter) rs = rs.filter((c) => c.team === teamFilter);
+      const rs = currentRoots();
 
       if (tab === 'page') {
         const paths = [...new Set(rs.map((c) => c.page.path))].sort();
         host.innerHTML = paths.map((p) => {
           const group = rs.filter((c) => c.page.path === p);
+          const openN = group.filter(isUnresolved).length;
+          const resN = group.filter((c) => c.status === 'resolved').length;
+          const closedN = group.filter((c) => c.status === 'closed').length;
           return `<div class="rvd-group"><h2 class="rvd-gh">` +
-            `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(p)}</a><span>${group.length} change${group.length > 1 ? 's' : ''}</span></h2>` +
-            `<div class="rvd-grid">${group.map(card).join('')}</div></div>`;
+            `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(pageName(p))}</a>` +
+            `<span class="rvd-gh-rollup">${openN} unresolved · ${resN} resolved${closedN ? ' · ' + closedN + ' closed' : ''}</span>` +
+            `<span class="rvd-gh-actions"><button class="rvd-gh-copy" data-page="${esc(p)}">Copy prompts</button></span>` +
+            `</h2><div class="rvd-grid">${group.map(card).join('')}</div></div>`;
         }).join('');
+        host.querySelectorAll('.rvd-gh-copy').forEach((b) => b.addEventListener('click', () =>
+          copyToClip(promptsText(rs.filter((c) => c.page.path === b.dataset.page)), b, 'Copied ✓')));
       } else {
         host.innerHTML = `<div class="rvd-grid">${rs.map(card).join('')}</div>`;
       }
-      $('#rvd-empty').hidden = rs.length > 0;
+      const emp = $('#rvd-empty');
+      emp.hidden = rs.length > 0;
+      if (!rs.length) emp.textContent = search ? 'No comments match your search.' : 'No comments yet.';
       bindActions();
     }
 
+    function updateBulk() {
+      const n = sel.size;
+      const bar = $('#rvd-bulk');
+      bar.hidden = n === 0;
+      if (n) $('#rvd-bulk-n').textContent = n + ' selected';
+    }
+
     function bindActions() {
-      $('#rvd-list').querySelectorAll('.resolve').forEach((btn) => {
+      $('#rvd-list').querySelectorAll('.rvd-sel').forEach((cb) => {
+        cb.addEventListener('change', () => {
+          cb.checked ? sel.add(cb.dataset.id) : sel.delete(cb.dataset.id);
+          updateBulk();
+        });
+      });
+      $('#rvd-list').querySelectorAll('.rvd-a[data-status]').forEach((btn) => {
         btn.addEventListener('click', async () => {
           const rec = all.find((c) => c.id === btn.dataset.id); if (!rec) return;
-          const next = rec.status === 'resolved' ? 'open' : 'resolved';
           btn.disabled = true;
-          try { const updated = await store.resolve(rec, next); rec.status = updated.status; counts(); render(); }
+          try { const updated = await store.resolve(rec, btn.dataset.status); rec.status = updated.status; counts(); render(); }
           catch (e) { btn.disabled = false; alert('Could not update — ' + e.message); }
         });
       });
@@ -792,6 +957,35 @@
         alert('Could not refresh — ' + e.message);
       }
     });
+    // ---- toolbar: search / sort / export / copy-all-prompts ----
+    $('#rvd-search').addEventListener('input', (e) => { search = e.target.value.trim(); render(); });
+    $('#rvd-sort').addEventListener('change', (e) => { sort = e.target.value; render(); });
+    $('#rvd-copyall').addEventListener('click', (e) => copyToClip(promptsText(currentRoots()), e.currentTarget, 'Copied ✓'));
+    $('#rvd-md').addEventListener('click', (e) => copyToClip(mdExport(currentRoots()), e.currentTarget, 'Copied ✓'));
+    $('#rvd-json').addEventListener('click', () => downloadJSON());
+
+    // ---- bulk actions on the selected comments ----
+    $('#rvd-bulk').addEventListener('click', async (e) => {
+      const b = e.target.closest('.rvd-bulk-a'); if (!b) return;
+      const act = b.dataset.act;
+      const recs = [...sel].map((id) => all.find((c) => c.id === id)).filter(Boolean);
+      if (!recs.length) return;
+      if (act === 'copy') { copyToClip(promptsText(recs), b, 'Copied ✓'); return; }
+      if (act === 'delete' && !confirm(`Delete ${recs.length} thread${recs.length > 1 ? 's' : ''} + their replies? This cannot be undone.`)) return;
+      [...$('#rvd-bulk').querySelectorAll('.rvd-bulk-a')].forEach((x) => (x.disabled = true));
+      try {
+        for (const rec of recs) {
+          if (act === 'resolve') { const u = await store.resolve(rec, 'resolved'); rec.status = u.status; }
+          else if (act === 'unresolve') { const u = await store.resolve(rec, 'open'); rec.status = u.status; }
+          else if (act === 'close') { const u = await store.resolve(rec, 'closed'); rec.status = u.status; }
+          else if (act === 'delete') { await store.del(rec); all = all.filter((c) => c.id !== rec.id && c.parentId !== rec.id); }
+        }
+        sel.clear(); updateBulk(); counts(); render();
+      } catch (err) { alert('Bulk action failed — ' + err.message); }
+      finally { [...$('#rvd-bulk').querySelectorAll('.rvd-bulk-a')].forEach((x) => (x.disabled = false)); }
+    });
+    $('#rvd-bulk-clear').addEventListener('click', () => { sel.clear(); updateBulk(); render(); });
+
     buildTeamChips();
     init();
   })();

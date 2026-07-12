@@ -6,6 +6,105 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.3.1 — 2026-07-12 — eased comment overlay
+
+- The on-page comment composer + reply popover get the login's clean, spaced treatment: roomier
+  card (344px) and padding (22px), calmer header, taller inputs, uppercase Send/Cancel — compact
+  but breathable. Style-only, `Overlay.astro`.
+
+## 2.3.0 — 2026-07-12 — ticket lifecycle (Unresolved ⇄ Resolved → Closed)
+
+- **Three-stage lifecycle**: a comment opens **Unresolved** (default); **Resolve** it after a fix;
+  **Unresolve** to send it back if the fix isn't right; **Close** to finish (terminal — no reopen).
+  Dashboard chips/tabs/counts/rollup/bulk updated (tabs: All / By Page / Unresolved / Resolved /
+  Closed); the Worker `/resolve` accepts `closed`.
+- **On-page pins hide Resolved + Closed** — the website/review overlay shows pins ONLY for
+  Unresolved comments, so the page stays clean as tickets get actioned. A dashboard **Open Pin**
+  (`#c=<id>`) still force-shows its target (even resolved/closed).
+- **Fix:** capture the deep-link hash before `enter()` rewrites the address bar — "Open Pin" was
+  silently broken by the `/<page>/review` URL rewrite; it works again.
+- ⚠️ Worker half (`closed` status) needs `wrangler deploy`; the dashboard + on-page rules work today
+  in demo/local and live once deployed.
+
+## 2.2.0 — 2026-07-12 — page names + simpler statuses + bulleted prompts
+
+- **Friendly page names** — `config.ts` `PAGE_NAMES` maps each path to a display name
+  (`/` → "Homepage", `/equity` → "Equity", …) with a `pageName()` title-case fallback; shown as the
+  link text wherever the dashboard printed a raw URL (card links, By Page headers, All Entries, prompt
+  modal). Hrefs stay the real paths. Project-configurable.
+- **Simpler statuses** — removed **Won't fix** (dismissed) and **Reopen**: back to open → resolved
+  (one-way). Dropped the Won't-fix tab, the dismissed chip, and the bulk dismiss/reopen actions.
+- **Bulleted copy-prompts** — every "Copy prompts" (toolbar, per-page, and bulk multi-select) now
+  copies a bulleted list (one prompt per bullet, wrapped lines indented).
+- **Overlay copy** — login subtitle → "Please select your Team and enter the provided key to start
+  marking comments."; the clicked element now reads `Selected - "…"` in the composer header.
+
+## 2.1.0 — 2026-07-12 — team-only comments + copy
+
+- **No names** — the on-page overlay no longer asks for a name; comments (and replies) are tagged
+  by **team only** (chosen once at login). The name field is gone from the composer + reply, and
+  the dashboard drops all name/anonymous displays (card meta, Master Log + All Entries "Reviewer"
+  columns removed, session detail, prompt modal, Markdown export). Reduces friction.
+- Overlay login title "Let's review this page" → **"Let's Review."**
+- Dashboard header wordmark "Shriram Financial Services" → **"Shriram FS"**.
+
+## 2.0.0 — 2026-07-12 — theming + decoupled shell + sync tooling (M3 + M4)
+
+**M3 — theming & overlay unification**
+- **Themes knob** — `config.ts` `THEME` selects a skin (`red-moon` default, `dark-cream` included);
+  the active theme's `--pk-*` tokens are injected into BOTH the dashboard and the on-page overlay,
+  so switching `THEME` reskins the whole tool from one source. The dashboard no longer hardcodes
+  its palette.
+- **Overlay onto Red Moon** — the on-page comment popover, pins, inputs, buttons, thread and toast
+  now use the shared `--pk-*` tokens (dark card, red accents, sharp corners) instead of the legacy
+  gold/cream — the overlay finally matches the dashboard.
+
+**M4 — decoupled shell & propagation tooling**
+- **Decoupled dashboard** — `/reviewdash` renders its own minimal `<html>` shell (no host
+  `BaseLayout`); `.rvd` is now self-sufficient (own gutter + reset), so the route needs nothing from
+  the host layout. One less host coupling.
+- **Auto-update tooling** — `scripts/sync.mjs` (`push` / `pull` / `check`) copies the package between
+  projects with a **semver guard** (refuses to overwrite a same-or-newer copy without `--force`) and
+  prints the host-seam reminder. Dev-only; see `scripts/README.md`.
+
+**Deferred (with reasons)** — M3 Dashboard JS-module split (pure internal refactor, high risk, no
+user-facing value); M4 assignee + due (needs a new Worker `/update` endpoint + deploy) and stable
+`data-proofkit` anchors (needs an approach decision: host-markup attributes vs. a robust-selector
+rewrite).
+
+⚠️ The M2 Worker changes (dismissed status, Claude provider) still need `wrangler deploy` to go live.
+
+## 1.9.0 — 2026-07-12 — 3-state status + pluggable AI provider (M2)
+
+- **Three statuses** — `open`, `resolved`, and **`dismissed` ("Won't fix")**. Cards show
+  Resolve / Won't fix (open) or Reopen (closed); tabs are All / By Page / Open / Resolved /
+  Won't fix; By-Page rollups and bulk actions gained a Won't-fix action; the Worker's `/resolve`
+  now accepts `dismissed`. Open counts exclude dismissed.
+- **Pluggable AI provider** — the Worker's change-prompt generator now supports **Anthropic
+  (Claude)** via an `ANTHROPIC_API_KEY` secret (model via `ANTHROPIC_MODEL`, default Haiku 4.5),
+  else **Cloudflare Workers AI** with an overridable `AI_MODEL`. Deterministic fallback unchanged.
+- ⚠️ The Worker half (dismissed status + provider) needs `wrangler deploy` from `proofkit/worker/`;
+  the dashboard 3-state UI works today (localStorage demo + live once the Worker is deployed).
+
+## 1.8.0 — 2026-07-12 — dashboard power features (M1)
+
+Roadmap milestone **M1** (client-only, no Worker/host changes):
+- **Search** across comment text, change-to, page, reviewer, team, element.
+- **Sort** — Newest / Oldest / Page A–Z.
+- **Export** — "Copy MD" (changes in view as Markdown) + "JSON" (download all comments).
+- **Copy prompts** — stack every AI change-prompt in view (global), and per **By Page** group;
+  falls back to a deterministic instruction when a prompt hasn't generated yet.
+- **Per-page rollup** — By Page headers show `N changes · X open · Y resolved`.
+- **Unread** — comments arrived since your last dashboard visit get a red **New** badge + a
+  "N new" stat tile (tracked via `reviewLastSeen` in localStorage).
+- **Bulk multi-select** — a checkbox per card + a floating action bar (Resolve / Reopen / Copy
+  prompts / Delete) that acts on the selected set at once.
+- Dashboard-only; no seam or JS-contract changes.
+
+_Still queued from the roadmap: M2 3-state status + pluggable AI provider (Worker); M3 shared
+theme.css + overlay unification + JS split + themes; M4 assignee/due, stable anchors, decoupled
+shell, auto-update._
+
 ## 1.7.1 — 2026-07-12 — copy
 
 - Dashboard H1 "Review Dashboard" → "Review and Bug Testing" (`Dashboard.astro`).

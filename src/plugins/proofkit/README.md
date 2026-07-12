@@ -12,9 +12,12 @@ canonical source (so it stays seamlessly integrated), and the zip is just an exp
 folder. See **`INSTALL.md`** to add it to a project and **`CHANGELOG.md`** / **`VERSION`** for
 release tracking.
 
-- **Version:** see `VERSION` (currently `1.0.0`).
+- **Version:** see `VERSION`.
 - **Turn it on/off:** one line — `PROOFKIT_ENABLED` in `config.ts`.
-- **Move it:** copy the folder + add three thin seams (`INSTALL.md`).
+- **Theme it:** one line — `THEME` in `config.ts` (`red-moon` | `dark-cream`); the active theme's
+  `--pk-*` tokens reskin both the dashboard and the on-page overlay.
+- **Move it:** copy the folder + add three thin seams (`INSTALL.md`), or use `scripts/sync.mjs`
+  (`push` / `pull` / `check`) to copy it between projects with a semver guard.
 
 > **⚠️ Keep the docs current.** `README.md` (what it does) + `INSTALL.md` (how to integrate) are
 > the source of truth that travels with the package. **Any change to the tool's behaviour, files,
@@ -148,11 +151,24 @@ All commands run from `proofkit/worker/`.
 | `POST` | `/comments` | add a comment | Team ID or admin |
 | `GET` | `/comments?path=/x` | list one page's comments (overlay pins) | Team ID or admin |
 | `GET` | `/comments` | list all comments (dashboard) | admin |
-| `POST` | `/resolve` | set a comment open/resolved | admin |
+| `POST` | `/resolve` | set a comment's status (`open` / `resolved` / `dismissed`) | admin |
 | `POST` | `/delete` | delete a whole thread (root + replies) | admin |
 
-Auth via header `X-Review-Pass`. The Worker also generates each comment's AI change-prompt via
-Workers AI (the `[ai]` binding).
+Auth via header `X-Review-Pass`. Comments have **three statuses** — `open`, `resolved`, and
+`dismissed` ("won't fix").
+
+### AI change-prompt provider
+
+The Worker generates each comment's dev-ready change-prompt. The provider is **pluggable** (env,
+no code change):
+
+- **Cloudflare Workers AI** (default) — needs the `[ai]` binding. Override the model with an
+  `AI_MODEL` var in `wrangler.toml` (default `@cf/meta/llama-3.3-70b-instruct-fp8-fast`).
+- **Anthropic (Claude)** — set the `ANTHROPIC_API_KEY` secret (`wrangler secret put
+  ANTHROPIC_API_KEY`); the Worker then calls Claude instead. Model overridable via the
+  `ANTHROPIC_MODEL` var (default `claude-haiku-4-5-20251001`).
+
+Either way it falls back to a deterministic instruction if the call errors or no provider is set.
 
 ---
 

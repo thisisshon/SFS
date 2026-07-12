@@ -122,7 +122,8 @@ export default {
         const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
         const rec = arr.find((r) => r.id === b.id);
         if (!rec) return json({ error: 'not found' }, 404, cors);
-        rec.status = b.status === 'resolved' ? 'resolved' : 'open';
+        // Ticket lifecycle: open (=unresolved, default) ⇄ resolved → closed (terminal).
+        rec.status = (b.status === 'resolved' || b.status === 'closed') ? b.status : 'open';
         await kv.put(keyFor(path), JSON.stringify(arr));
         return json(rec, 200, cors);
       }
@@ -153,27 +154,33 @@ function fallbackPrompt(rec) {
 // Generate a developer-ready change instruction via Workers AI, then persist it
 // onto the record. Runs in the background (ctx.waitUntil) so submit stays fast.
 async function genPrompt(env, kv, keyFor, rec) {
+  const a = rec.anchor || {};
+  // NOTE: team/reviewer are deliberately NOT sent - the prompt is pasted into a
+  // coding agent, so reviewer attribution is noise. Keep it to the change itself.
+  const facts = {
+    page: rec.page.path,
+    element: a.tag || 'unknown',
+    section_or_text: a.snippet || '',
+    css_selector: a.selector || '',
+    reviewer_note: rec.comment || '',
+    exact_new_content: rec.changeTo || '',
+  };
+  const system =
+    'You convert a website content-review note into ONE precise, developer-ready change instruction to paste into a coding agent. ' +
+    'State the exact page path, the specific section/element, the current text if given, and the exact new content. ' +
+    'Preserve casing, spacing and punctuation of any provided replacement copy VERBATIM and put it in quotes. ' +
+    'Be crisp and self-contained (1-3 imperative sentences) so several instructions can be stacked one after another. ' +
+    'Output ONLY the change instruction - no preamble, no reviewer/author attribution or sign-off, no options, no markdown headers.';
   let prompt = '';
   try {
-    if (env.AI) {
-      const a = rec.anchor || {};
-      // NOTE: team/reviewer are deliberately NOT sent - the prompt is pasted into a
-      // coding agent, so reviewer attribution is noise. Keep it to the change itself.
-      const facts = {
-        page: rec.page.path,
-        element: a.tag || 'unknown',
-        section_or_text: a.snippet || '',
-        css_selector: a.selector || '',
-        reviewer_note: rec.comment || '',
-        exact_new_content: rec.changeTo || '',
-      };
-      const system =
-        'You convert a website content-review note into ONE precise, developer-ready change instruction to paste into a coding agent. ' +
-        'State the exact page path, the specific section/element, the current text if given, and the exact new content. ' +
-        'Preserve casing, spacing and punctuation of any provided replacement copy VERBATIM and put it in quotes. ' +
-        'Be crisp and self-contained (1-3 imperative sentences) so several instructions can be stacked one after another. ' +
-        'Output ONLY the change instruction - no preamble, no reviewer/author attribution or sign-off, no options, no markdown headers.';
-      const out = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+    // Pluggable provider: Anthropic (Claude) when ANTHROPIC_API_KEY is set, else
+    // Cloudflare Workers AI (model overridable via the AI_MODEL var). Either way it
+    // falls back to a deterministic instruction if the call errors / is unavailable.
+    if (env.ANTHROPIC_API_KEY) {
+      prompt = await genAnthropic(env, system, facts);
+    } else if (env.AI) {
+      const model = env.AI_MODEL || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+      const out = await env.AI.run(model, {
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: JSON.stringify(facts) },
@@ -193,4 +200,27 @@ async function genPrompt(env, kv, keyFor, rec) {
     const r = arr.find((x) => x.id === rec.id);
     if (r) { r.aiPrompt = prompt.slice(0, 4000); await kv.put(key, JSON.stringify(arr)); }
   } catch (e) { /* leave aiPrompt empty; dashboard shows "generating" */ }
+}
+
+// Anthropic Messages API - Claude generates the change instruction. Enabled by
+// setting the ANTHROPIC_API_KEY secret (`wrangler secret put ANTHROPIC_API_KEY`);
+// model overridable via the ANTHROPIC_MODEL var (default: Haiku - fast + cheap).
+async function genAnthropic(env, system, facts) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      system,
+      messages: [{ role: 'user', content: JSON.stringify(facts) }],
+    }),
+  });
+  if (!res.ok) throw new Error('anthropic ' + res.status);
+  const j = await res.json();
+  return String((j.content && j.content[0] && j.content[0].text) || '').trim();
 }

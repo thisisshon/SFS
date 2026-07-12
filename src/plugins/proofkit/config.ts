@@ -70,6 +70,85 @@ export const TEAM_COLORS: Record<string, [string, string]> = {
  */
 export const HIDE_SELECTORS: string[] = ['.to-top'];
 
+/**
+ * Colour theme (skin) for the dashboard + on-page overlay. Both inject the active
+ * theme's `--pk-*` custom properties, so switching THEME reskins the whole tool.
+ * Add a skin by adding an entry to THEMES; keep the same token names.
+ */
+export const THEME: keyof typeof THEMES = 'red-moon';
+const THEMES = {
+  'red-moon':
+    '--pk-canvas:#181818;--pk-card:#1e1e1e;--pk-elev:#242424;--pk-input:#141414;' +
+    '--pk-red:#da291c;--pk-red-2:#b01e0a;--pk-ink:#ffffff;--pk-body:#a7a7a7;' +
+    '--pk-muted:#7d7d7d;--pk-hair:#333333;--pk-amber:#f5a623;--pk-green:#3ddc84;--pk-softred:#ef5b50',
+  'dark-cream':
+    '--pk-canvas:#1a1712;--pk-card:#221d16;--pk-elev:#2a241c;--pk-input:#15120d;' +
+    '--pk-red:#c9a24b;--pk-red-2:#a8843a;--pk-ink:#f5efe2;--pk-body:#b8ad97;' +
+    '--pk-muted:#8a8069;--pk-hair:#3a3226;--pk-amber:#e0b45a;--pk-green:#7fb58a;--pk-softred:#d98a6a',
+};
+/** The active theme's CSS custom-property declarations (no selector), injected by the tool. */
+export const themeVars: string = THEMES[THEME] || THEMES['red-moon'];
+
+/**
+ * Friendly display names per page path — shown (as link text) wherever the dashboard
+ * would otherwise print a raw URL. Project-configurable: edit this map for a new site.
+ * Anything not listed falls back to a title-cased slug via pageName().
+ */
+export const PAGE_NAMES: Record<string, string> = {
+  '/': 'Homepage',
+  '/about-us': 'About Us',
+  '/open-demat-account': 'Open a Demat Account',
+  '/become-a-partner': 'Become a Partner',
+  '/karnataka-bank-customers': 'Karnataka Bank Customers',
+  '/antara': 'Antara',
+  '/sitemap': 'Sitemap',
+  '/products': 'Product Suite',
+  '/equity': 'Equity',
+  '/derivatives': 'Derivatives',
+  '/mtf': 'MTF',
+  '/commodities': 'Commodities',
+  '/currency': 'Currency',
+  '/mutual-funds': 'Mutual Funds',
+  '/etf': 'ETFs',
+  '/ipo': 'IPO',
+  '/nfo': 'NFO',
+  '/nps': 'NPS',
+  '/bonds': 'Bonds',
+  '/fixed-deposit': 'Fixed Deposit',
+  '/loan-against-mutual-fund': 'Loan Against Mutual Funds',
+  '/loan-against-shares': 'Loan Against Securities',
+  '/global-investing': 'Global Investing',
+  '/research-hub': 'Research Centre',
+  '/technical-analysis': 'Technical Research',
+  '/fundamental-analysis': 'Fundamental Research',
+  '/mutual-fund-analysis': 'Mutual Fund Research',
+  '/calculators': 'Calculators',
+  '/sip-calculator': 'SIP Calculator',
+  '/lumpsum-calculator': 'Lumpsum Calculator',
+  '/swp-calculator': 'SWP Calculator',
+  '/nps-calculator': 'NPS Calculator',
+  '/fd-calculator': 'FD Calculator',
+  '/contact-us': 'Contact Us',
+  '/grievance-redressal': 'Grievance Redressal',
+  '/privacy-policy': 'Privacy Policy',
+  '/terms-and-conditions': 'Terms & Conditions',
+  '/terms-of-use-purse': 'Terms of Use – Purse',
+  '/regulatorydocuments': 'Regulatory Documents',
+  '/regulatorydocuments/investor-charter': 'Investor Charter',
+  '/regulatorydocuments/mandatory-member-details': 'Mandatory Member Details',
+  '/designsystem': 'Design System',
+  '/designsystem/current': 'Design System – Current',
+  '/designsystem/proposed': 'Design System – Proposed',
+};
+
+/** Friendly name for a page path (PAGE_NAMES, else a title-cased slug fallback). */
+export function pageName(path: string): string {
+  const p = (path || '/').replace(/\/+$/, '') || '/';
+  if (PAGE_NAMES[p]) return PAGE_NAMES[p];
+  const seg = p.split('/').filter(Boolean).pop() || 'home';
+  return seg.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
 /** SEO for the login route (/review) — noindex, it's an internal tool. */
 export const loginSeo: SEO = {
   title: 'Content Review',
