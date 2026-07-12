@@ -32,12 +32,18 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     // ---- two-tier auth (header X-Review-Pass) ----
-    //   Team ID (REVIEW_PASS) -> reviewers: add a comment, read a page's pins.
-    //   Admin   (ADMIN_PASS)  -> the /review dashboard: read ALL, resolve, delete.
-    //   Admin is a superset of reviewer.
+    //   Reviewer key -> add a comment, read a page's pins. Any of:
+    //     - a per-team key from TEAM_KEYS (a JSON var: {"Product":"...","SEO":"..."})
+    //     - REVIEW_PASS (a single shared reviewer key; optional fallback)
+    //   Admin (ADMIN_PASS) -> the dashboard: read ALL, resolve/close, delete.
+    //   Admin is a superset of reviewer. The team is a label chosen at login; any valid
+    //   team key authenticates as a reviewer.
     const pass = request.headers.get('X-Review-Pass') || '';
+    let TEAM_KEYS = {};
+    try { TEAM_KEYS = JSON.parse(env.TEAM_KEYS || '{}'); } catch (e) {}
     const isAdmin = !!env.ADMIN_PASS && pass === env.ADMIN_PASS;
-    const isReviewer = isAdmin || (!!env.REVIEW_PASS && pass === env.REVIEW_PASS);
+    const isTeamKey = !!pass && Object.values(TEAM_KEYS).includes(pass);
+    const isReviewer = isAdmin || isTeamKey || (!!env.REVIEW_PASS && pass === env.REVIEW_PASS);
     const deny = () => json({ error: 'unauthorized' }, 401, cors);
 
     const url = new URL(request.url);

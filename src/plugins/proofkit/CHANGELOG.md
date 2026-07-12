@@ -6,6 +6,15 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.4.0 — 2026-07-12 — per-team reviewer keys
+
+- **Per-team passwords** — the Worker now accepts a `TEAM_KEYS` JSON var (`{"Product":"…",…}`);
+  any team's key authenticates a reviewer (the team picked at login is a label). The old single
+  `REVIEW_PASS` still works as a fallback; admin stays `ADMIN_PASS`. Default UAT keys are seeded in
+  `wrangler.toml` (low-value, in-repo — rotate before production).
+- ⚠️ Worker change — needs `wrangler deploy` to take effect; set the admin password with
+  `wrangler secret put ADMIN_PASS`.
+
 ## 2.3.1 — 2026-07-12 — eased comment overlay
 
 - The on-page comment composer + reply popover get the login's clean, spaced treatment: roomier

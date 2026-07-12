@@ -7,6 +7,12 @@ compatibility_date = "2024-11-01"
 # this is typically "https://OWNER.github.io". Use "*" only while testing.
 ALLOW_ORIGIN = "https://thisisshon.github.io"
 
+# Per-team reviewer keys (Team + Key login). Any of these values authenticates a
+# reviewer; the team picked in the dropdown is a label. These are LOW-VALUE UAT
+# passwords kept in-repo for simplicity — rotate/remove before real production, or
+# move to `wrangler secret put TEAM_KEYS` if you want them out of git.
+TEAM_KEYS = '{"Product":"product2026","SEO":"seo2026","Marketing":"marketing2026","Content":"content2026"}'
+
 # KV store for comments. Create it once with:
 #   wrangler kv namespace create COMMENTS
 # then paste the printed id below.
@@ -26,6 +32,7 @@ binding = "AI"
 # and optionally the model:
 #   ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
 
-# The passcodes are secrets, NOT stored here. Set them once with:
-#   wrangler secret put REVIEW_PASS      # Team ID (reviewers)
-#   wrangler secret put ADMIN_PASS       # dashboard admin
+# Admin dashboard password — a secret, NOT stored here. Set it once with:
+#   wrangler secret put ADMIN_PASS       # dashboard admin (read all, resolve/close, delete)
+# (REVIEW_PASS is the old single shared reviewer key — still honoured as a fallback,
+#  but TEAM_KEYS above replaces it. Set it only if you want one shared key too.)

@@ -77,8 +77,10 @@ Comment dock never appears before that. `?review=0` signs out. Plus the two Work
 - Admins **resolve** / **re-open** / **delete** threads.
 
 **Two-tier auth** (enforced server-side by the Worker)
-- **Team ID** (`REVIEW_PASS`) — reviewers: add comments + read a page's pins.
-- **Admin** (`ADMIN_PASS`) — the dashboard: read ALL comments, resolve, delete. Admin ⊃ reviewer.
+- **Reviewer key** — add comments + read a page's pins. Either a **per-team key** from the
+  `TEAM_KEYS` var (a JSON map `{"Product":"…","SEO":"…"}` in `wrangler.toml`; the team picked at
+  login is a label, any valid key authenticates) or the single shared `REVIEW_PASS` fallback.
+- **Admin** (`ADMIN_PASS`) — the dashboard: read ALL comments, resolve/close, delete. Admin ⊃ reviewer.
 
 **Storage modes**
 - **Shared/live** — when `WORKER_URL` is set (via `PUBLIC_REVIEW_WORKER_URL`), everyone reads/writes
@@ -138,8 +140,9 @@ All commands run from `proofkit/worker/`.
    `wrangler kv namespace create COMMENTS`.
 3. **Set the site origin** in `wrangler.toml` → `ALLOW_ORIGIN` (e.g. `https://owner.github.io`; `*`
    only for testing). Also set a project-specific `name`.
-4. **Set the two passwords:** `wrangler secret put REVIEW_PASS` (Team ID) and `wrangler secret put
-   ADMIN_PASS` (admin).
+4. **Set the passwords:** put the per-team reviewer keys in `wrangler.toml` → `TEAM_KEYS` (a JSON
+   map), and set the admin password with `wrangler secret put ADMIN_PASS`. (Optionally
+   `wrangler secret put REVIEW_PASS` for one shared reviewer key too.)
 5. **Deploy:** `wrangler deploy` → prints the Worker URL.
 6. **Wire it up** — expose that URL to the build as `PUBLIC_REVIEW_WORKER_URL` (CI env var, or a
    git-ignored `.env`). `config.ts` reads it as `WORKER_URL`.
