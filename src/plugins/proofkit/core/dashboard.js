@@ -156,11 +156,20 @@
         loginEl = document.createElement('div'); loginEl.className = 'rvd-login';
         loginEl.innerHTML =
           '<div class="rvd-login-card" role="dialog" aria-modal="true">' +
-          '<div class="rvd-login-title">Content Review</div>' +
-          '<div class="rvd-login-sub">Enter the review password to open the dashboard.</div>' +
-          '<input class="rvd-login-input" type="password" placeholder="Password" autocomplete="current-password">' +
+          '<span class="rvd-login-eyebrow">Content Review</span>' +
+          '<h1 class="rvd-login-title">Panel Login</h1>' +
+          '<p class="rvd-login-sub">Enter your key to open the panel.</p>' +
+          '<div class="rvd-login-field">' +
+          '<label class="rvd-login-label" for="rvd-login-key">Key</label>' +
+          '<input id="rvd-login-key" class="rvd-login-input" type="password" placeholder="Enter your key" autocomplete="current-password" />' +
+          '</div>' +
           '<div class="rvd-login-err" hidden></div>' +
-          '<div class="rvd-login-actions"><button type="button" class="rvd-login-btn">Login</button></div>' +
+          '<button type="button" class="rvd-login-btn">Authenticate</button>' +
+          '<div class="rvd-login-brand">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+          '<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="var(--pk-red)"/>' +
+          '<circle cx="12" cy="9.5" r="1.6" fill="#fff"/></svg><span>ProofKit</span>' +
+          '</div>' +
           '</div>';
         const input = loginEl.querySelector('.rvd-login-input');
         const go = () => tryLogin(input);
@@ -181,8 +190,8 @@
       try { await loadData(); hideLogin(); startAutoRefresh(); }
       catch (e) {
         sessionStorage.removeItem(PASS_KEY);
-        btn.disabled = false; btn.textContent = 'Login';
-        err.textContent = e.message === 'unauthorized' ? 'Incorrect password. Please try again.' : ('Could not connect — ' + e.message);
+        btn.disabled = false; btn.textContent = 'Authenticate';
+        err.textContent = e.message === 'unauthorized' ? 'Incorrect key. Please try again.' : ('Could not connect — ' + e.message);
         err.hidden = false; input.focus(); input.select();
       }
     }

@@ -6,6 +6,23 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.9.0 — 2026-07-13 — live SSE theme push + design-system dropdowns + "Panel Login" redesign
+
+- **Live theme push (SSE).** New Worker endpoint **`GET /events`** streams `text/event-stream`: it polls
+  the `settings` KV server-side and pushes a `theme` event whenever it changes, so an admin's flip lands
+  on every open dashboard in ~a second — no reload or tab-focus needed. Bounded to ~90s per connection;
+  the browser's `EventSource` auto-reconnects. `config.js` adds `startThemeStream()` (called from
+  `initTheme()`); it's a silent no-op without a Worker/EventSource, with the on-focus sync as a fallback.
+  ⚠️ Worker change — auto-deploys via `.github/workflows/deploy-worker.yml`.
+- **All dropdowns on the design system — squared + spacious.** New canonical **`.pk-select`** component in
+  `design/components.css` (squared, 48px, token-bound, single chevron; `.pk-select--sm` for compact use).
+  The existing selects now mirror it: the dashboard sort and the team- + on-page-overlay login selects are
+  squared (radius 0) with the design-system chevron and roomier padding.
+- **Admin gate redesigned — "Panel Login".** The `/reviewdash` password modal is recreated as a taller,
+  minimal portrait card whose only background visual is a soft brand-red glow from the top, with one
+  standout squared **Key** field (58px, focus glow), an **Authenticate** button, and the **ProofKit**
+  logo at the bottom.
+
 ## 2.8.0 — 2026-07-13 — design system (tokens + components) + /reviewdash/product showcase + toggle fix
 
 - **Design system extracted into `core/design/`.** Colour + theme are now a single source of truth in

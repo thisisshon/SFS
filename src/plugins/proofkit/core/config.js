@@ -144,11 +144,28 @@ export function toggleTheme() {
   setGlobalTheme(getTheme() === LIGHT_THEME ? DEFAULT_THEME : LIGHT_THEME);
 }
 
-/** Apply the cached theme instantly (no flash), then reconcile with the global one
- *  and keep it in sync whenever the tab regains focus (picks up another admin's flip). */
+/* Live push (SSE): subscribe to the Worker's /events stream so an admin's theme flip
+ * lands on every open dashboard within ~a second — no reload, no tab-focus needed.
+ * The Worker polls KV server-side and pushes `theme` events; EventSource auto-
+ * reconnects when the bounded stream closes. Silent no-op without a Worker / SSE. */
+let themeES = null;
+export function startThemeStream() {
+  if (!WORKER_URL || typeof EventSource === 'undefined' || themeES) return;
+  try {
+    themeES = new EventSource(WORKER_URL + '/events');
+    themeES.addEventListener('theme', (e) => {
+      try { const t = JSON.parse(e.data).theme; if (t && t !== getTheme()) applyTheme(t); } catch {}
+    });
+    // onerror: EventSource reconnects on its own; nothing to do here.
+  } catch { themeES = null; }
+}
+
+/** Apply the cached theme instantly (no flash), reconcile with the global one, then
+ *  live-subscribe (SSE) — with an on-focus sync as a belt-and-suspenders fallback. */
 export function initTheme() {
   document.documentElement.setAttribute('data-pk-theme', getTheme()); // instant
   syncTheme();                                                        // reconcile with the Worker
+  startThemeStream();                                                 // live push
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncTheme(); });
   return getTheme();
 }

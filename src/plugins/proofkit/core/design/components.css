@@ -51,6 +51,23 @@
 /* ---- hairline divider ---- */
 .pk-hr{height:1px;background:var(--pk-hair);border:0;margin:0}
 
+/* ---- select / dropdown: squared, spacious, token-bound, one chevron ----
+   The canonical dropdown for the whole tool. Existing dashboard/overlay/login
+   selects mirror this look in their own scoped CSS (they can't all beat their
+   local specificity); new surfaces should just use .pk-select. */
+.pk-select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  height:48px;padding:0 44px 0 16px;border:1px solid var(--pk-hair);border-radius:0;box-sizing:border-box;
+  background-color:var(--pk-input);color:var(--pk-ink);cursor:pointer;
+  font:600 13px/1 var(--pk-font);letter-spacing:.04em;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;
+  transition:border-color .15s var(--pk-ease);
+}
+.pk-select:focus{outline:none;border-color:var(--pk-red)}
+.pk-select option{background:var(--pk-card);color:var(--pk-ink)}
+.pk-select--sm{height:42px;padding:0 38px 0 14px;background-position:right 14px center;font-size:12px}
+
 /* ---------------------------------------------------------------------------
    THE LIGHT/DARK TOGGLE (.pk-tt) — control DOM is built by config.js
    buildThemeToggle(); these are its styles. One moon glyph rides the thumb; the

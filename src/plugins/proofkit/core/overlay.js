@@ -256,7 +256,7 @@
       .rv-login-sub{font-size:15px;line-height:1.6;color:#969696;margin:16px 0 40px}
       .rv-login-label{display:block;margin-bottom:12px;font:600 11px/1 Inter,system-ui,sans-serif;
         text-transform:uppercase;letter-spacing:1.2px;color:#8f8f8f}
-      .rv-login-input{width:100%;height:56px;padding:0 20px;border:1px solid #303030;border-radius:4px;background:#111;
+      .rv-login-input{width:100%;height:56px;padding:0 20px;border:1px solid #303030;border-radius:0;background:#111;
         color:#fff;font:400 15px/1.5 Inter,system-ui,sans-serif;box-sizing:border-box}
       .rv-login-input::placeholder{color:#5a5a5a}
       .rv-login-input:focus{outline:none;border-color:#da291c}

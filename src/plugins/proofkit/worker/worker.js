@@ -40,6 +40,7 @@
  *   POST /notifications/read   mark notifications read         -> {ok, updated}
  *   GET  /settings             global settings (public)        -> {theme}
  *   POST /settings             set global theme (admin)        -> {ok, theme}
+ *   GET  /events               SSE stream of theme changes     -> text/event-stream
  */
 export default {
   async fetch(request, env, ctx) {
@@ -88,6 +89,46 @@ export default {
           await kv.put(SETTINGS_KEY, JSON.stringify(s));
           return json({ ok: true, theme }, 200, cors);
         }
+      }
+
+      // ---- live push (SSE): stream global-settings (theme) changes ----
+      // KV gives no change events, so this POLLS it server-side and pushes a `theme`
+      // event whenever it changes — the admin's flip reaches every open dashboard in
+      // ~a second. Public (like GET /settings). Bounded to ~90s; the browser's
+      // EventSource auto-reconnects, keeping each client's Worker time small.
+      if (request.method === 'GET' && url.pathname === '/events') {
+        const enc = new TextEncoder();
+        const readTheme = async () => {
+          const s = JSON.parse((await kv.get(SETTINGS_KEY)) || '{}');
+          return s.theme || '';
+        };
+        let stop = false;
+        const stream = new ReadableStream({
+          async start(controller) {
+            const send = (s) => { try { controller.enqueue(enc.encode(s)); } catch { stop = true; } };
+            let last = await readTheme();
+            send('retry: 3000\n\n');
+            send('event: theme\ndata: ' + JSON.stringify({ theme: last }) + '\n\n');
+            for (let i = 0; i < 30 && !stop; i++) {
+              await new Promise((r) => setTimeout(r, 3000));
+              let cur;
+              try { cur = await readTheme(); } catch { cur = last; }
+              if (cur !== last) { last = cur; send('event: theme\ndata: ' + JSON.stringify({ theme: cur }) + '\n\n'); }
+              else send(': ping\n\n'); // heartbeat keeps intermediaries from closing the stream
+            }
+            try { controller.close(); } catch {}
+          },
+          cancel() { stop = true; },
+        });
+        return new Response(stream, {
+          status: 200,
+          headers: {
+            ...cors,
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache, no-transform',
+            'X-Accel-Buffering': 'no',
+          },
+        });
       }
 
       // ---- add a comment (reviewer) ----
