@@ -54,7 +54,7 @@ const seo = {
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
   <Hero
-    compact
+    calc
     breadcrumb={[{ name: 'Calculators', href: '/calculators' }, { name: 'SWP Calculator' }]}
   >
     <Fragment slot="title">SWP Calculator – Plan Your <span class="g">Monthly Withdrawals Instantly</span></Fragment>
@@ -73,18 +73,18 @@ const seo = {
           <div class="field">
             <div class="field-top">
               <label for="amt">Initial Corpus</label>
-              <div class="field-val"><span class="pfx">₹</span><input id="amt" type="text" inputmode="numeric" value="20,00,000" aria-label="Initial corpus in rupees" /></div>
+              <div class="field-val"><span class="pfx">₹</span><input id="amt" type="text" inputmode="numeric" value="18,60,000" aria-label="Initial corpus in rupees" /></div>
             </div>
-            <input class="slider" id="amtR" type="range" min="10000" max="100000000" step="10000" value="2000000" aria-label="Initial corpus" />
+            <input class="slider" id="amtR" type="range" min="10000" max="100000000" step="10000" value="1860000" aria-label="Initial corpus" />
             <div class="slider-scale"><span>₹10,000</span><span>₹10,00,00,000</span></div>
           </div>
 
           <div class="field">
             <div class="field-top">
               <label for="wd">Monthly Withdrawal</label>
-              <div class="field-val"><span class="pfx">₹</span><input id="wd" type="text" inputmode="numeric" value="20,000" aria-label="Monthly withdrawal amount in rupees" /></div>
+              <div class="field-val"><span class="pfx">₹</span><input id="wd" type="text" inputmode="numeric" value="10,500" aria-label="Monthly withdrawal amount in rupees" /></div>
             </div>
-            <input class="slider" id="wdR" type="range" min="1000" max="500000" step="500" value="20000" aria-label="Monthly withdrawal amount" />
+            <input class="slider" id="wdR" type="range" min="1000" max="500000" step="500" value="10500" aria-label="Monthly withdrawal amount" />
             <div class="slider-scale"><span>₹1,000</span><span>₹5,00,000</span></div>
           </div>
 
@@ -105,22 +105,22 @@ const seo = {
           <div class="bar-top">
             <div class="bar-head">
               <span class="bar-cap">How Long It Lasts</span>
-              <span class="bar-tot" id="d-tot">13.8 yrs</span>
+              <span class="bar-tot" id="d-tot">50+ yrs</span>
             </div>
             <div class="stack-bar" role="img" aria-label="Share of the corpus withdrawn versus remaining">
-              <div class="seg seg-inv" id="seg-inv" style="width:100%"></div>
-              <div class="seg seg-ret" id="seg-ret" style="width:0%"></div>
+              <div class="seg seg-inv" id="seg-inv" style="width:27.12%"></div>
+              <div class="seg seg-ret" id="seg-ret" style="width:72.88%"></div>
             </div>
           </div>
 
           <div class="res-cards" data-reveal-row>
             <div class="res-card">
               <div class="res-top"><span class="dot" style="background:var(--c-inv)"></span>Total Withdrawn</div>
-              <div class="res-val" id="r-wd">₹33,20,000</div>
+              <div class="res-val" id="r-wd">₹63,00,000</div>
             </div>
             <div class="res-card">
               <div class="res-top"><span class="dot" style="background:var(--c-ret)"></span>Remaining Corpus</div>
-              <div class="res-val" id="r-rem">₹0</div>
+              <div class="res-val" id="r-rem">₹1,69,30,282</div>
             </div>
           </div>
 

@@ -317,9 +317,9 @@
     // the list render and the toolbar's copy/export actions ("what's in view").
     function currentRoots() {
       let rs = roots();
-      // "All" = the active worklist only: open + in-bucket. Anything published (deployed
-      // or closed-live) drops out here; it still shows under its own tab + in Master Log.
-      if (tab === 'all') rs = rs.filter((c) => isOpen(c) || isBucketed(c));
+      // "All" = the open worklist. In-bucket comments live ONLY under the Deploy nav
+      // (not duplicated here); published items show under their own tab + Master Log.
+      if (tab === 'all') rs = rs.filter(isOpen);
       if (tab === 'open') rs = rs.filter(isOpen);
       if (tab === 'bucket') rs = rs.filter(isBucketed);
       if (tab === 'deployed') rs = rs.filter(isDeployed);
@@ -376,7 +376,7 @@
                                : 'background:#242424;color:#c9c9c9;border-color:#333';
         return `<button class="rvd-tchip${active ? ' is-active' : ''}" data-team="${esc(team)}" style="${style}">${esc(label)}</button>`;
       };
-      $('#rvd-teamchips').innerHTML = one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
+      $('#rvd-teamchips').innerHTML = '<span class="rvd-chips-from">From</span>' + one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
       $('#rvd-teamchips').querySelectorAll('.rvd-tchip').forEach((b) => {
         b.addEventListener('click', () => { teamFilter = b.dataset.team; buildTeamChips(); render(); });
       });
@@ -467,6 +467,7 @@
             `<div class="rvd-foot-left">${repliesToggle}</div>` +
             `<div class="rvd-acts">` +
               `<a class="rvd-openpin" href="${esc(root.page.path)}?review=1#c=${id}" target="_blank" rel="noopener">Open Pin</a>` +
+              `<button class="rvd-a rvd-copyone" data-copy="${id}">Copy prompt</button>` +
               lifecycleActions(root) +
               `<button class="rvd-del delete" data-id="${id}">Delete</button>` +
             `</div>` +
@@ -799,7 +800,13 @@
     }
     function notifItem(n) {
       const unread = n.readAdmin === false;
+      const directed = n.kind === 'directed';
       const done = n.publishedStatus === 'closed' ? 'closed' : 'deployed';
+      const kindChip = directed
+        ? `<span class="rvd-chip open">Directed</span>`
+        : `<span class="rvd-chip ${done}">${done === 'closed' ? 'Closed' : 'Deployed'}</span>`;
+      const openPin = n.commentId
+        ? `<a class="rvd-openpin" href="${esc(n.path)}?review=1#c=${esc(n.commentId)}" target="_blank" rel="noopener">Open Pin</a>` : '';
       return `<div class="rvd-notif${unread ? ' is-unread' : ''}">` +
         `<span class="rvd-notif-dot"></span>` +
         `<div class="rvd-notif-body">` +
@@ -807,7 +814,7 @@
           `<div class="rvd-notif-meta">${teamChip(n.team)}` +
             `<a class="rvd-slug" href="${esc(n.path)}" target="_blank" rel="noopener">${esc(n.pageName || pageName(n.path))}</a>` +
             `<span class="rvd-time">${esc(fmt(n.createdAt))}</span>` +
-            `<span class="rvd-chip ${done}">${done === 'closed' ? 'Closed' : 'Deployed'}</span>` +
+            kindChip + openPin +
           `</div>` +
         `</div>` +
         `<button class="rvd-a rvd-notif-toggle" type="button" data-id="${esc(n.id)}" data-read="${unread ? 'true' : 'false'}">` +
@@ -891,6 +898,12 @@
           btn.disabled = true;
           try { const updated = await store.status(rec, btn.dataset.status); Object.assign(rec, updated); counts(); render(); }
           catch (e) { btn.disabled = false; alert('Could not update — ' + e.message); }
+        });
+      });
+      host.querySelectorAll('.rvd-copyone').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const rec = all.find((c) => c.id === btn.dataset.copy); if (!rec) return;
+          copyToClip(localPrompt(rec), btn, 'Copied ✓');
         });
       });
       host.querySelectorAll('.delete').forEach((btn) => {

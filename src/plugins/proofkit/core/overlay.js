@@ -61,6 +61,22 @@
             rec.status = 'open';
             const arr = localGet(rec.page.path); arr.push(rec);
             localStorage.setItem(localKey(rec.page.path), JSON.stringify(arr));
+            // Demo parity with the Worker: arrival notification to the directed team
+            // (real teams only — not Builder/admin), for root comments.
+            if (!rec.parentId && rec.toTeam && rec.toTeam !== ADMIN_TEAM) {
+              try {
+                const where = (rec.page && rec.page.title) || (rec.page && rec.page.path) || 'a page';
+                const notifs = JSON.parse(localStorage.getItem('rvc-notifications') || '[]');
+                notifs.push({
+                  id: 'N' + Date.now().toString(36) + Math.floor(Math.random() * 1e4),
+                  createdAt: rec.createdAt, team: rec.toTeam, kind: 'directed', fromTeam: rec.team || '',
+                  commentId: rec.id, path: rec.page.path, pageName: where,
+                  summary: 'New comment on ' + where + (rec.team ? ' from ' + rec.team : ''),
+                  readTeam: false, readAdmin: false,
+                });
+                localStorage.setItem('rvc-notifications', JSON.stringify(notifs));
+              } catch (e) {}
+            }
             return rec;
           },
         }

@@ -38,86 +38,149 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Contact Us' }]} />
+  <section class="hero hero-dark" id="sec-hero" data-section="hero">
     <div class="hero-grid">
       <div class="hero-inner" data-enter>
+        <Breadcrumb trail={[{ name: 'Contact Us' }]} />
         <h1>How can we <span class="g">help you?</span></h1>
         <p class="lead">Reach our support team across multiple channels. We are here from Monday to Friday, 8:30am – 5:30pm, Saturday: 10 am to 1pm</p>
         <div class="hero-contacts">
-          <a class="ct-pill" href="tel:08047185579">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
-            080-47185579 | 080-43676869 Extn.825/831
-          </a>
-          <a class="ct-pill" href="mailto:support@shriramfs.com">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
-            support@shriramfs.com
-          </a>
+        <a class="ct-pill" href="tel:08047185579">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+          080-47185579 | 080-43676869 Extn.825/831
+        </a>
+        <a class="ct-pill" href="mailto:support@shriramfs.com">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+          support@shriramfs.com
+        </a>
         </div>
       </div>
 
       <!-- schedule-a-call lead-capture card -->
-      <form class="hero-form hero-aside reveal" aria-label="Schedule a call with us" onsubmit="return false;">
+      <form class="hero-form hero-aside reveal" aria-label="Let's Schedule A Quick Call" onsubmit="return false;">
         <div class="hf-head">
-          <h2>Schedule a call with us</h2>
+          <h2>Let's Schedule A Quick Call</h2>
         </div>
         <div class="hf-body">
-          <div class="hf-unit">
-            <div class="hf-field">
-              <div class="hf-field-in">
-                <label for="cf-name">Name</label>
-                <input id="cf-name" name="name" type="text" autocomplete="name" placeholder="Name" aria-describedby="err-name" required />
+          <!-- Row 1: Mobile Number (full width) - homepage flag + +91 treatment on the shared .hf-field -->
+          <div class="hf-row">
+            <div class="hf-unit">
+              <div class="hf-field tel">
+                <span class="tel-flag" aria-hidden="true"><img src="/images/india-flag.png" alt="" /></span>
+                <span class="tel-div" aria-hidden="true"></span>
+                <div class="hf-field-in">
+                  <label for="cf-mobile">Mobile Number</label>
+                  <div class="tel-row">
+                    <span class="tel-cc">+91</span>
+                    <input id="cf-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="00000 00000" aria-describedby="err-mobile" required />
+                  </div>
+                </div>
               </div>
+              <p class="hf-err" id="err-mobile">Enter a valid 10-digit mobile number.</p>
             </div>
-            <p class="hf-err" id="err-name">Please enter your name.</p>
           </div>
-          <div class="hf-unit">
-            <div class="hf-field">
-              <div class="hf-field-in">
-                <label for="cf-mobile">Mobile Number</label>
-                <input id="cf-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="Mobile Number" aria-describedby="err-mobile" required />
+          <!-- Row 2: Name + City -->
+          <div class="hf-row">
+            <div class="hf-unit">
+              <div class="hf-field">
+                <div class="hf-field-in">
+                  <label for="cf-name">Name</label>
+                  <input id="cf-name" name="name" type="text" autocomplete="name" placeholder="Name" aria-describedby="err-name" required />
+                </div>
               </div>
+              <p class="hf-err" id="err-name">Please enter your name.</p>
             </div>
-            <p class="hf-err" id="err-mobile">Enter a valid 10-digit mobile number.</p>
+            <div class="hf-unit">
+              <div class="hf-field sel">
+                <div class="hf-field-in">
+                  <label for="cf-city">City</label>
+                  <select id="cf-city" name="city" aria-describedby="err-city" required>
+                    <option value="">City</option>
+                    <option>Agra</option>
+                    <option>Ahmedabad</option>
+                    <option>Ajmer</option>
+                    <option>Aligarh</option>
+                    <option>Amritsar</option>
+                    <option>Aurangabad</option>
+                    <option>Bengaluru</option>
+                    <option>Bhopal</option>
+                    <option>Bhubaneswar</option>
+                    <option>Chandigarh</option>
+                    <option>Chennai</option>
+                    <option>Coimbatore</option>
+                    <option>Dehradun</option>
+                    <option>Delhi</option>
+                    <option>Faridabad</option>
+                    <option>Ghaziabad</option>
+                    <option>Guntur</option>
+                    <option>Gurugram</option>
+                    <option>Guwahati</option>
+                    <option>Gwalior</option>
+                    <option>Hubballi</option>
+                    <option>Hyderabad</option>
+                    <option>Indore</option>
+                    <option>Jabalpur</option>
+                    <option>Jaipur</option>
+                    <option>Jalandhar</option>
+                    <option>Jammu</option>
+                    <option>Jamshedpur</option>
+                    <option>Jodhpur</option>
+                    <option>Kanpur</option>
+                    <option>Kochi</option>
+                    <option>Kolkata</option>
+                    <option>Kozhikode</option>
+                    <option>Lucknow</option>
+                    <option>Ludhiana</option>
+                    <option>Madurai</option>
+                    <option>Mangaluru</option>
+                    <option>Meerut</option>
+                    <option>Mumbai</option>
+                    <option>Mysuru</option>
+                    <option>Nagpur</option>
+                    <option>Nashik</option>
+                    <option>Navi Mumbai</option>
+                    <option>Noida</option>
+                    <option>Patna</option>
+                    <option>Prayagraj</option>
+                    <option>Pune</option>
+                    <option>Raipur</option>
+                    <option>Rajkot</option>
+                    <option>Ranchi</option>
+                    <option>Salem</option>
+                    <option>Surat</option>
+                    <option>Thane</option>
+                    <option>Thiruvananthapuram</option>
+                    <option>Tiruchirappalli</option>
+                    <option>Udaipur</option>
+                    <option>Vadodara</option>
+                    <option>Varanasi</option>
+                    <option>Vijayawada</option>
+                    <option>Visakhapatnam</option>
+                    <option>Warangal</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+              <p class="hf-err" id="err-city">Please select your city.</p>
+            </div>
           </div>
-          <div class="hf-unit">
-            <div class="hf-field sel">
-              <div class="hf-field-in">
-                <label for="cf-city">City</label>
-                <select id="cf-city" name="city" aria-describedby="err-city" required>
-                  <option value="">City</option>
-                  <option>Bengaluru</option>
-                  <option>Chennai</option>
-                  <option>Coimbatore</option>
-                  <option>Hyderabad</option>
-                  <option>Kolkata</option>
-                  <option>Madurai</option>
-                  <option>Mumbai</option>
-                  <option>New Delhi</option>
-                  <option>Surat</option>
-                  <option>Trichy</option>
-                  <option>Vijayawada</option>
-                  <option>Visakhapatnam</option>
-                  <option>Other</option>
-                </select>
+          <!-- Row 3: Purpose (full width) -->
+          <div class="hf-row">
+            <div class="hf-unit">
+              <div class="hf-field sel">
+                <div class="hf-field-in">
+                  <label for="cf-purpose">Purpose</label>
+                  <select id="cf-purpose" name="purpose" aria-describedby="err-purpose" required>
+                    <option value="">Purpose</option>
+                    <option>Product related</option>
+                    <option>Service related</option>
+                    <option>Demat account related</option>
+                    <option>Others</option>
+                  </select>
+                </div>
               </div>
+              <p class="hf-err" id="err-purpose">Please select a purpose.</p>
             </div>
-            <p class="hf-err" id="err-city">Please select your city.</p>
-          </div>
-          <div class="hf-unit">
-            <div class="hf-field sel">
-              <div class="hf-field-in">
-                <label for="cf-purpose">Purpose</label>
-                <select id="cf-purpose" name="purpose" aria-describedby="err-purpose" required>
-                  <option value="">Purpose</option>
-                  <option>Product related</option>
-                  <option>Service related</option>
-                  <option>Demat account related</option>
-                  <option>Others</option>
-                </select>
-              </div>
-            </div>
-            <p class="hf-err" id="err-purpose">Please select a purpose.</p>
           </div>
         </div>
         <button class="btn btn-primary btn-xl" type="submit">Submit</button>
@@ -159,30 +222,49 @@ const seo = {
     </div>
     <div class="chan-grid reveal" data-reveal-row>
       <div class="chan">
-        <span class="chan-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>
-        <h3>Landline Number</h3>
-        <span class="val"><a href="tel:08047185579">080 - 4718 5579</a></span>
-        <p>Support hours: Monday to Friday:08:30 AM – 5:30 PM ,Saturday:10 am to 1pm  , Closed on Public Holiday.</p>
+        <div class="chan-top">
+          <span class="chan-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>
+          <h3>Landline Number</h3>
+        </div>
+        <a class="chan-val" href="tel:08047185579">080 - 4718 5579</a>
+        <a class="chan-act" href="tel:08047185579">Call now
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </a>
       </div>
       <div class="chan">
-        <span class="chan-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>
-        <h3>Alternate Landline</h3>
-        <span class="val"><a href="tel:08043676869">080- 4367 6869 Extn. 825/831</a></span>
-        <p>Support hours: Monday to Friday:08:30 AM – 5:30 PM ,Saturday:10 am to 1pm,  Closed on Public Holiday.</p>
+        <div class="chan-top">
+          <span class="chan-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h3l1.5 5-2 1.5a11 11 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>
+          <h3>Alternate Landline</h3>
+        </div>
+        <a class="chan-val" href="tel:08043676869">080 - 4367 6869 <span class="chan-ext">Extn. 825 / 831</span></a>
+        <a class="chan-act" href="tel:08043676869">Call now
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </a>
       </div>
       <div class="chan">
-        <span class="chan-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>
-        <h3>Email support</h3>
-        <span class="val"><a href="mailto:support@shriramfs.com">support@shriramfs.com</a></span>
-        <p>Response within 24 hours</p>
+        <div class="chan-top">
+          <span class="chan-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>
+          <h3>Email support</h3>
+        </div>
+        <a class="chan-val" href="mailto:support@shriramfs.com">support@shriramfs.com</a>
+        <span class="chan-note">Response within 24 hours</span>
+        <a class="chan-act" href="mailto:support@shriramfs.com">Write to us
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </a>
       </div>
     </div>
     <div class="office reveal">
       <span class="office-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V8l8-4 8 4v12" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M4 20h16M9 20v-5h6v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 11h.01M15 11h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
       <div class="office-tx">
+        <span class="office-eyebrow">Visit us</span>
         <h3>Head office</h3>
-        <p>3rd Floor, Rukmini Towers, #3/1, Sheshadripuram, Bengaluru-560 020<br/>Monday to Friday: 8:30 AM – 5:30 PM , Saturday:10 am to 1pm, Closed on Public Holiday.</p>
+        <p class="office-addr">3rd Floor, Rukmini Towers, #3/1, Sheshadripuram, Bengaluru-560 020</p>
+        <p class="office-hrs">Monday to Friday: 8:30 AM – 5:30 PM &nbsp;·&nbsp; Saturday: 10 am to 1pm &nbsp;·&nbsp; Closed on Public Holiday.</p>
       </div>
+      <a class="btn btn-secondary office-dir" href="https://maps.google.com/?q=Rukmini%20Towers%2C%20Sheshadripuram%2C%20Bengaluru%20560020" target="_blank" rel="noopener">
+        <svg class="btn-ico" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.6"></circle></svg>
+        Get directions
+      </a>
     </div>
     <div class="cta-box dark reveal">
       <div class="ct-tt">
@@ -397,6 +479,9 @@ const seo = {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    justify-content: space-between; /* pills spread horizontally across the text column */
+    width: 100%;
+    max-width: var(--hero-text-w);
     margin-top: 32px;
     padding-top: 32px;
     border-top: 1px solid #4f524a; /* page-local hairline on gradient - Tier-2 candidate */
@@ -461,6 +546,43 @@ const seo = {
   }
   /* Input field (.hf-row/.hf-unit/.hf-field/.hf-field-in/.hf-err) is the shared
      canonical component in global.css - see DESIGN-SYSTEM.md §4.15. Not redefined here. */
+  /* Mobile field - the homepage hero mobile input, brought here as DECORATION on
+     the shared .hf-field (rule 8): India flag + hairline divider + persistent +91
+     country code. Structure/height/label/states all inherit from .hf-field. */
+  .hf-field.tel { gap: 12px; }
+  .hf-field.tel .tel-flag {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .hf-field.tel .tel-flag img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hf-field.tel .tel-div {
+    width: 1px;
+    height: 24px;
+    flex: none;
+    background: var(--color-gray-250); /* #ddd - home hero-card divider */
+  }
+  .hf-field.tel .tel-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hf-field.tel .tel-cc {
+    flex: none;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-field-ink);
+  }
+  .hf-field.tel .tel-row input {
+    flex: 1 1 auto;
+  }
   .hero-form .btn-primary {
     width: 100%;
     min-width: 0; /* full-width form submit: exempt from the 220px footprint */
@@ -614,7 +736,7 @@ const seo = {
 
   .chan-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
   .chan {
@@ -624,42 +746,81 @@ const seo = {
     padding: var(--container-pad);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+  }
+  .chan-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
   .chan-ico {
     width: 48px;
     height: 48px;
+    flex: none;
     border-radius: 12px;
     background: var(--color-gold-100); /* #fff0d7 */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 4px;
   }
   .chan-ico svg {
     width: 24px;
     height: 24px;
     color: var(--color-text-heading-dark);
   }
-  .chan h3 {
+  .chan-top h3 {
     font-weight: 500;
     font-size: 18px;
     color: var(--color-text-primary);
   }
-  .chan .val {
+  .chan-val {
     font-weight: 600;
-    font-size: 18px;
+    font-size: 20px;
     color: var(--color-text-heading-dark);
     overflow-wrap: anywhere;
+    transition: color 0.2s ease;
   }
-  .chan .val a {
-    color: inherit;
+  .chan-ext {
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
   }
-  .chan p {
+  .chan-note {
     font-weight: 400;
     font-size: 14px;
     color: var(--color-text-muted);
+  }
+  /* footer action link, pinned to the card base, separated by a hairline */
+  .chan-act {
     margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border-card);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-text-heading-dark);
+    transition: color 0.2s ease;
+  }
+  .chan-act svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    color: var(--color-gold-400);
+    transition: transform 0.2s ease;
+  }
+  @media (min-width: 1024px) and (hover: hover) {
+    .chan-val:hover {
+      color: var(--color-olive-900); /* #2e3914 */
+    }
+    .chan-act:hover {
+      color: var(--color-olive-900); /* #2e3914 */
+    }
+    .chan-act:hover svg {
+      transform: translateX(3px);
+    }
   }
 
   .office {
@@ -687,19 +848,35 @@ const seo = {
     color: var(--color-text-heading-dark);
   }
   .office-tx {
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+  }
+  .office-eyebrow {
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 1.2px; /* eyebrow tracking - matches .branch-gcat */
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
   }
   .office-tx h3 {
     font-weight: 500;
-    font-size: 18px;
+    font-size: 20px;
     color: var(--color-text-primary);
   }
-  .office-tx p {
-    font-weight: 400;
+  .office-addr {
+    font-weight: 500;
     font-size: 16px;
-    color: var(--color-text-tertiary);
+    color: var(--color-text-heading-dark);
+  }
+  .office-hrs {
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--color-text-muted);
+  }
+  .office-dir {
+    flex: none;
   }
 
   /* ---------- Branch Locator ---------- */
@@ -875,7 +1052,11 @@ const seo = {
       align-items: flex-start;
       gap: 16px;
     }
-    .chan .val {
+    .office-dir {
+      width: 100%;
+      justify-content: center;
+    }
+    .chan-val {
       font-size: 18px;
     }
     .bc-actions {
@@ -1015,16 +1196,18 @@ const seo = {
       });
     }
 
-    /* ----- mobile field: +91 prefix, group 10 digits as "##### #####" ----- */
+    /* ----- mobile field: the +91 is a fixed visual prefix (see .hf-field.tel), so
+       the value holds only the 10 digits, grouped "##### #####". A pasted 12-digit
+       +91 number has its leading 91 stripped; a genuine 91-leading mobile is kept. ----- */
     var mob = document.getElementById('cf-mobile');
     if (mob) {
       mob.addEventListener('input', function () {
-        var d = mob.value.replace(/\D/g, '');
-        if (d.slice(0, 2) === '91') {
-          d = d.slice(2);
+        var raw = mob.value.replace(/\D/g, '');
+        if (raw.length === 12 && raw.slice(0, 2) === '91') {
+          raw = raw.slice(2);
         }
-        d = d.slice(0, 10);
-        mob.value = d ? '+91 ' + (d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d) : '';
+        var d = raw.slice(0, 10);
+        mob.value = d ? (d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d) : '';
       });
     }
 
@@ -1196,7 +1379,7 @@ const seo = {
     if (form) {
       var fields = [
         { id: 'cf-name', err: 'err-name', test: function (v) { return v.trim().length >= 2; } },
-        { id: 'cf-mobile', err: 'err-mobile', test: function (v) { return v.replace(/\D/g, '').replace(/^91/, '').length === 10; } },
+        { id: 'cf-mobile', err: 'err-mobile', test: function (v) { var d = v.replace(/\D/g, ''); if (d.length === 12 && d.slice(0, 2) === '91') { d = d.slice(2); } return d.length === 10; } },
         { id: 'cf-city', err: 'err-city', test: function (v) { return !!v; } },
         { id: 'cf-purpose', err: 'err-purpose', test: function (v) { return !!v; } },
       ];

@@ -445,9 +445,8 @@
     border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
     transition: border-color 0.22s ease;
   }
-  @media (min-width: 1024px) and (hover: hover) {
-    .doc-card:hover { border-color: var(--color-sage-450); }
-  } /* #8d8e84 (Tier-1) */
+  /* Doc cards are informational (not clickable) - no hover state; only the
+     View/Download links (.doc-dl) below react to hover. */
   .doc-card .nm { font-weight: 500; font-size: 16px; color: var(--color-text-primary); flex: 1 0 auto; }
   .doc-card .upd { font-weight: 400; font-size: 14px; color: var(--color-text-muted); }
   .doc-card .upd .sep { margin: 0 8px; }
@@ -564,7 +563,50 @@
     min-height: clamp(440px, 29vw, 552px); padding: 0 var(--pad);
     display: flex; flex-direction: column; justify-content: center; overflow: hidden;
     background: radial-gradient(125% 210% at 100% -8%, var(--color-olive-600) 0%, var(--color-olive-800) 50%, var(--color-charcoal-850) 100%);
+    border-bottom: 8px solid var(--color-olive-500); /* #4d6710 */
   }
+
+  /* Dark hero variant (V4) - the ONLY hero surface. Always applied by <Hero>;
+     the calc type (.hero-calc, rule 7) rides on top. Geometry, type and the
+     breadcrumb link colour are inherited from .hero - only the surface, the
+     texture layer and the current-crumb accent change. Faithful to the Figma
+     layer stack (node 1261:7464): base #121212 + a low olive glow, then a
+     soft-light abstract texture on top. The glow/blend use translucency by
+     design (documented Tier-2 exception to rule 5 - a decorative background
+     effect the source specifies as alpha + a soft-light blend). */
+  .hero-dark {
+    position: relative;
+    /* Layer 1-2: solid surface (#121212 = charcoal-925) lifted by the low,
+       wide olive glow rising from the bottom-centre (olive-600 core, ~40%). */
+    background:
+      radial-gradient(52% 62% at 50% 116%, rgba(79, 88, 59, 0.40) 0%, rgba(79, 88, 59, 0) 68%),
+      var(--color-charcoal-925);
+  }
+  /* Top layer (Figma node 1261:7487): the abstract "Gemini" texture composited
+     in soft-light so it reads as a faint sheen, WITH a left-fading 5%-black
+     linear gradient over it (darker at the right, clearing to the left). The
+     gradient is the FIRST background layer so it paints OVER the opaque image;
+     the whole pseudo-element is then blended via mix-blend-mode. Decorative-only
+     (never in the a11y tree). */
+  .hero-dark::before {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(to left, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0) 100%),
+      url("/assets/equity-hero-texture.jpg") center / cover no-repeat;
+    mix-blend-mode: soft-light;
+    /* Texture dialled back to half strength sitewide - a softer sheen. */
+    opacity: 0.5;
+  }
+  /* Keep the breadcrumb + content stack above the texture layer. */
+  .hero-dark > * { position: relative; z-index: 1; }
+  /* Current-page crumb accent: gold for a real trail; but a single-item crumb
+     (just the current page, no parents) reads as a lone label - keep it white. */
+  .hero-dark .crumbs [aria-current="page"] { color: var(--color-gold-400); }
+  .hero-dark .crumbs li:only-child [aria-current="page"] { color: var(--color-white); }
+  /* The dark hero's breadcrumb is static - it does NOT play the shared
+     enter-rise; only the hero content + background animate on landing (see the
+     hero-landing parallax below). */
+  .hero-dark .crumbs { animation: none; }
 
   /* ===== Breadcrumb - plain text trail in the hero. Sitewide on every page
      EXCEPT the homepage. Flush to the --pad gutter (144px at full width) and
@@ -598,7 +640,29 @@
     .hero:has(.crumbs):has(.hero-grid) .crumbs { position: absolute; top: 24px; left: var(--pad); margin: 0; }
     .hero:has(.crumbs):has(.hero-grid) .hero-grid,
     .hero:has(.crumbs):has(.hero-grid) .hero-inner { margin-bottom: 0; }
+    /* Dark V4 two-column hero (Type 2): text column + right aside, spaced apart
+       by the shared 56px grid gap. The LEFT column is the 1-column dark hero
+       verbatim - the breadcrumb stays folded INTO .hero-inner's stack (same
+       24px gap, left-aligned) and the whole crumb→H1→lead group is vertically
+       centred beside the card, NOT lifted out of flow and pinned to the corner
+       the way the (legacy light) two-column crumb hero above does. Same
+       specificity as those rules → wins on source order. */
+    .hero-dark:has(.crumbs):has(.hero-grid) { padding-block: 0; }
+    .hero-dark:has(.crumbs):has(.hero-grid) .crumbs { position: static; top: auto; left: auto; margin: 0; }
   }
+  /* Dark hero (V4): all hero content is ONE left-aligned container. The
+     breadcrumb now sits INSIDE .hero-inner (see Hero.astro), so crumb, H1, body
+     copy and button stack as a single group - equal spacing between them via one
+     flex `gap`, left-aligned (align-items + text-align) and vertically centred in
+     the band (justify-content). Overrides the shared crumb-hero auto-margin
+     centring and the per-element top-margins the base hero uses for spacing. */
+  .hero-dark:has(.crumbs) { justify-content: center; }
+  .hero-dark:has(.crumbs) .hero-inner { margin: 0; }
+  .hero-dark .hero-inner { align-items: flex-start; text-align: left; gap: 24px; }
+  .hero-dark .hero-inner .crumbs,
+  .hero-dark .hero-inner .lead,
+  .hero-dark .hero-inner .cta { margin: 0; }
+  .hero-dark .crumbs { align-self: flex-start; }
   /* Enters last, with the same enter-rise motion as the hero content: the
      hero-inner ([data-enter]) plays for 0.7s from load; the breadcrumb follows
      a further 0.5s later → 1.2s delay. `both` holds it hidden until then.
@@ -621,7 +685,10 @@
 
   .hero-inner { padding: 56px 0; display: flex; flex-direction: column; }
   .hero h1 { font-weight: 500; font-size: 40px; color: var(--color-white); max-width: var(--hero-text-w); }
-  .hero h1 .g { color: var(--color-gold-400); }
+  /* Hero H1 is ONE tone - white, never a white/gold split. The `.g` span is kept
+     in the markup (stable) but inherits the H1 white here; only non-hero headings
+     (CTA boxes) keep the gold accent. Single edit → every hero H1 sitewide. */
+  .hero h1 .g { color: inherit; }
   .hero .lead { margin-top: 16px; font-weight: 400; font-size: 18px; color: var(--color-text-on-dark-lead); max-width: var(--hero-text-w); }
   .hero .cta { margin-top: 40px; }
   /* Hero CTA button is a fixed 220px (--cta-w), uniform across every page's
@@ -696,8 +763,12 @@
   .encl-cell p { font-weight: 400; font-size: 16px; color: var(--color-text-muted); }
 
   /* ===== checklist cards ===== */
-  .check-card { display: flex; flex-direction: column; gap: 32px; }
-  .row-2 .check-card { flex: 1 0 0; min-width: 0; }
+  /* Heading -> checklist gap is 48px (+16 over the standalone 32px base) so the title
+     sits clear of the first check; mobile scales to 40px in the breakpoint below.
+     Card inset stays on the base .card (var(--container-pad)); only this gap grows.
+     .row-2 .check-card restates the gap to out-specify .row-2 .card (gap:16px). */
+  .check-card { display: flex; flex-direction: column; gap: 48px; }
+  .row-2 .check-card { flex: 1 0 0; min-width: 0; gap: 48px; }
   .check-card .ch-title { font-weight: 500; font-size: 20px; color: var(--color-text-primary); }
   .check-list { display: flex; flex-direction: column; gap: 24px; }
   .check-row { display: flex; gap: 16px; align-items: flex-start; }
@@ -860,13 +931,13 @@
      Works on <a> and <button> (appearance reset). Hugs its content by
      default; add style="width:100%" (or a page utility) for full-bleed.
      Icons inside carry .btn-ico so they land on the 16/20/24/32 scale
-     (rule 4), sized per button size. Radius is 8px across the whole scale.
+     (rule 4), sized per button size. Radius is 4px (--radius-sm) across the whole scale.
      The older .btn-gold/.btn-dark/.btn-ghost/.btn-outline classes remain
      for pages not yet migrated - see the button usage plan.
      ============================================================ */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    box-sizing: border-box; border: 1px solid transparent; border-radius: 8px;
+    box-sizing: border-box; border: 1px solid transparent; border-radius: var(--radius-sm);
     -webkit-appearance: none; appearance: none; cursor: pointer;
     font-family: inherit; font-weight: 500; white-space: nowrap; text-decoration: none;
     height: 40px; padding-inline: 20px; font-size: 14px; /* default = L (40px) */
@@ -882,7 +953,7 @@
   }
   .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; }
 
-  /* ---- size scale: height / inline-padding / label size (radius fixed 8px).
+  /* ---- size scale: height / inline-padding / label size (radius fixed 4px).
      Vertical centring is by flex + fixed height, so the source's off-grid
      vertical paddings (5/7/9/11) are not needed; inline padding snapped to
      the 8px grid (source S=17 -> 16). ---- */
@@ -1199,7 +1270,7 @@
   .nps-trade-cols { display: flex; gap: clamp(20px, 3vw, 48px); }
   .nps-trade-cols .nps-col-items { flex: 1; padding: 0; }
   .nps-view-all { margin-top: clamp(28px, 4vw, 56px); }
-  .nps-view-all a { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 28px; border: 1.5px solid var(--color-sage-900); border-radius: 8px; /* 8px - matches the global .btn system */ font-size: 14px; font-weight: 500; color: var(--color-sage-900); text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
+  .nps-view-all a { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 28px; border: 1.5px solid var(--color-sage-900); border-radius: var(--radius-sm); /* matches the global .btn system */ font-size: 14px; font-weight: 500; color: var(--color-sage-900); text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
   @media (min-width: 1024px) and (hover: hover) {
     .nps-view-all a:hover { background: var(--color-sage-900); color: var(--color-white); }
   }
@@ -1327,7 +1398,7 @@
   .ready-text b { font-weight: 700; }
   .ready-btn {
     flex: none; background: var(--color-gold-100); color: var(--color-action-primary-ink); height: 40px;
-    padding: 7px 20px; /* off-grid - Tier-2 */ border-radius: 8px; /* 8px - matches the global .btn system */ display: flex; align-items: center; justify-content: center;
+    padding: 7px 20px; /* off-grid - Tier-2 */ border-radius: var(--radius-sm); /* matches the global .btn system */ display: flex; align-items: center; justify-content: center;
     font-weight: 500; font-size: 12px; white-space: nowrap;
   }
 
@@ -1566,6 +1637,9 @@
   .pcard-grid { gap: 24px; }
   .hf-row { flex-direction: column; gap: 24px; }
   .check-list { gap: 16px; }
+  /* Heading -> checklist gap scaled for mweb (48px -> 40px, on the 8px grid).
+     .row-2 .check-card restated to keep beating .row-2 .card (gap:16px). */
+  .check-card, .row-2 .check-card { gap: 40px; }
 
   .sec-lead, .sub-lead, .card-p, .cat p, .step p, .pgroup-head p,
   .check-row .tx, .appr p, .risk p, .cell p { font-size: 14px; }
@@ -1589,24 +1663,28 @@
   .foot-bottom { flex-direction: column; align-items: flex-start; }
 }
 
-/* ===== Compact hero - calculator detail pages (rule 7 variant) =====
-   The standardised (product) hero centres breadcrumb + content inside a tall
-   440–552px band via auto-margins (see .hero:has(.crumbs)). Calculator pages
-   carry only breadcrumb + H1 + lead, so the band HUGS that content on a small,
-   explicit padding - deliberately shorter than the product hero. Kept UNLAYERED
-   and placed after the mobile hero rules so it beats BOTH the layered desktop
-   rule and the unlayered mobile `min-height:560px` override. Values on the 8px
-   grid (rule 6). Applies to every calculator: single source of truth.
+/* ===== Calculator hero (Type 3) - `.hero-calc` (rule 7) =====
+   The standardised (product) hero centres content inside a tall 440–552px band.
+   EVERY calculator page - the hub (/calculators) AND the detail pages - shares
+   ONE fixed, UNIFORM band so all calc heroes are identical in height (rule 7/18):
+   408px = the tallest calc hero's content (NPS/FD: crumb + 2-line H1 + lead + CTA
+   ≈ 326px) plus ~82px top/bottom breathing room. A shorter one (the hub, ≈231px;
+   SWP, no CTA) just centres its content in the same band rather than shrinking it.
+   Content stays vertically centred (inherits `.hero{justify-content:center}` /
+   `.hero-dark:has(.crumbs){justify-content:center}`).
 
-   Vertical padding (the hug):
-     Desktop - 40px above breadcrumb · 24px breadcrumb→H1 · 40px below lead
-     Mobile  - 32px above breadcrumb · 16px breadcrumb→H1 · 32px below lead */
-.hero-compact:has(.crumbs) { min-height: 0; justify-content: flex-start; }
-.hero-compact:has(.crumbs) .crumbs { margin-block: 0; padding-top: 40px; }
-.hero-compact:has(.crumbs) .hero-inner { margin-bottom: 0; padding: 24px 0 40px; }
+   Keyed on `.hero-calc` alone (NOT `:has(.crumbs)`) so the crumb-less hub is
+   pinned to the same height. Kept UNLAYERED and placed after the mobile hero
+   rules so it beats BOTH the layered desktop clamp and the unlayered mobile
+   `min-height:560px`. Value on the 8px grid (rule 6). Single source of truth:
+   change 408 here → all calc heroes. Mobile (≤768px): min-height:0 so the band
+   hugs naturally as content reflows; the detail pages restore 40px top/bottom
+   padding (the shared mobile crumb rule zeroes .hero-inner padding for the
+   auto-margin centring, which the hug doesn't use). */
+.hero-calc { min-height: 408px; }
 @media (max-width: 768px) {
-  .hero-compact:has(.crumbs) .crumbs { padding-top: 32px; }
-  .hero-compact:has(.crumbs) .hero-inner { padding: 16px 0 32px; }
+  .hero-calc { min-height: 0; }
+  .hero-calc:has(.crumbs) .hero-inner { padding-block: 40px; }
 }
 
 /* Small phones */
@@ -1719,7 +1797,7 @@
   to { opacity: 1; transform: none; }
 }
 [data-enter] { animation: enter-rise 0.7s var(--ease-reveal) both; }
-[data-enter='2'] { animation-delay: 0.7s; }
+[data-enter='2'] { animation-delay: 0.4s; }
 
 /* Hero landing choreography (equity, via mainClass="rev-rise-scale"): the hero
    CONTENT loads first sitting near the hero's vertical centre (lifted up by
@@ -1737,4 +1815,30 @@
 .rev-rise-scale .hero-inner[data-enter] {
   --hero-lift: 40px;
   animation: hero-center-drop 1.7s var(--ease-reveal) both;
+}
+
+/* Hero landing parallax (equity dark hero). On page land the two hero layers
+   ease in OPPOSITION for a subtle depth cue: the CONTENT zooms in + fades up
+   from a hair small (0.96 -> 1), while the BACKGROUND texture goes the other
+   way - starting slightly zoomed-in and settling back out (1.06 -> 1). A few
+   percent only, on the sitewide reveal ease. Scoped to .hero-dark so it
+   overrides the shared center-drop for this hero alone; every other page's
+   hero is untouched, the breadcrumb stays static, and the global
+   reduced-motion rule above collapses both to their end state. */
+@keyframes hero-content-zoom-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+/* Background is flipped 180° (baked into both keyframe stops so it stays
+   flipped throughout the zoom-out landing). */
+@keyframes hero-bg-zoom-out {
+  from { transform: rotate(180deg) scale(1.06); }
+  to   { transform: rotate(180deg); }
+}
+.hero-dark .hero-inner[data-enter] {
+  transform-origin: left center;
+  animation: hero-content-zoom-in 1.3s var(--ease-reveal) both;
+}
+.hero-dark::before {
+  animation: hero-bg-zoom-out 1.7s var(--ease-reveal) both;
 }

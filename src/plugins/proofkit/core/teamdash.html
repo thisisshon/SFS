@@ -25,7 +25,7 @@
           <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="#da291c"/>
           <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
         </svg>
-        <span class="tmd-word">ProofKit</span>
+        <span class="tmd-word">ProoofKit</span>
         <span class="tmd-tag">Content Review | <span class="tmd-tag-brand">Shriram FS</span><span class="tmd-tag-team" id="tmd-tag-team"></span></span>
       </div>
       <div class="tmd-actions">
@@ -61,15 +61,22 @@
       </aside>
 
       <div class="tmd-content">
-        <!-- My Comments -->
+        <!-- For Action -->
         <div id="tmd-view-comments">
-          <div class="tmd-filters" id="tmd-filters" role="tablist">
-            <button class="tmd-filter is-active" data-filter="all">All</button>
-            <button class="tmd-filter" data-filter="pending">Pending</button>
-            <button class="tmd-filter" data-filter="done">Done</button>
-            <button class="tmd-filter" data-filter="closed">Closed</button>
-            <span class="tmd-filter-sp"></span>
-            <button class="tmd-bypage" id="tmd-bypage" type="button">By Page</button>
+          <div id="tmd-controls">
+            <div class="tmd-toolbar">
+              <input id="tmd-search" class="tmd-search" type="search" placeholder="Search comments, pages, reviewers…" autocomplete="off" spellcheck="false" />
+              <div id="tmd-sort-mount"></div>
+            </div>
+            <div class="tmd-filters" id="tmd-filters" role="tablist">
+              <button class="tmd-filter is-active" data-filter="all">All</button>
+              <button class="tmd-filter" data-filter="pending">Pending</button>
+              <button class="tmd-filter" data-filter="done">Done</button>
+              <button class="tmd-filter" data-filter="closed">Closed</button>
+              <span class="tmd-filter-sp"></span>
+              <button class="tmd-bypage" id="tmd-bypage" type="button">By Page</button>
+            </div>
+            <div class="tmd-teamchips" id="tmd-teamchips" hidden></div>
           </div>
           <div id="tmd-list"></div>
         </div>

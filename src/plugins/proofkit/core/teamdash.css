@@ -104,6 +104,25 @@
     transition:border-color .15s,color .15s}
   .tmd .tmd-bypage.is-active{border-color:var(--pk-red);color:var(--pk-red)}
 
+  /* ---- toolbar: search + sort ---- */
+  .tmd .tmd-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
+  .tmd .tmd-search{flex:1 1 220px;min-width:180px;height:42px;padding:0 14px;border:1px solid var(--pk-hair);border-radius:0;
+    background:var(--pk-input);color:var(--pk-ink);font:400 14px/1.5 var(--pk-font)}
+  .tmd .tmd-search::placeholder{color:var(--pk-muted)}
+  .tmd .tmd-search:focus{outline:none;border-color:var(--pk-red)}
+  /* ---- from-team filter chips ---- */
+  .tmd .tmd-teamchips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 20px}
+  /* "From" label on the left of the from-team filter chips */
+  .tmd .tmd-chips-from{font:700 10px/1 var(--pk-font);letter-spacing:.12em;text-transform:uppercase;color:var(--pk-muted);margin-right:2px}
+  /* Open Pin link (cards + notifications) — jumps to the pin on the live page */
+  .tmd .tmd-openpin{height:28px;padding:0 12px;border:1px solid var(--pk-hair);border-radius:0;background:transparent;
+    color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+    display:inline-flex;align-items:center;white-space:nowrap;transition:border-color .15s,color .15s}
+  .tmd .tmd-teamchips[hidden]{display:none}
+  .tmd .tmd-tchip{height:30px;padding:0 14px;border:1.5px solid transparent;border-radius:9999px;cursor:pointer;
+    font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w-lg);box-sizing:border-box;transition:transform .12s}
+
   /* ---- list + group ---- */
   .tmd .tmd-grid{display:flex;flex-direction:column;gap:10px}
   .tmd .tmd-group{margin-bottom:32px}
@@ -112,9 +131,12 @@
   .tmd .tmd-gh a{color:var(--pk-ink);text-decoration:none;border-bottom:1px solid var(--pk-hair)}
   .tmd .tmd-gh span{font-size:12px;font-weight:500;color:var(--pk-muted);letter-spacing:0;text-transform:none}
 
-  /* ---- comment card (read-only) ---- */
-  .tmd .tmd-item{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:0;
-    background:var(--pk-card);border:1px solid var(--pk-hair);border-left:2px solid var(--pk-hair)}
+  /* ---- comment card (read-only, click to open detail) ---- */
+  .tmd .tmd-item{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:0;cursor:pointer;
+    background:var(--pk-card);border:1px solid var(--pk-hair);border-left:2px solid var(--pk-hair);
+    transition:border-color .15s,background .15s}
+  .tmd .tmd-item:focus-visible{outline:none;border-left-color:var(--pk-red);background:var(--pk-elev)}
+  .tmd .tmd-detailhint{margin-left:auto;font:700 10px/1 var(--pk-font);letter-spacing:.08em;text-transform:uppercase;color:var(--pk-muted)}
   .tmd .tmd-line{display:flex;align-items:flex-start;gap:14px}
   .tmd .tmd-line .tmd-chip{flex:none;margin-top:1px}
   /* "from <team>" — who raised the comment that's now directed to us */
@@ -147,6 +169,28 @@
   .tmd .tmd-reply{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
   .tmd .tmd-rtxt{font-size:14px;line-height:1.5;color:var(--pk-ink)}
   .tmd .tmd-rmeta{font-size:12px;color:var(--pk-muted)}
+
+  /* ---- comment detail (reviewer · AI prompt · validation · history) ---- */
+  .tmd .tmd-back{margin-bottom:16px;background:none;border:none;cursor:pointer;padding:0;
+    font:700 11px/1 var(--pk-font);letter-spacing:.08em;text-transform:uppercase;color:var(--pk-body);transition:color .15s}
+  .tmd .tmd-detail{display:flex;flex-direction:column;gap:20px;max-width:760px}
+  .tmd .tmd-detail-title{font-size:20px;font-weight:600;line-height:1.4;color:var(--pk-ink);margin:0}
+  .tmd .tmd-detail-chips{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .tmd .tmd-fields{display:flex;flex-direction:column;gap:0;border:1px solid var(--pk-hair)}
+  .tmd .tmd-field{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:14px 16px;border-bottom:1px solid var(--pk-hair)}
+  .tmd .tmd-field:last-child{border-bottom:none}
+  .tmd .tmd-field-k{font:700 10px/1.4 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;color:var(--pk-muted)}
+  .tmd .tmd-field-v{font-size:14px;line-height:1.5;color:var(--pk-ink);min-width:0;overflow-wrap:anywhere}
+  .tmd .tmd-prompt-box{white-space:pre-wrap;font-size:13px;line-height:1.55;color:var(--pk-ink);
+    background:var(--pk-input);border:1px solid var(--pk-hair);padding:12px 14px;overflow-wrap:anywhere}
+  .tmd .tmd-copyprompt{margin-top:10px;height:34px;padding:0 16px;border:1px solid var(--pk-hair);border-radius:0;background:transparent;cursor:pointer;
+    color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;transition:border-color .15s,color .15s}
+  .tmd .tmd-timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .tmd .tmd-tl{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-left:16px;position:relative}
+  .tmd .tmd-tl::before{content:"";position:absolute;left:0;top:5px;width:7px;height:7px;border-radius:9999px;background:var(--pk-hair)}
+  .tmd .tmd-tl.is-current::before{background:var(--pk-red)}
+  .tmd .tmd-tl-event{font-size:13px;font-weight:600;color:var(--pk-ink)}
+  .tmd .tmd-tl-time{font-size:12px;color:var(--pk-muted);white-space:nowrap}
 
   /* ---- notifications ---- */
   .tmd .tmd-noteshead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
@@ -207,6 +251,10 @@
     .tmd .tmd-slug:hover{color:var(--pk-red);border-color:var(--pk-red)}
     .tmd .tmd-upgrade:hover{opacity:1;color:var(--pk-red);border-color:var(--pk-red)}
     .tmd .tmd-adminbar-back:hover{text-decoration:underline}
+    .tmd .tmd-item:hover{border-left-color:var(--pk-red);background:var(--pk-elev)}
+    .tmd .tmd-item:hover .tmd-detailhint{color:var(--pk-red)}
+    .tmd .tmd-tchip:hover{transform:translateY(-1px)}
+    .tmd .tmd-back:hover,.tmd .tmd-copyprompt:hover,.tmd .tmd-openpin:hover{border-color:var(--pk-red);color:var(--pk-red)}
     .tmd-login-btn:hover{background:var(--pk-red-2)}
   }
 

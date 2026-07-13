@@ -64,16 +64,16 @@ const seo = {
   description:
     'Open a fully digital Demat and trading account in minutes with Shriram Financial Services. Zero paperwork, SEBI-regulated and secure.',
   path: '/open-demat-account',
-  jsonLd: [faqPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })))],
+  jsonLd: [faqPageSchema(FAQS.slice(0, 6).map((f) => ({ question: f.q, answer: f.a })))],
 };
 ---
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Open a Demat Account' }]} />
+  <section class="hero hero-dark" id="sec-hero" data-section="hero">
     <div class="hero-grid">
       <div class="hero-inner" data-enter>
+        <Breadcrumb trail={[{ name: 'Open a Demat Account' }]} />
         <h1>Open a <span class="g">Demat Account</span> in Minutes, 100% Online, Zero Paperwork</h1>
         <p class="lead">Hold stocks, bonds, ETFs, and mutual funds digitally with a Demat account.</p>
       </div>
@@ -108,7 +108,6 @@ const seo = {
       </form>
     </div>
   </section>
-
   <!-- ================= WHAT IS A DEMAT ACCOUNT? ================= -->
   <section class="section stack sec-light" id="sec-about" data-section="about" style="gap:56px" data-enter="2">
     <div class="stack" style="gap:16px">
@@ -142,7 +141,6 @@ const seo = {
       <div class="cat"><h4>Many investments in one account</h4><p>You can hold different eligible investments in one demat account. These may include shares, ETFs, bonds, mutual fund units and sovereign gold bonds.</p></div>
       <div class="cat"><h4>Needed for listed shares</h4><p>If you want to buy or sell listed shares in India, you generally need a demat account. It is usually linked to your trading account.</p></div>
       <div class="cat"><h4>Corporate benefits are updated</h4><p>Dividends, bonus shares and stock splits are updated in your account. This is done based on company, registrar and depository records.</p></div>
-      <div class="cat"><h4>Pledging may be possible</h4><p>You may be able to pledge eligible securities for funding. This depends on the security, broker, lender and current rules.</p></div>
       <div class="cat"><h4>Nomination helps your family</h4><p>It is better to add a nominee while opening the account. Adding one can make it easier for your family to access the account, reducing delays and paperwork during a difficult time/uncertainty.</p></div>
     </div>
   </section>
@@ -189,12 +187,78 @@ const seo = {
       <h2 class="sec-title">Am I Eligible to Open a Demat Account?</h2>
       <p class="sec-lead">Answer these questions to understand which account type may suit you.</p>
     </div>
-    <div class="cat-grid cat-grid-3" data-reveal-row>
-      <div class="cat"><h4>Question 1: Who is the account for?</h4><p>Resident Indian; NRI; Minor under 18</p></div>
-      <div class="cat"><h4>Question 2: Is your PAN linked with Aadhaar?</h4><p>Yes; No; Not sure</p></div>
-      <div class="cat"><h4>Question 3: Do you have an active Indian bank account?</h4><p>Yes; No</p></div>
-      <div class="cat"><h4>Question 4: Have you invested before?</h4><p>Yes; No</p></div>
-      <div class="cat"><h4>Question 5: What will you use the account for?</h4><p>Long-term stock investing; Trading in shares and ETFs; IPO applications; Mutual funds; F&amp;O or derivatives trading</p></div>
+    <!-- Interactive eligibility checker: pure-CSS (`:has()`), no runtime JS.
+         Selecting an answer updates the live result panel; the reference table
+         below stays as the comprehensive fallback. -->
+    <div class="eq" data-reveal-row>
+      <form class="eq-quiz">
+        <fieldset class="eq-q">
+          <legend><span class="eq-num">1</span> Who is the account for?</legend>
+          <div class="eq-opts">
+            <label class="eq-opt"><input type="radio" name="q1" id="q1-res" checked /><span>Resident Indian</span></label>
+            <label class="eq-opt"><input type="radio" name="q1" id="q1-nri" /><span>NRI</span></label>
+            <label class="eq-opt"><input type="radio" name="q1" id="q1-minor" /><span>Minor under 18</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="eq-q">
+          <legend><span class="eq-num">2</span> Is your PAN linked with Aadhaar?</legend>
+          <div class="eq-opts">
+            <label class="eq-opt"><input type="radio" name="q2" /><span>Yes</span></label>
+            <label class="eq-opt"><input type="radio" name="q2" id="q2-no" /><span>No</span></label>
+            <label class="eq-opt"><input type="radio" name="q2" id="q2-unsure" /><span>Not sure</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="eq-q">
+          <legend><span class="eq-num">3</span> Do you have an active Indian bank account?</legend>
+          <div class="eq-opts">
+            <label class="eq-opt"><input type="radio" name="q3" /><span>Yes</span></label>
+            <label class="eq-opt"><input type="radio" name="q3" id="q3-no" /><span>No</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="eq-q">
+          <legend><span class="eq-num">4</span> Have you invested before?</legend>
+          <div class="eq-opts">
+            <label class="eq-opt"><input type="radio" name="q4" /><span>Yes</span></label>
+            <label class="eq-opt"><input type="radio" name="q4" id="q4-no" /><span>No</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="eq-q">
+          <legend><span class="eq-num">5</span> What will you use the account for?</legend>
+          <div class="eq-opts">
+            <label class="eq-opt"><input type="radio" name="q5" /><span>Long-term investing</span></label>
+            <label class="eq-opt"><input type="radio" name="q5" /><span>Trading shares &amp; ETFs</span></label>
+            <label class="eq-opt"><input type="radio" name="q5" /><span>IPO applications</span></label>
+            <label class="eq-opt"><input type="radio" name="q5" /><span>Mutual funds</span></label>
+            <label class="eq-opt"><input type="radio" name="q5" id="q5-fno" /><span>F&amp;O / derivatives</span></label>
+          </div>
+        </fieldset>
+      </form>
+
+      <aside class="eq-result" aria-live="polite">
+        <p class="eq-kicker">Suggested account</p>
+        <div class="eq-rec eq-r-res"><h3>Regular demat account</h3><p>Or a BSDA, if eligible. Needs your PAN, Aadhaar and completed KYC.</p></div>
+        <div class="eq-rec eq-r-nri"><h3>NRE or NRO demat account</h3><p>Repatriable (NRE) or non-repatriable (NRO). Needs a matching NRI bank account and FEMA/KYC documents.</p></div>
+        <div class="eq-rec eq-r-minor"><h3>Minor demat account</h3><p>Held in the minor's name and operated by a parent or legal guardian until 18.</p></div>
+
+        <ul class="eq-flags">
+          <li class="eq-flag eq-flag-pan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5M12 16.5h.01M10.3 3.9 2.4 17.5A1.9 1.9 0 0 0 4 20.4h16a1.9 1.9 0 0 0 1.6-2.9L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Link your PAN with Aadhaar first — it's required to complete KYC.</span>
+          </li>
+          <li class="eq-flag eq-flag-bank">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5M12 16.5h.01M10.3 3.9 2.4 17.5A1.9 1.9 0 0 0 4 20.4h16a1.9 1.9 0 0 0 1.6-2.9L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>You'll need an active Indian bank account to open and operate the demat account.</span>
+          </li>
+          <li class="eq-flag eq-flag-new">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16v-5M12 8h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
+            <span>New to investing? A BSDA can lower maintenance charges on smaller holdings.</span>
+          </li>
+          <li class="eq-flag eq-flag-fno">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16v-5M12 8h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
+            <span>For F&amp;O or derivatives, you'll also activate a trading account with the F&amp;O segment.</span>
+          </li>
+        </ul>
+      </aside>
     </div>
     <div class="stack" style="gap:16px">
       <h3 class="sub-title">Quick reference: who can open what</h3>
@@ -215,7 +279,7 @@ const seo = {
       <div class="faq-left">
         <h2 class="faq-title">Got Questions?</h2>
         <p class="sec-lead">Here are simple answers to common questions.</p>
-        <FaqAccordion faqs={FAQS} />
+        <FaqAccordion faqs={FAQS.slice(0, 6)} />
       </div>
       <div class="faq-side">
         <div class="usr"><img src="/assets/user.svg" alt="" /></div>
@@ -373,6 +437,134 @@ const seo = {
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center;
+  }
+
+  /* ---------- eligibility checker: quiz (left) + live result (right).
+     Zero-JS - the result reacts purely via `:has()`. Values reuse tokens. ---------- */
+  .eq {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .eq-quiz {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid var(--color-border-card);
+    border-radius: var(--radius-3xl);
+    background: var(--color-surface-card);
+    padding: var(--container-pad);
+  }
+  .eq-q {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--color-border-hairline);
+  }
+  .eq-q:first-child { padding-top: 4px; }
+  .eq-q:last-child { padding-bottom: 4px; border-bottom: 0; }
+  .eq-q legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--color-text-primary);
+  }
+  .eq-num {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: var(--color-gold-100);
+    color: var(--color-olive-900);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .eq-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .eq-opt {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-border-card);
+    border-radius: var(--radius-full);
+    background: var(--color-surface-page);
+    color: var(--color-text-primary);
+    font-size: 15px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .15s ease, background .15s ease, color .15s ease;
+  }
+  /* radio is the accessible control; the pill is the visible target */
+  .eq-opt input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .eq-opt:has(input:checked) {
+    background: var(--color-gold-100);
+    border-color: var(--color-olive-900);
+    color: var(--color-olive-900);
+    font-weight: 500;
+  }
+  .eq-opt:has(input:focus-visible) { outline: 2px solid var(--color-olive-900); outline-offset: 2px; }
+
+  /* --- result panel --- */
+  .eq-result {
+    position: sticky;
+    top: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border: 1px solid var(--color-border-card);
+    border-radius: var(--radius-3xl);
+    background: var(--color-surface-card);
+    padding: var(--container-pad);
+  }
+  .eq-kicker {
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--color-olive-500);
+  }
+  .eq-rec { display: none; }
+  .eq-rec h3 { font-weight: 500; font-size: 24px; color: var(--color-olive-900); }
+  .eq-rec p { margin-top: 8px; font-size: 15px; color: var(--color-text-muted); }
+  .eq:has(#q1-res:checked) .eq-r-res,
+  .eq:has(#q1-nri:checked) .eq-r-nri,
+  .eq:has(#q1-minor:checked) .eq-r-minor { display: block; }
+
+  .eq-flags { display: flex; flex-direction: column; gap: 8px; }
+  .eq-flag {
+    display: none;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--color-gold-100);
+    color: var(--color-olive-900);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .eq-flag svg { flex: none; margin-top: 1px; }
+  .eq:has(#q2-no:checked) .eq-flag-pan,
+  .eq:has(#q2-unsure:checked) .eq-flag-pan,
+  .eq:has(#q3-no:checked) .eq-flag-bank,
+  .eq:has(#q4-no:checked) .eq-flag-new,
+  .eq:has(#q5-fno:checked) .eq-flag-fno { display: flex; }
+
+  @media (max-width: 900px) {
+    .eq { grid-template-columns: 1fr; }
+    .eq-result { position: static; }
   }
 
   /* ---------- responsive (two-column hero stacking is canonical in global.css @980px) ---------- */

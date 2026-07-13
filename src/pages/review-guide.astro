@@ -1,8 +1,8 @@
 ---
 /**
- * /review-guide — Proofkit direction / onboarding guide.
+ * /review-guide — ProoofKit direction / onboarding guide.
  *
- * A comprehensive walkthrough of Proofkit for the teams who use it: what every
+ * A comprehensive walkthrough of ProoofKit for the teams who use it: what every
  * feature does, how to flag comments on the live site, the deploy-gated
  * lifecycle, and what each role sees.
  *
@@ -13,7 +13,7 @@
  * .pk-* component classes + --pk-* tokens (sharp corners, scarce Rosso Corsa,
  * uppercase tracked labels).
  *
- * Gated on PROOFKIT_ENABLED; noindex like every Proofkit route. Facts here track
+ * Gated on PROOFKIT_ENABLED; noindex like every ProoofKit route. Facts here track
  * the package README.md / CHANGELOG.md — keep in sync when the tool changes.
  */
 import { PROOFKIT_ENABLED, TEAMS, ADMIN_TEAM, TEAM_COLORS } from '../plugins/proofkit/config';
@@ -21,7 +21,7 @@ import pkg from '../plugins/proofkit/package.json';
 import './../plugins/proofkit/core/design/tokens.css'; // colour + theme system (Red Moon default)
 import './../plugins/proofkit/core/design/components.css'; // shared .pk-* component classes
 
-/* The exact team chips the tool renders, reproduced from Proofkit's own palette. */
+/* The exact team chips the tool renders, reproduced from ProoofKit's own palette. */
 const teamChips = TEAMS.map((t) => ({ name: t, bg: TEAM_COLORS[t][0], fg: TEAM_COLORS[t][1] }));
 const adminChip = { name: ADMIN_TEAM, bg: TEAM_COLORS[ADMIN_TEAM][0], fg: TEAM_COLORS[ADMIN_TEAM][1] };
 
@@ -45,7 +45,7 @@ const lifecycleSteps = [
 const faqs = [
   {
     q: 'Do I need to install anything to review the site?',
-    a: 'No. Proofkit runs entirely in the browser. Visit <b>/review</b>, sign in with your team and key, and every page grows a <b>Comment</b> button. There is nothing to download and no extension to add.',
+    a: 'No. ProoofKit runs entirely in the browser. Visit <b>/review</b>, sign in with your team and key, and every page grows a <b>Comment</b> button. There is nothing to download and no extension to add.',
   },
   {
     q: 'Nothing happens when I open a normal page — is it broken?',
@@ -65,11 +65,11 @@ const faqs = [
   },
   {
     q: 'What is the “Direct to” dropdown for?',
-    a: 'It routes the comment to the team that should <b>act</b> on it. It defaults to <b>Builder</b> (the admin, for on-site changes) and lists every team except your own. The comment then lands in that team’s <b>/teamdash</b> inbox “For Action”, tagged with a “from &lt;your team&gt;” chip.',
+    a: 'It routes the comment to the team that should <b>act</b> on it. It defaults to <b>Builder</b> (the admin, for on-site changes) and lists every team except your own. The comment then lands in that team’s <b>/teamdash</b> inbox “For Action”, tagged with a “<b>Raised By</b> &lt;your team&gt;” chip, and that team is <b>notified</b> the moment it arrives.',
   },
   {
     q: 'What is the AI change-prompt?',
-    a: 'For every comment the backend generates a precise, developer-ready instruction describing the change — so a developer (or Claude Code) can action it without guesswork. It’s visible to admins on the dashboard with a copy button; teams don’t see it.',
+    a: 'For every comment the backend generates a precise, developer-ready instruction describing the change — so a developer (or Claude Code) can action it without guesswork. Admins get it on every card and in the Master Log; the <b>directed team</b> now sees it too, inside a comment’s <b>detail view</b> (open a card), with its own copy button.',
   },
   {
     q: 'Does it work before the backend is set up?',
@@ -77,8 +77,8 @@ const faqs = [
   },
 ];
 
-const title = 'Proofkit Review Guide';
-const desc = 'How to use Proofkit — sign in, flag comments on the live site, direct them to a team, and track them through the deploy gate until they go live.';
+const title = 'ProoofKit Review Guide';
+const desc = 'How to use ProoofKit — sign in, flag comments on the live site, direct them to a team, and track them through the deploy gate until they go live.';
 ---
 
 {PROOFKIT_ENABLED ? (
@@ -96,12 +96,12 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
     <div class="g">
       <!-- ================= TOP BAR ================= -->
       <header class="g-top">
-        <a class="g-brand" href="/review-guide" aria-label="Proofkit">
+        <a class="g-brand" href="/review-guide" aria-label="ProoofKit">
           <svg class="g-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="#da291c"/>
             <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
           </svg>
-          <span class="g-word">ProofKit</span>
+          <span class="g-word">ProoofKit</span>
           <span class="g-tag">Review Guide | <span class="g-tag-brand">Shriram FS</span></span>
         </a>
         <nav class="g-topnav">
@@ -114,10 +114,10 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
       <section class="g-hero">
         <div class="g-hero-glow" aria-hidden="true"></div>
         <div class="g-wrap g-hero-in">
-          <span class="pk-eyebrow">Proofkit · content-review tool</span>
+          <span class="pk-eyebrow">ProoofKit · content-review tool</span>
           <h1 class="g-display">The Review Guide</h1>
           <p class="g-lead">
-            Proofkit lets any team walk the <b>live</b> site, drop a numbered comment on any element,
+            ProoofKit lets any team walk the <b>live</b> site, drop a numbered comment on any element,
             and track that request all the way to production — no code, no screenshots, no email
             threads. This guide covers every feature: signing in, flagging changes, directing them to
             the right team, and the deploy gate that keeps “Done” honest.
@@ -133,9 +133,9 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
       <section class="g-sec">
         <div class="g-wrap">
           <span class="pk-eyebrow">Overview</span>
-          <h2 class="g-h2">What Proofkit is</h2>
+          <h2 class="g-h2">What ProoofKit is</h2>
           <p class="g-body g-measure">
-            Proofkit is a self-contained review tool built into this site. It has three moving parts that
+            ProoofKit is a self-contained review tool built into this site. It has three moving parts that
             work together: an <b>on-page overlay</b> for leaving comments, <b>two dashboards</b> for
             tracking them, and a <b>deploy gate</b> that only shows your team a change once it is truly live.
             There is nothing to install — if it’s switched on, it lives quietly on every page and wakes up
@@ -171,7 +171,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
 
           <div class="g-note g-mt">
             <p><b>Two ways it stores comments.</b> When the shared backend (a Cloudflare Worker) is connected,
-              everyone reads and writes one live store. Without it, Proofkit runs in <b>local demo mode</b> —
+              everyone reads and writes one live store. Without it, ProoofKit runs in <b>local demo mode</b> —
               comments live in your own browser and any password works — so the whole flow is testable before
               the backend exists.</p>
           </div>
@@ -297,8 +297,8 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
             <article class="pk-card">
               <h3 class="g-h3">Where it lands</h3>
               <p class="g-body">A directed comment appears in the destination team’s <b>/teamdash</b> under <b>“For Action”</b>,
-                tagged with a <b>“from &lt;your team&gt;”</b> chip so they know who raised it. Replies inherit the root’s
-                direction. Admins can re-route a comment’s From/To later if needed.</p>
+                tagged with a <b>“Raised By &lt;your team&gt;”</b> chip so they know who raised it, and that team is notified on
+                arrival. Replies inherit the root’s direction. Admins can re-route a comment’s From/To later if needed.</p>
             </article>
           </div>
         </div>
@@ -310,7 +310,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
           <span class="pk-eyebrow">The deploy gate</span>
           <h2 class="g-h2">How a comment travels</h2>
           <p class="g-body g-measure">
-            This is the most important idea in Proofkit. A comment carries <b>two truths</b>: the admin’s internal
+            This is the most important idea in ProoofKit. A comment carries <b>two truths</b>: the admin’s internal
             <b> working status</b>, and <b>what your team sees</b>. They’re deliberately kept apart — nothing an admin
             does is visible to your team until the change is actually <b>deployed</b> to the live site.
           </p>
@@ -362,15 +362,18 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
           <div class="g-grid-2 g-mt">
             <article class="pk-card">
               <h3 class="g-h3">A “For Action” inbox</h3>
-              <p class="g-body">Everything <b>directed to your team</b> lands here, each card showing a <b>from &lt;team&gt;</b>
-                chip. You see the masked status only — <b>Pending</b> until it’s live, then <b>Done</b> — never the admin’s
-                working status, validation or AI prompt.</p>
+              <p class="g-body">Everything <b>directed to your team</b> lands here, each card showing a <b>Raised By &lt;team&gt;</b>
+                chip and an <b>Open Pin</b> link to see it on the live page. <b>Search</b>, <b>sort</b>, filter by status or by the
+                team that raised it, and <b>open any card</b> for the full detail — reviewer, the <b>AI change-prompt</b> (with
+                copy), validation, and a Raised → Done history. You still see the <b>masked</b> status only (<b>Pending</b> until
+                it’s live, then <b>Done</b>) — never the admin’s internal working status or deploy bucket.</p>
             </article>
             <article class="pk-card">
               <h3 class="g-h3">Live notifications</h3>
-              <p class="g-body">When your comments go live, a notification lands in your feed (one per published comment),
-                with unread badges and a per-item read/unread toggle. If you need admin access, an <b>“Upgrade access to
-                admin”</b> link at the bottom takes you to the admin sign-in.</p>
+              <p class="g-body">You’re notified the moment a comment is <b>directed to your team</b>, and again when your own
+                comments go <b>live</b> — each notification carries an <b>Open Pin</b> link, unread badges and a per-item
+                read/unread toggle. If you need admin access, an <b>“Upgrade access to admin”</b> link at the bottom takes you
+                to the admin sign-in.</p>
             </article>
           </div>
         </div>
@@ -387,7 +390,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
           </p>
 
           <div class="g-grid g-mt">
-            <article class="pk-card g-mini"><h3 class="g-mini-t">Overview</h3><p class="g-body">The active worklist — <b>All / By Page / Open / In Bucket / Deployed / Closed</b> tabs, team-colour filter chips and live counts. Cards clamp long text and collapse replies; auto-refreshes every 30s. The left edge is colour-keyed to lifecycle state.</p></article>
+            <article class="pk-card g-mini"><h3 class="g-mini-t">Overview</h3><p class="g-body">The open worklist — <b>All / By Page / Open / Deployed / Closed</b> tabs, “From” team filter chips and live counts. Each card has <b>Open Pin</b> and a <b>Copy prompt</b> button. Completed-but-unpublished (bucket) comments live only under <b>Deploy</b>, not here. The left edge is colour-keyed to lifecycle state.</p></article>
             <article class="pk-card g-mini"><h3 class="g-mini-t">Deploy</h3><p class="g-body">The bucket of completed/closed-but-unpublished comments plus a batch <b>Deploy</b> button. Deploying publishes the whole bucket at once and fires each team’s notifications.</p></article>
             <article class="pk-card g-mini"><h3 class="g-mini-t">Notifications</h3><p class="g-body">The full deploy/notification feed with unread tracking, a per-item read/unread toggle and “Mark all read”.</p></article>
             <article class="pk-card g-mini"><h3 class="g-mini-t">Master Log</h3><p class="g-body">The complete record — every root entry (When / Page / Element / Team / Status / Prompt), including deployed ones. Each row drills into a full detail view with a <b>status-history timeline</b> and a <b>More options</b> menu.</p></article>
@@ -405,7 +408,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
               <h3 class="g-h3">The AI change-prompt</h3>
               <p class="g-body">Every comment gets a precise, developer-ready instruction auto-generated by the backend — hand it
                 to a developer or to Claude Code and the change can be made without guesswork. It sits on the admin card with a
-                copy button; teams never see it.</p>
+                <b>copy button</b>, and the <b>directed team</b> sees it too inside a comment’s detail view.</p>
             </article>
           </div>
         </div>
@@ -493,7 +496,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
               <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="#da291c"/>
               <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
             </svg>
-            <span class="g-word">ProofKit</span>
+            <span class="g-word">ProoofKit</span>
           </span>
           <span class="g-foot-meta">Content-review tool · v{pkg.version}</span>
         </div>
@@ -514,7 +517,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
 )}
 
 <style>
-  /* ===== /review-guide — the Proofkit "Red Moon" skin. Layout only; every colour
+  /* ===== /review-guide — the ProoofKit "Red Moon" skin. Layout only; every colour
      binds to a --pk-* token from the tool's design system (tokens.css). ===== */
 
   .g { background: var(--pk-canvas); color: var(--pk-ink); font-family: var(--pk-font);
@@ -584,7 +587,7 @@ const desc = 'How to use Proofkit — sign in, flag comments on the live site, d
   .g-step-t { margin: 0; font-weight: 600; font-size: 16px; color: var(--pk-ink); }
   .g-step-d { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--pk-body); }
 
-  /* ---- team chips (Proofkit's own palette) ---- */
+  /* ---- team chips (ProoofKit's own palette) ---- */
   .g-teamrow { display: flex; flex-wrap: wrap; gap: 10px; }
   .g-team { display: inline-flex; align-items: center; justify-content: center; min-width: 92px;
     padding: 7px 16px; font-weight: 700; font-size: 12px; letter-spacing: .04em; }

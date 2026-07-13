@@ -169,6 +169,12 @@ export default {
         await kv.put(keyFor(path), JSON.stringify(arr));
         // Generate the AI change-prompt in the background so it's ready in seconds.
         if (!rec.parentId) ctx.waitUntil(genPrompt(env, kv, keyFor, rec));
+        // Arrival notification: tell the DIRECTED team a new review just landed in their
+        // inbox. Only for a real team (has a TEAM_KEYS entry) — Builder/admin already sees
+        // everything in the Overview — and only root comments (replies don't re-notify).
+        if (!rec.parentId && rec.toTeam && TEAM_KEYS[rec.toTeam]) {
+          ctx.waitUntil(fireArrivalNotif(kv, NOTIF_KEY, rec));
+        }
         return json(rec, 201, cors);
       }
 
@@ -353,7 +359,11 @@ async function readAll(kv) {
   return out;
 }
 
-// The team-visible projection: never leak the working status or admin-only fields.
+// The team-visible projection: never leak the true working status or the deploy
+// bucket. Teams DO get full per-comment detail — reviewer identity, the AI change
+// prompt, the completion validation — plus enough to synthesise a team-safe status
+// history (Raised → Marked done/Closed) client-side. The raw `history` (which carries
+// pre-deploy transitions) is deliberately NOT sent.
 function maskForTeam(r) {
   return {
     id: r.id,
@@ -361,14 +371,42 @@ function maskForTeam(r) {
     createdAt: r.createdAt,
     team: r.team || '',       // FROM: which team raised it
     toTeam: r.toTeam || '',   // TO: which team it is directed to (this team)
-    name: r.name || '',
+    name: r.name || '',       // reviewer identity
     comment: r.comment,
     changeTo: r.changeTo || '',
+    aiPrompt: r.aiPrompt || '',       // ready-to-hand-to-a-dev change instruction
+    validation: r.validation || null, // completion validation (content-copy-match / manual)
     page: r.page,
     anchor: r.anchor || {},
     status: r.published ? (r.publishedStatus || 'open') : 'open', // masked
+    publishedStatus: r.published ? (r.publishedStatus || '') : '', // for the Raised→Done timeline
     publishedAt: r.publishedAt || '',
   };
+}
+
+// Arrival notification: a new comment was DIRECTED to a team (fired on creation, so
+// the directed team knows work landed in its /teamdash inbox). Distinguished from the
+// deploy notification by `kind:'directed'`.
+async function fireArrivalNotif(kv, NOTIF_KEY, rec) {
+  try {
+    const where = (rec.page && rec.page.title) || (rec.page && rec.page.path) || 'a page';
+    const notif = {
+      id: crypto.randomUUID(),
+      createdAt: rec.createdAt,
+      team: rec.toTeam,            // who should see it (the directed team)
+      kind: 'directed',
+      fromTeam: rec.team || '',
+      commentId: rec.id,
+      path: (rec.page && rec.page.path) || '/',
+      pageName: where,
+      summary: `New comment on ${where}` + (rec.team ? ` from ${rec.team}` : ''),
+      readTeam: false,
+      readAdmin: false,
+    };
+    const existing = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
+    existing.push(notif);
+    await kv.put(NOTIF_KEY, JSON.stringify(existing));
+  } catch (e) { /* best-effort; never block the comment write */ }
 }
 
 // A notification for one just-published root comment.

@@ -164,7 +164,14 @@ export function ensureDemoSeed() {
       publishedStatus: r.publishedStatus, summary: 'Your comment on ' + r.page.title + ' was ' + (r.publishedStatus === 'closed' ? 'closed' : 'marked Done') + '.',
       readTeam: false, readAdmin: false,
     }));
-    localStorage.setItem('rvc-notifications', JSON.stringify(notifs));
+    // Arrival notifications: a new review was directed to a (real) team's inbox.
+    const arrival = recs.filter((r) => !r.parentId && r.toTeam && r.toTeam !== ADMIN_TEAM).map((r) => ({
+      id: uid(), createdAt: r.createdAt, team: r.toTeam, kind: 'directed', fromTeam: r.team,
+      commentId: r.id, path: r.page.path, pageName: r.page.title,
+      summary: 'New comment on ' + r.page.title + (r.team ? ' from ' + r.team : ''),
+      readTeam: false, readAdmin: false,
+    }));
+    localStorage.setItem('rvc-notifications', JSON.stringify(notifs.concat(arrival)));
     localStorage.setItem('pkDemoSeeded', '1');
   } catch {}
 }
@@ -466,7 +473,7 @@ export function buildPanelLogin(opts) {
       '</div>' +
       '<div class="pk-login-err" hidden></div>' +
       '<button type="button" class="pk-login-btn">Authenticate</button>' +
-      '<div class="pk-login-brand">' + PK_MARK + '<span>ProofKit</span></div>' +
+      '<div class="pk-login-brand">' + PK_MARK + '<span>ProoofKit</span></div>' +
     '</div>';
   const q = (s) => el.querySelector(s);
   // Team = a custom (non-native) dropdown, full-width inside the card.

@@ -1,5 +1,5 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, pageName, ADMIN_TEAM,
-    buildPanelLogin, getSession, setSession, clearSession, initTheme, ensureDemoSeed } from './config.js';
+    buildPanelLogin, buildDropdown, getSession, setSession, clearSession, initTheme, ensureDemoSeed } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter). This is a
@@ -36,9 +36,11 @@
     // The team-visible projection (matches the Worker's maskForTeam) for LOCAL mode.
     const maskLocal = (c) => ({
       id: c.id, parentId: c.parentId || null, createdAt: c.createdAt, team: c.team || '', toTeam: c.toTeam || '',
-      name: c.name || '', comment: c.comment, changeTo: c.changeTo || '', page: c.page, anchor: c.anchor || {},
+      name: c.name || '', comment: c.comment, changeTo: c.changeTo || '',
+      aiPrompt: c.aiPrompt || '', validation: c.validation || null,
+      page: c.page, anchor: c.anchor || {},
       status: c.published ? (c.publishedStatus || 'open') : 'open', // masked
-      publishedAt: c.publishedAt || '',
+      publishedStatus: c.published ? (c.publishedStatus || '') : '', publishedAt: c.publishedAt || '',
     });
     // Directed inbox: comments routed TO this team (toTeam) for it to action.
     function localComments(t) {
@@ -105,19 +107,65 @@
       : c.status === 'closed'
         ? `<span class="tmd-chip closed">Closed</span>`
         : `<span class="tmd-chip pending">Pending</span>`;
+    const statusLabel = (c) => c.status === 'completed' ? 'Done' : c.status === 'closed' ? 'Closed' : 'Pending';
+
+    // The AI change-prompt (falls back to a deterministic instruction if not ready yet).
+    function localPrompt(c) {
+      if (c.aiPrompt) return c.aiPrompt;
+      const a = c.anchor || {};
+      const where = a.snippet ? `the “${a.snippet}” ${a.tag || 'element'}` : (a.tag || 'the element');
+      let s = `On page ${c.page.path}, in ${where}: ${c.comment}`;
+      if (c.changeTo) s += `\nChange the content to exactly (preserve casing/punctuation): “${c.changeTo}”`;
+      return s;
+    }
+    async function copyToClip(text, btn, ok) {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (btn) { const t = btn.textContent; btn.textContent = ok || 'Copied ✓'; setTimeout(() => { btn.textContent = t; }, 1400); }
+      } catch (e) { alert('Copy failed — ' + e.message); }
+    }
+    // Team-safe status history: only the events a team should see (Raised → Marked
+    // done/Closed on deploy). Pre-deploy transitions (the bucket) are never surfaced.
+    function teamHistory(c) {
+      const out = [{ at: c.createdAt, label: 'Raised' }];
+      if (c.publishedAt) out.push({ at: c.publishedAt, label: c.publishedStatus === 'closed' ? 'Closed' : 'Marked done' });
+      return out;
+    }
+    // Completion validation, framed for the team (only content-copy-match is meaningful).
+    function validLine(c) {
+      const v = c && c.validation;
+      if (!v) return '—';
+      if (v.method === 'content-copy-match') return (v.ok ? '✓ Verified on the live page' : '⚠ Not verified on the live page yet') + (v.detail ? ' — ' + esc(v.detail) : '');
+      return 'Confirmed by admin' + (v.detail ? ' — ' + esc(v.detail) : '');
+    }
 
     // ---- state ----
     let comments = [], notes = [], view = 'comments', filter = 'all', byPage = false;
+    let search = '', sort = 'new', fromFilter = '', entryDetail = null;
     const roots = () => comments.filter((c) => !c.parentId);
     const repliesOf = (id) => comments.filter((c) => c.parentId === id).sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
     const unreadNotes = () => notes.filter((n) => n.readTeam === false);
 
+    function matchesSearch(c) {
+      if (!search) return true;
+      const a = c.anchor || {};
+      return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, a.snippet, a.tag]
+        .filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase());
+    }
+    function sortRoots(rs) {
+      const s = rs.slice();
+      if (sort === 'old') s.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      else if (sort === 'page') s.sort((a, b) => a.page.path.localeCompare(b.page.path) || (a.createdAt < b.createdAt ? 1 : -1));
+      else s.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)); // newest
+      return s;
+    }
     function currentRoots() {
       let rs = roots();
       if (filter === 'pending') rs = rs.filter((c) => c.status === 'open');
       else if (filter === 'done') rs = rs.filter((c) => c.status === 'completed');
       else if (filter === 'closed') rs = rs.filter((c) => c.status === 'closed');
-      return rs.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      if (fromFilter) rs = rs.filter((c) => (c.team || '') === fromFilter); // raised-by team
+      return sortRoots(rs.filter(matchesSearch));
     }
 
     // ---- data ----
@@ -166,10 +214,10 @@
             `<div class="tmd-rmeta">${esc(fmt(r.createdAt))}</div></div>`).join('') + `</div>`
         : '';
       return (
-        `<article class="tmd-item">` +
+        `<article class="tmd-item" data-id="${esc(root.id)}" tabindex="0" role="button" aria-label="View comment details">` +
           `<div class="tmd-line">` +
             statusChip(root) +
-            (root.team ? `<span class="tmd-from">from ${teamChip(root.team)}</span>` : '') +
+            (root.team ? `<span class="tmd-from">Raised By ${teamChip(root.team)}</span>` : '') +
             `<div class="tmd-headline">` +
               `<div class="tmd-comment">${esc(root.comment)}` +
                 (replies.length ? `<span class="tmd-n">${replies.length + 1} comments</span>` : '') + `</div>` +
@@ -180,14 +228,86 @@
           `<div class="tmd-meta">` +
             `<a class="tmd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(pageName(root.page.path))}</a>` +
             `<span class="tmd-time">${esc(fmt(root.createdAt))}</span>` +
+            `<a class="tmd-openpin" href="${esc(root.page.path)}?review=1#c=${esc(root.id)}" target="_blank" rel="noopener">Open Pin</a>` +
+            `<span class="tmd-detailhint">View details →</span>` +
           `</div>` +
           repliesHtml +
         `</article>`
       );
     }
 
+    // From-team filter chips — the teams that raised the items in this inbox. "All"
+    // (red) clears; a team chip fills with its own identity colour when active.
+    function buildTeamChips() {
+      const host = $('#tmd-teamchips'); if (!host) return;
+      const present = [...new Set(roots().map((c) => c.team).filter(Boolean))]
+        .sort((a, b) => TEAMS.indexOf(a) - TEAMS.indexOf(b));
+      const one = (label, t) => {
+        const active = fromFilter === t;
+        let style;
+        if (active && t) { const acc = (TEAM_COLORS[t] || [])[1] || '#da291c'; style = `background:${acc};color:#fff;border-color:${acc}`; }
+        else if (active) style = 'background:#da291c;color:#fff;border-color:#da291c';
+        else if (t) { const s = teamStyle(t); style = `background:${s.bg};color:${s.fg};border-color:${s.bd}`; }
+        else style = isLight() ? 'background:#f0efe9;color:#565650;border-color:#e4e1d9' : 'background:#242424;color:#c9c9c9;border-color:#333';
+        return `<button class="tmd-tchip${active ? ' is-active' : ''}" data-team="${esc(t)}" style="${style}">${esc(label)}</button>`;
+      };
+      host.hidden = present.length < 2; // only worth showing when items come from ≥2 teams
+      host.innerHTML = present.length < 2 ? ''
+        : '<span class="tmd-chips-from">From</span>' + one('All Teams', '') + present.map((t) => one(t, t)).join('');
+    }
+
+    // ---- comment detail (reviewer, AI prompt, validation, status history) ----
+    function renderDetail() {
+      const c = roots().find((x) => x.id === entryDetail);
+      const host = $('#tmd-list');
+      if (!c) { entryDetail = null; return renderComments(); }
+      const a = c.anchor || {};
+      const where = a.snippet ? '“' + esc(a.snippet) + '”' + (a.tag ? ' · ' + esc(a.tag) : '') : (a.tag ? esc(a.tag) : '—');
+      const hist = teamHistory(c);
+      const replies = repliesOf(c.id);
+      const field = (k, vHtml) => `<div class="tmd-field"><div class="tmd-field-k">${k}</div><div class="tmd-field-v">${vHtml}</div></div>`;
+      const timeline = `<ol class="tmd-timeline">` + hist.map((h, i) =>
+        `<li class="tmd-tl${i === hist.length - 1 ? ' is-current' : ''}"><span class="tmd-tl-event">${esc(h.label)}</span>` +
+        `<span class="tmd-tl-time">${esc(fmt(h.at))}</span></li>`).join('') + `</ol>`;
+      const repliesHtml = replies.length
+        ? `<div class="tmd-field"><div class="tmd-field-k">Replies</div><div class="tmd-replies">` + replies.map((r) =>
+            `<div class="tmd-reply">${teamChip(r.team)}<div class="tmd-rtxt">${esc(r.comment)}</div>` +
+            `<div class="tmd-rmeta">${esc(fmt(r.createdAt))}</div></div>`).join('') + `</div></div>`
+        : '';
+      host.innerHTML =
+        `<button class="tmd-back" id="tmd-back">← Back to list</button>` +
+        `<article class="tmd-detail">` +
+          `<h2 class="tmd-detail-title">${esc(c.comment)}</h2>` +
+          `<div class="tmd-detail-chips">${statusChip(c)}${c.team ? '<span class="tmd-from">from ' + teamChip(c.team) + '</span>' : ''}` +
+            `<a class="tmd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">Open pin</a></div>` +
+          `<div class="tmd-fields">` +
+            field('Page', `<a class="tmd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a> <span style="color:var(--pk-muted)">${esc(c.page.path)}</span>`) +
+            field('Element / anchor', where) +
+            field('Raised by', esc(c.name || 'anonymous') + (c.team ? ' · ' + esc(c.team) : '')) +
+            field('Submitted', esc(fmt(c.createdAt))) +
+            (c.changeTo ? `<div class="tmd-field"><div class="tmd-field-k">Change to</div><div class="tmd-change"><div>${esc(c.changeTo)}</div></div></div>` : '') +
+            field('Status', esc(statusLabel(c))) +
+            field('Validation', validLine(c)) +
+            `<div class="tmd-field"><div class="tmd-field-k">AI change prompt</div>` +
+              (c.aiPrompt || c.comment
+                ? `<div class="tmd-prompt-box">${esc(localPrompt(c))}</div><button class="tmd-copyprompt" type="button">Copy prompt</button>`
+                : `<div class="tmd-field-v" style="color:var(--pk-muted);font-style:italic">Generating…</div>`) + `</div>` +
+            `<div class="tmd-field"><div class="tmd-field-k">Status history</div>${timeline}</div>` +
+            repliesHtml +
+          `</div>` +
+        `</article>`;
+      $('#tmd-back').addEventListener('click', () => { entryDetail = null; render(); });
+      const cp = $('.tmd-copyprompt');
+      if (cp) cp.addEventListener('click', () => copyToClip(localPrompt(c), cp, 'Copied ✓'));
+    }
+
     function renderComments() {
       const host = $('#tmd-list');
+      const controls = $('#tmd-controls');
+      // Detail drill-in: hide the list controls, show the single-comment detail.
+      if (entryDetail) { if (controls) controls.hidden = true; renderDetail(); return; }
+      if (controls) controls.hidden = false;
+      buildTeamChips();
       const rs = currentRoots();
       if (byPage) {
         const paths = [...new Set(rs.map((c) => c.page.path))].sort();
@@ -205,7 +325,9 @@
       }
       const emp = $('#tmd-empty');
       emp.hidden = rs.length > 0;
-      if (!rs.length) emp.textContent = filter === 'all' ? 'Nothing directed to your team yet.' : 'Nothing in this filter.';
+      if (!rs.length) emp.textContent = search ? 'No comments match your search.'
+        : (filter !== 'all' || fromFilter) ? 'Nothing in this filter.'
+        : 'Nothing directed to your team yet.';
     }
 
     function noteItem(n) {
@@ -217,6 +339,7 @@
           `<div class="tmd-note-meta">` +
             `<a class="tmd-slug" href="${esc(n.path || '/')}" target="_blank" rel="noopener">${esc(n.pageName || pageName(n.path || '/'))}</a>` +
             `<span class="tmd-time">${esc(fmt(n.createdAt))}</span>` +
+            (n.commentId ? `<a class="tmd-openpin" href="${esc(n.path || '/')}?review=1#c=${esc(n.commentId)}" target="_blank" rel="noopener">Open Pin</a>` : '') +
           `</div>` +
         `</div>` +
         `<button class="tmd-note-toggle" type="button" data-id="${esc(n.id)}" data-read="${unread ? '1' : '0'}">` +
@@ -297,13 +420,13 @@
     // ---- events ----
     $('.tmd-side').addEventListener('click', (e) => {
       const b = e.target.closest('.tmd-nav'); if (!b) return;
-      view = b.dataset.view;
+      view = b.dataset.view; entryDetail = null;
       document.querySelectorAll('.tmd-nav').forEach((n) => n.classList.toggle('is-active', n === b));
       render();
     });
     $('#tmd-filters').addEventListener('click', (e) => {
       const b = e.target.closest('.tmd-filter'); if (!b) return;
-      filter = b.dataset.filter;
+      filter = b.dataset.filter; entryDetail = null;
       $('#tmd-filters').querySelectorAll('.tmd-filter').forEach((f) => f.classList.toggle('is-active', f === b));
       renderComments();
     });
@@ -312,6 +435,37 @@
       e.currentTarget.classList.toggle('is-active', byPage);
       renderComments();
     });
+    // Open a comment's full detail (click/Enter a card; links inside pass through).
+    $('#tmd-list').addEventListener('click', (e) => {
+      if (e.target.closest('a, button')) return;
+      const item = e.target.closest('.tmd-item[data-id]'); if (!item) return;
+      entryDetail = item.dataset.id; renderComments();
+    });
+    $('#tmd-list').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const item = e.target.closest && e.target.closest('.tmd-item[data-id]'); if (!item) return;
+      e.preventDefault(); entryDetail = item.dataset.id; renderComments();
+    });
+    // Search across the inbox.
+    $('#tmd-search').addEventListener('input', (e) => { search = e.target.value.trim(); entryDetail = null; renderComments(); });
+    // From-team filter chips.
+    $('#tmd-teamchips').addEventListener('click', (e) => {
+      const b = e.target.closest('.tmd-tchip'); if (!b) return;
+      fromFilter = b.dataset.team; entryDetail = null; renderComments();
+    });
+    // Sort — the shared custom dropdown.
+    const sortDD = buildDropdown({
+      small: true, value: sort,
+      items: [
+        { value: 'new', label: 'Newest first' },
+        { value: 'old', label: 'Oldest first' },
+        { value: 'page', label: 'Page A–Z' },
+      ],
+      onSelect: (v) => { sort = v; entryDetail = null; renderComments(); },
+    });
+    $('#tmd-sort-mount').appendChild(sortDD.el);
+    // Admin can push a global theme (SSE); repaint so JS-inlined chip colours re-derive.
+    document.addEventListener('pk:themechange', () => { try { render(); } catch (e) {} });
     $('#tmd-markall').addEventListener('click', async (e) => {
       const ids = unreadNotes().map((n) => n.id);
       if (!ids.length) return;

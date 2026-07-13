@@ -147,13 +147,16 @@ const ESCALATIONS = [
   .hero-subline {
     font-weight: 400;
     font-size: 16px;
-    color: var(--color-text-tertiary);
+    color: var(--color-text-on-dark-lead); /* standard on-dark body copy - visible on the V4 dark hero */
     max-width: var(--hero-text-w);
   }
   .hero-contacts {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    justify-content: space-between; /* pills spread horizontally across the text column */
+    width: 100%;
+    max-width: var(--hero-text-w);
     margin-top: 32px;
     padding-top: 32px;
     border-top: 1px solid #55594e; /* page-local - Tier-2 */

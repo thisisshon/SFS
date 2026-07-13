@@ -7,7 +7,6 @@
  * Nested route → BaseLayout / imports at ../../ depth.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumb from '../components/site/Breadcrumb.astro';
 
 // "Everything You Need to Trade With Confidence" - ten benefits (real SVG icons).
 const BENEFITS = [
@@ -93,21 +92,19 @@ const seo = {
 
 <BaseLayout seo={seo} mainClass="rev-rise-scale">
   <!-- ================= HERO ================= -->
-  <section class="hero" id="sec-hero" data-section="hero">
-    <Breadcrumb trail={[{ name: 'Karnataka Bank 3-in-1' }]} />
+  <section class="hero hero-dark" id="sec-hero" data-section="hero">
     <div class="hero-grid">
       <div class="hero-inner" data-enter>
         <p class="kb-eyebrow">KARNATAKA BANK × SHRIRAM FINANCIAL SERVICES</p>
         <h1>One Account. Every Market. Zero Hassle.</h1>
-        <p class="lead">Open a 3-in-1 account by linking your Karnataka Bank Savings account to a Shriram Financial Services Demat and trading account for a seamless online trading experience. Trade and Invest in Equity, derivatives, Commodities, Mutual Funds, and IPOs online, backed by dedicated research and support.</p>
+        <p class="lead">Open a 3-in-1 account by linking your Karnataka Bank Savings account to a Shriram Financial Services Demat and trading account for a seamless online trading experience.</p>
 
-        <!-- co-brand lockup -->
-        <div class="kb-cobrand" aria-label="Shriram Financial Services in alliance with Karnataka Bank">
-          <span class="kb-logo"><img src="/assets/shriram-group.svg" alt="Shriram Financial Services" /></span>
-          <span class="kb-x" aria-hidden="true"></span>
-          <span class="kb-bank">Karnataka Bank</span>
-        </div>
-
+      <!-- co-brand lockup -->
+      <div class="kb-cobrand" aria-label="Shriram Financial Services in alliance with Karnataka Bank">
+        <span class="kb-logo"><img src="/assets/shriram-group.svg" alt="Shriram Financial Services" /></span>
+        <span class="kb-x" aria-hidden="true"></span>
+        <span class="kb-bank">Karnataka Bank</span>
+      </div>
       </div>
 
       <!-- lead-capture card (shared .hf-field component) -->
@@ -122,18 +119,27 @@ const seo = {
               <input id="kb-name" name="name" type="text" autocomplete="name" placeholder="e.g. Ritesh Kumar" />
             </div>
           </div>
-          <div class="hf-field">
-            <span class="hf-flag" aria-hidden="true"></span>
-            <span class="hf-divider" aria-hidden="true"></span>
-            <div class="hf-field-in">
-              <label for="kb-mobile">Mobile Number</label>
-              <input id="kb-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="+91 00000 00000" />
+          <div class="hf-row">
+            <div class="hf-unit">
+              <div class="hf-field">
+                <span class="hf-flag" aria-hidden="true"><img src="/images/india-flag.png" alt="" /></span>
+                <span class="hf-divider" aria-hidden="true"></span>
+                <div class="hf-field-in">
+                  <label for="kb-mobile">Mobile Number</label>
+                  <div class="hf-tel">
+                    <span class="hf-cc">+91</span>
+                    <input id="kb-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="00000 00000" />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="hf-field">
-            <div class="hf-field-in">
-              <label for="kb-city">City</label>
-              <input id="kb-city" name="city" type="text" autocomplete="address-level2" placeholder="e.g. Mumbai" />
+            <div class="hf-unit">
+              <div class="hf-field">
+                <div class="hf-field-in">
+                  <label for="kb-city">City</label>
+                  <input id="kb-city" name="city" type="text" autocomplete="address-level2" placeholder="e.g. Mumbai" />
+                </div>
+              </div>
             </div>
           </div>
           <div class="hf-actions">
@@ -260,20 +266,37 @@ const seo = {
     flex-direction: column;
     gap: 24px;
   }
-  /* Demat-style phone-flag prefix - the India flag is illustration content, kept verbatim. */
+  /* Homepage mobile-number component: 18px India flag image + divider, then a
+     fixed "+91" country-code prefix ahead of the number (matches index.astro). */
   .hf-flag {
     width: 18px;
     height: 18px;
     border-radius: 50%;
     flex: none;
-    border: 1px solid var(--color-gray-200);
-    background: linear-gradient(180deg, #ff9933 33%, #fff 33% 66%, #138808 66%);
+    overflow: hidden;
+  }
+  .hf-flag img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .hf-divider {
     width: 1px;
     height: 24px;
     background: var(--color-gray-200);
     flex: none;
+  }
+  .hf-tel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hf-cc {
+    flex: none;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-field-ink);
   }
   .hf-actions {
     display: flex;
@@ -417,7 +440,8 @@ const seo = {
 </style>
 
 <script>
-  /* Digit-group the hero mobile field (matches the demat lead card). */
+  /* Digit-group the hero mobile field as "##### #####" - the "+91" is a fixed
+     visual prefix (.hf-cc), so it is NOT part of the input value. */
   const mob = document.getElementById('kb-mobile') as HTMLInputElement | null;
   if (mob) {
     mob.addEventListener('input', () => {
@@ -426,7 +450,7 @@ const seo = {
         d = d.slice(2);
       }
       d = d.slice(0, 10);
-      mob.value = d ? '+91 ' + (d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d) : '';
+      mob.value = d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d;
     });
   }
 </script>

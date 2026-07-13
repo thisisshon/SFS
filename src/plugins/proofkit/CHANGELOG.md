@@ -6,6 +6,51 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.15.0 — 2026-07-13 — ProoofKit rename · Open Pin everywhere · Overview/bucket cleanup
+
+- **Product renamed to ProoofKit** (three o's, capital K) across every user-facing wordmark — both
+  dashboards, the on-page login card, the `/review` + 404 stubs, the product page, and the Review Guide.
+  (Package/folder name `proofkit` is unchanged.)
+- **Open Pin on team cards + notifications.** Every `/teamdash` "For Action" card, and every team
+  notification, now carries an **Open Pin** link to the comment on the live page.
+- **Copy prompt on admin cards.** Each `/reviewdash` Overview card gains a per-card **Copy prompt** button
+  (previously only in the Master Log menu / bulk bar).
+- **Overview no longer shows the deploy bucket.** The Overview "All" tab is the **open** worklist only;
+  completed-but-unpublished (bucket) comments live solely under the **Deploy** nav. The redundant **In
+  Bucket** tab is removed (Deploy already covers it).
+- **"Raised By" on team cards.** The card's raiser label reads **"Raised By &lt;team&gt;"** (was "from").
+- **"From" label on the filter chips.** Both dashboards prefix the team-filter chip row with a **From**
+  label (they filter by the raising team).
+- **Arrival notifications show Open Pin + a "Directed" tag** in the admin notifications feed.
+- **Review Guide updated** for all of the above — notably: teams **do** now see the AI change-prompt (in a
+  comment's detail view), arrival notifications, Open Pin, search/sort/filter, and the corrected Overview tabs.
+
+## 2.14.0 — 2026-07-13 — team dashboard: full detail, search/sort/filter
+
+Brings the team dashboard (`/teamdash`) closer to the admin panel while staying
+read-only and self-scoped:
+
+- **Full detail per comment.** Clicking a card opens a detail view — reviewer identity
+  (name + raising team), the AI change prompt (with Copy), completion validation, and a
+  team-safe **status history** (Raised → Marked done/Closed), plus an **Open pin** deep
+  link. The Worker's `maskForTeam` now exposes `aiPrompt`, `validation`, `publishedStatus`
+  (LOCAL mask matches). The raw pre-deploy history is still NOT sent — the timeline is
+  synthesised client-side from created/published, so the deploy bucket never leaks.
+- **Search / sort / from-team filter chips.** The "For Action" view gains a search box, a
+  Newest/Oldest/Page-A–Z sort (shared `buildDropdown`), and **from-team filter chips**
+  (which team raised each item — shown only when the inbox spans ≥2 teams; own-colour
+  active fill, red only for "All"). By-Page grouping already existed.
+- Team chips + status chips already carried uniform widths; the new detail view reuses the
+  admin's field/timeline patterns, scoped under `.tmd`.
+- **Arrival notifications.** A team is now notified the moment a comment is **directed to
+  it** (previously it was only notified when its OWN raised comments were deployed, so
+  directed work could sit in "For Action" unseen). The Worker fires a `kind:'directed'`
+  notification to the `toTeam` on comment creation — only for real teams (a `TEAM_KEYS`
+  entry), since Builder/admin already sees everything in the Overview, and only for root
+  comments. Mirrored in the LOCAL demo (overlay add + seed).
+- No new write powers: teams still cannot change status, deploy, delete, re-route, export,
+  or see other teams — everything remains Worker-enforced.
+
 ## 2.13.2 — 2026-07-13 — fix: `/review` sometimes didn't open the login (armed but signed-out)
 
 - **Fix: an armed-but-signed-out tab showed nothing.** `/review` arms the tab (`reviewMode=1`) via the

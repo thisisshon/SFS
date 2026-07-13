@@ -53,15 +53,27 @@
    are carried for pixel parity and flagged `Tier-2` in-file - do not add new ones.)*
 
 <a id="rule-7"></a>
-7. **The hero is standardised across pages.** Same gradient, `min-height`, `.hero-inner` padding
-   (`56px 0`), H1/lead font sizes and the two-column `gap:56px`. Only the text content changes.
-   H1 and lead cap at `--hero-text-w` (600px); the two-column aside is always `--hero-aside-w`.
-   Defined once in `global.css`. **Two sanctioned variants:** the `/calculators` hub `.calc-hero`,
-   and `.hero.hero-compact` on the **calculator detail pages** - it drops the tall band
-   (`min-height:0`) and the auto-margin centring so the hero *hugs* its breadcrumb + H1 + lead
-   (no CTA) on a small explicit padding (desktop `40 / 24 / 40`, mobile `32 / 16 / 32` -
-   above-breadcrumb / breadcrumb→H1 / below-lead), deliberately shorter than the product hero.
-   Documented in `/designsystem/proposed`.
+7. **The hero is standardised - V4 dark is the ONLY surface, in THREE types under one `<Hero>`.**
+   Every hero is the near-black V4 dark surface (`.hero.hero-dark`): #121212 + low olive glow +
+   flipped soft-light texture, breadcrumb folded into `.hero-inner`, content left-aligned and
+   parallax-revealed on landing. `min-height`, `.hero-inner` padding (`56px 0`), H1/lead font
+   sizes and the `gap:56px` are defined once in `global.css`; H1/lead cap at `--hero-text-w`
+   (600px). The three types:
+   - **Type 1 - one-column** (default `<Hero>`): breadcrumb → H1 → lead → CTA stacked left,
+     vertically centred in the tall band (`min-height:clamp(440px,29vw,552px)`).
+   - **Type 2 - two-column** (add an `aside` slot): renders `.hero-grid` - the LEFT column is
+     Type 1 verbatim (breadcrumb stays in-flow, NOT pinned to the corner), the aside is always
+     `--hero-aside-w` and sits spaced apart on the right by the 56px gap. Collapses to a single
+     stack ≤980px.
+   - **Type 3 - calculator** (`<Hero calc>` → `.hero-calc`): the dark hero pinned to ONE fixed,
+     uniform height shared by the `/calculators` hub AND every detail page - `min-height:408px`
+     (= the tallest calc hero, NPS/FD ≈ 326px content + breathing room), keyed on `.hero-calc`
+     alone so the crumb-less hub is pinned too. A shorter one just centres in the same band.
+     Mobile (≤768px) hugs (`min-height:0`).
+
+   The legacy **light** variant, **`.hero-compact`** and the bespoke **`.calc-hero`** are all
+   discarded - folded into these three types. Homepage keeps its bespoke video hero. Documented
+   in `/designsystem/proposed`.
 
 <a id="rule-8"></a>
 8. **Every form field uses the shared input-field component.** There is **one** form field for
@@ -161,8 +173,9 @@ Rationale: `global.css` is the implementation (mandatory anyway, not documentati
     items, its own olive side card, no watermark). Documented live in `/designsystem/proposed`.
 
 <a id="rule-17"></a>
-17. **🟢 There is ONE global button system - `.btn` + family + size (radius 8px).** *(Added
-    2026-07-11 from the Figma "V4 / Buttons" sheet, node 1190:7111; role naming v2 same day.)*
+17. **🟢 There is ONE global button system - `.btn` + family + size (radius 4px).** *(Added
+    2026-07-11 from the Figma "V4 / Buttons" sheet, node 1190:7111; role naming v2 same day.
+    Radius changed 8px→4px, bound to `--radius-sm`, 2026-07-13.)*
     Compose a button as `.btn` + a **family** + a **size**: `<a class="btn btn-primary btn-xl">`.
     **Families (use in MODERATION - mostly primary + the black-stroke secondary):**
     - `btn-primary` - **gold solid**, the ONE main CTA per view.
@@ -195,20 +208,23 @@ Rationale: `global.css` is the implementation (mandatory anyway, not documentati
 
 <a id="rule-18"></a>
 18. **🟢 The hero is a shared component - `<Hero>`, not hand-written markup.** *(Extracted
-    2026-07-11.)* `src/components/sections/Hero.astro` renders the entire standardised hero band
-    (rule 7): the gradient `<section class="hero">` (+ `compact` for the calculator hug variant),
-    an optional `<Breadcrumb>`, and the `.hero-inner` stack. **Props:** `breadcrumb` (trail array),
-    `cta` (`{ label, href }` - the single gold `btn-primary`, auto-sized to the **220px** `--cta-w`
-    min-width set once in `global.css`), `compact`, `reveal` (the `data-enter` scroll hook, default
-    true), `id`/`dataSection`. **Slots:** `title` (H1 inner, rich markup ok), `lead`, `eyebrow`,
-    `cta` (multi-button heroes), `aside` (two-column form/card → hero-grid), and the default slot
-    for extra in-hero content (tables, contact pills). **A sitewide hero change - button style,
-    width, spacing, a new element - is now a single edit to `Hero.astro` + `global.css`, never a
-    per-page sweep.** 33 pages use it; the few genuinely bespoke heroes with page-scoped `<style>`
-    (homepage video hero, `about-us` stats, `antara`, `become-a-partner`, the form two-column heroes
-    `open-demat-account`/`karnataka-bank-customers`/`contact-us`, `calculators` `.calc-hero`,
-    `designsystem`) stay hand-written. New pages build their hero with `<Hero>` - never re-author the
-    `<section class="hero">` markup.
+    2026-07-11; consolidated to dark-only + three types 2026-07-13.)*
+    `src/components/sections/Hero.astro` renders the entire standardised hero band (rule 7): the
+    dark `<section class="hero hero-dark">` (+ `hero-calc` for the calculator type), the
+    breadcrumb folded into the `.hero-inner` stack, and - when an `aside` slot is present - the
+    two-column `.hero-grid`. **Props:** `breadcrumb` (trail array), `cta` (`{ label, href }` - the
+    single gold `btn-primary`, auto-sized to the **220px** `--cta-w` min-width set once in
+    `global.css`), `calc` (Type 3 fixed calc-hero height), `reveal` (the `data-enter` scroll hook,
+    default true), `id`/`dataSection`. **Slots:** `title` (H1 inner, rich markup ok), `lead`,
+    `eyebrow`, `cta` (multi-button heroes), `aside` (form/card → promotes to the Type 2 two-column
+    grid), and the default slot for extra in-hero content (calc chips, tables, contact pills).
+    **A sitewide hero change - button style, width, spacing, a new element - is now a single edit
+    to `Hero.astro` + `global.css`, never a per-page sweep.** The `variant` and `compact` props
+    are gone (dark is the only surface; `compact` → `calc`). The few genuinely bespoke heroes with
+    page-scoped `<style>` (homepage video hero, `about-us` stats, `antara`, `become-a-partner`, and
+    the hand-written form heroes `open-demat-account`/`karnataka-bank-customers`/`contact-us`,
+    `designsystem`) stay hand-written on the same `.hero.hero-dark` surface. New pages build their
+    hero with `<Hero>` - never re-author the `<section class="hero">` markup.
 
 <a id="rule-19"></a>
 19. **🟢 Every How-To / process stepper is one of two shared components - `<StepsRow>` /
