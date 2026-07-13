@@ -50,36 +50,148 @@ export async function checkReviewPassword(input) {
 }
 
 /* --------------------------------------------------------------------------
- * ONE login per tab. Every Proofkit surface — the on-page overlay, /reviewdash,
- * /teamdash — shares this single per-tab session: the { team, key } chosen at the
- * one login. Whoever logs in anywhere is authenticated everywhere in that tab;
- * the team decides the role (ADMIN_TEAM ⇒ admin panel, else the team dashboard).
+ * ONE login, adopted per tab. Every Proofkit surface — the on-page overlay,
+ * /reviewdash, /teamdash — shares this single session: the { team, key } chosen at
+ * the one login. The live session is per-tab (sessionStorage), but it is ALSO
+ * mirrored into localStorage so a link opened in a NEW tab (which starts with an
+ * empty sessionStorage — the browser will not copy it across `rel="noopener"`
+ * links) can ADOPT it and skip a second login. Whoever logs in anywhere is
+ * authenticated everywhere; the team decides the role (ADMIN_TEAM ⇒ admin panel,
+ * else the team dashboard).
  * ------------------------------------------------------------------------ */
 export function getSession() {
-  try { return { team: sessionStorage.getItem('pkTeam') || '', key: sessionStorage.getItem('pkKey') || '' }; }
-  catch { return { team: '', key: '' }; }
+  try {
+    let team = sessionStorage.getItem('pkTeam') || '';
+    let key = sessionStorage.getItem('pkKey') || '';
+    if (!key) {
+      // Fresh tab (e.g. opened from a dashboard hyperlink): adopt the shared login
+      // from a sibling tab so the user is not asked to sign in again.
+      const lTeam = localStorage.getItem('pkTeam') || '';
+      const lKey = localStorage.getItem('pkKey') || '';
+      if (lKey) { team = lTeam; key = lKey; try { sessionStorage.setItem('pkTeam', team); sessionStorage.setItem('pkKey', key); } catch {} }
+    }
+    return { team, key };
+  } catch { return { team: '', key: '' }; }
 }
 export function setSession(team, key) {
   try { sessionStorage.setItem('pkTeam', team); sessionStorage.setItem('pkKey', key); } catch {}
+  try { localStorage.setItem('pkTeam', team); localStorage.setItem('pkKey', key); } catch {} // shared → adoptable by new tabs
 }
 export function clearSession() {
   try { sessionStorage.removeItem('pkTeam'); sessionStorage.removeItem('pkKey'); } catch {}
+  try { localStorage.removeItem('pkTeam'); localStorage.removeItem('pkKey'); } catch {}
+}
+
+/* --------------------------------------------------------------------------
+ * DEMO SEED (LOCAL/no-Worker mode only). Populates the localStorage store with a
+ * spread of ~20 dummy comments covering every lifecycle state (open · in-bucket
+ * completed · in-bucket closed · deployed · closed-live) at least twice, across
+ * teams/pages, with a couple of threads and legacy change-to callouts. Runs ONCE
+ * (guarded by `pkDemoSeeded`) and wipes any prior demo rows first, so a real edit
+ * afterwards is never clobbered. Callers gate on LOCAL — never seed against a Worker.
+ * ------------------------------------------------------------------------ */
+export function ensureDemoSeed() {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    if (localStorage.getItem('pkDemoSeeded') === '1') return;
+    Object.keys(localStorage).forEach((k) => { if (k.indexOf('rvc:') === 0 || k === 'rvc-notifications') localStorage.removeItem(k); });
+    const now = Date.now();
+    const at = (min) => new Date(now - min * 60000).toISOString();
+    const titles = {
+      '/': 'Homepage', '/equity': 'Equity', '/mutual-funds': 'Mutual Funds', '/contact-us': 'Contact Us',
+      '/nps': 'NPS', '/bonds': 'Bonds', '/open-demat-account': 'Open a Demat Account',
+      '/sip-calculator': 'SIP Calculator', '/about-us': 'About Us',
+    };
+    const pg = (path) => ({ path, url: path, title: titles[path] || path, slug: path.replace(/^\//, '') || 'home' });
+    let n = 0;
+    const uid = () => 'D' + now.toString(36) + (n++).toString(36);
+    const mk = (min, from, to, path, snippet, tag, comment, state, extra) => {
+      extra = extra || {};
+      const createdAt = at(min), cAt = at(Math.max(1, min - 5)), pAt = at(Math.max(1, min - 8));
+      const r = {
+        id: extra.id || uid(), createdAt, status: 'open', published: false, publishedStatus: '',
+        completedAt: '', closedAt: '', publishedAt: '', validation: null,
+        history: [{ status: 'open', at: createdAt, event: 'created', published: false }],
+        parentId: extra.parentId || null, sessionId: 'demo', team: from, toTeam: to,
+        name: 'demo', comment, changeTo: extra.changeTo || '',
+        aiPrompt: 'On page ' + path + ', in the “' + snippet + '” ' + tag + ': ' + comment,
+        page: pg(path), anchor: { selector: '', snippet, tag, pageX: 120, pageY: 320, xPct: 20, yPct: 40 },
+      };
+      if (state === 'completed' || state === 'deployed') {
+        r.status = 'completed'; r.completedAt = cAt;
+        r.validation = { ok: true, method: 'manual', detail: 'Marked complete.', checkedAt: cAt };
+        r.history.push({ status: 'completed', at: cAt, event: 'status', published: false });
+      }
+      if (state === 'closed' || state === 'closedlive') {
+        r.status = 'closed'; r.closedAt = cAt;
+        r.history.push({ status: 'closed', at: cAt, event: 'status', published: false });
+      }
+      if (state === 'deployed') { r.published = true; r.publishedStatus = 'completed'; r.publishedAt = pAt; r.history.push({ status: 'completed', at: pAt, event: 'deployed', published: true }); }
+      if (state === 'closedlive') { r.published = true; r.publishedStatus = 'closed'; r.publishedAt = pAt; r.history.push({ status: 'closed', at: pAt, event: 'deployed', published: true }); }
+      return r;
+    };
+    const thread1 = mk(40, 'SEO', 'Builder', '/', 'Footer links row', 'ul', 'Two footer links return a 404.', 'open');
+    const thread2 = mk(64, 'Content', 'Design', '/about-us', 'About — heading', 'h1', 'Tighten the about-us copy.', 'completed');
+    const recs = [
+      mk(5, 'Content', 'Builder', '/', 'Upload a bank proof (cancelled cheque)', 'p', 'Headline is too long for mobile viewports.', 'open', { changeTo: 'Upload proof' }),
+      mk(12, 'SEO', 'Builder', '/', 'Book a free 15-minute discovery call', 'a', 'Add a meta description to the homepage.', 'open'),
+      mk(18, 'SEO', 'Product', '/', 'Mobile Number', 'label', 'Placeholder text is unclear to users.', 'open'),
+      mk(24, 'Product', 'Builder', '/equity', "Own a part of India's leading companies", 'h2', 'CTA button contrast is too low (a11y).', 'open'),
+      mk(33, 'Marketing', 'Design', '/mutual-funds', 'Start a SIP today', 'h3', 'Banner image feels dated — refresh it.', 'open'),
+      mk(46, 'Business', 'Builder', '/contact-us', 'Get Expert Advise', 'span', 'Typo: “Advise” should be “Advice”.', 'open', { changeTo: 'Get Expert Advice' }),
+      mk(58, 'SEO', 'Builder', '/equity', 'Equity — hero', 'h1', 'Title tag is missing on this page.', 'completed'),
+      mk(72, 'Content', 'Builder', '/nps', 'NPS introduction', 'p', 'Reword the intro paragraph for clarity.', 'completed'),
+      mk(88, 'Design', 'Product', '/bonds', 'Bonds — product card', 'div', 'Card grid is misaligned on tablet.', 'completed'),
+      mk(101, 'Marketing', 'Builder', '/open-demat-account', 'Open your account', 'button', 'Update the promo copy for the new offer.', 'completed'),
+      mk(119, 'Product', 'Builder', '/sip-calculator', 'SIP amount slider', 'input', 'Duplicate of an earlier note — closing.', 'closed'),
+      mk(134, 'Business', 'SEO', '/contact-us', 'Contact form', 'form', 'Not actionable as written — closing.', 'closed'),
+      mk(150, 'SEO', 'Builder', '/', 'Trust badges', 'div', 'Add the SEBI registration number.', 'deployed'),
+      mk(168, 'Content', 'Builder', '/equity', 'Risk disclaimer', 'p', 'Shorten the risk disclaimer text.', 'deployed', { changeTo: 'Investments are subject to market risks.' }),
+      mk(181, 'Marketing', 'Design', '/mutual-funds', 'Fund cards', 'section', 'New fund-card layout shipped.', 'deployed'),
+      mk(200, 'Design', 'Builder', '/nps', 'NPS calculator link', 'a', 'Fixed the broken calculator link.', 'deployed'),
+      mk(224, 'Product', 'Builder', '/bonds', 'Bond yield table', 'table', "Won't fix this cycle — closing live.", 'closedlive'),
+      mk(241, 'Business', 'Builder', '/open-demat-account', 'KYC steps', 'ol', 'Deferred to next sprint.', 'closedlive'),
+      thread1, thread2,
+      mk(38, 'Product', 'Builder', '/', 'Footer links row', 'ul', 'Confirmed — investigating the broken links.', 'open', { parentId: thread1.id }),
+      mk(35, 'SEO', 'Builder', '/', 'Footer links row', 'ul', 'Any update on this?', 'open', { parentId: thread1.id }),
+      mk(60, 'Design', 'Design', '/about-us', 'About — heading', 'h1', 'Draft copy is ready for review.', 'open', { parentId: thread2.id }),
+    ];
+    const byPage = {};
+    recs.forEach((r) => { (byPage[r.page.path] = byPage[r.page.path] || []).push(r); });
+    Object.keys(byPage).forEach((p) => localStorage.setItem('rvc:' + p, JSON.stringify(byPage[p])));
+    const notifs = recs.filter((r) => !r.parentId && r.published).map((r) => ({
+      id: uid(), createdAt: r.publishedAt, team: r.team, commentId: r.id, path: r.page.path, pageName: r.page.title,
+      publishedStatus: r.publishedStatus, summary: 'Your comment on ' + r.page.title + ' was ' + (r.publishedStatus === 'closed' ? 'closed' : 'marked Done') + '.',
+      readTeam: false, readAdmin: false,
+    }));
+    localStorage.setItem('rvc-notifications', JSON.stringify(notifs));
+    localStorage.setItem('pkDemoSeeded', '1');
+  } catch {}
 }
 
 /* --------------------------------------------------------------------------
  * Teams + chip colours.
  * ------------------------------------------------------------------------ */
-export const TEAMS = ['Product', 'SEO', 'Marketing', 'Content'];
+export const TEAMS = ['Product', 'SEO', 'Marketing', 'Content', 'Design', 'Business'];
 
-/** Login-only identity that maps to ADMIN; deliberately NOT in TEAMS. */
-export const ADMIN_TEAM = 'Design';
+/**
+ * Login-only identity that maps to ADMIN; deliberately NOT in TEAMS.
+ * 'Builder' is the admin who has access to EVERYTHING AND the default target team
+ * a reviewer directs on-site changes to (see `toTeam`). Design is now an ordinary
+ * team (it no longer maps to admin).
+ */
+export const ADMIN_TEAM = 'Builder';
 
-/** Per-team chip colours as [background, text]. Keys must match TEAMS. */
+/** Per-team chip colours as [background, text]. Keys must match TEAMS (+ ADMIN_TEAM,
+ *  which is a directable target and so needs a chip too). */
 export const TEAM_COLORS = {
   Product: ['#e7f0fb', '#1b5fa8'],
   SEO: ['#e7f7ee', '#1d7a46'],
   Marketing: ['#fdeee6', '#b5541f'],
   Content: ['#f1eafb', '#6b3fa0'],
+  Design: ['#e4f5f3', '#0f6d64'],
+  Business: ['#fce8ee', '#a12a4f'],
+  Builder: ['#fbeeda', '#8a5a12'], // admin + default directed-to target (site changes)
 };
 
 /** Host-page elements to hide while review mode is armed. `[]` if nothing. */
@@ -135,7 +247,7 @@ export async function setGlobalTheme(name) {
   applyTheme(name);
   if (!WORKER_URL) return;
   try {
-    const pass = getSession().key || ''; // admin key = the shared session key (team === Design)
+    const pass = getSession().key || ''; // admin key = the shared session key (team === Builder)
     await fetch(WORKER_URL + '/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Review-Pass': pass },
@@ -278,6 +390,8 @@ export function buildDropdown(opts) {
   trigger.addEventListener('click', (e) => { e.stopPropagation(); isOpen ? close() : open(); });
 
   items.forEach((it, idx) => {
+    // A thin separator above this item (e.g. to fence Builder off from the teams).
+    if (it.dividerBefore) { const sep = document.createElement('div'); sep.className = 'pk-dropdown-sep'; menu.appendChild(sep); }
     const v = valOf(it);
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'pk-dropdown-item'; b.setAttribute('role', 'option');
@@ -319,7 +433,7 @@ export function buildDropdown(opts) {
  * The shared "Panel Login" card — the ONE modern auth surface both dashboards
  * use (styles: design/components.css `.pk-login`). It builds the Team + Key
  * fields, the Authenticate button, and the ProofKit logo; each dashboard wires
- * its own submit (admin vs team routing). ADMIN_TEAM ('Design') is offered as a
+ * its own submit (admin vs team routing). ADMIN_TEAM ('Builder') is offered as a
  * login-only identity — picking it + the admin key grants ADMIN access.
  * ------------------------------------------------------------------------ */
 const PK_MARK =
@@ -357,7 +471,8 @@ export function buildPanelLogin(opts) {
   const q = (s) => el.querySelector(s);
   // Team = a custom (non-native) dropdown, full-width inside the card.
   const teamItems = [...TEAMS].sort((a, b) => a.localeCompare(b)).map((t) => ({ value: t, label: t }));
-  teamItems.push({ value: ADMIN_TEAM, label: ADMIN_TEAM });
+  // Builder (admin) sits last, fenced off from the ordinary teams by a divider.
+  teamItems.push({ value: ADMIN_TEAM, label: ADMIN_TEAM, dividerBefore: true });
   const teamDD = buildDropdown({ items: teamItems, placeholder: 'Select Team', block: true });
   q('.pk-login-team').appendChild(teamDD.el);
   return {

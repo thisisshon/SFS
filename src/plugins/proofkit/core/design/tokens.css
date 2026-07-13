@@ -53,6 +53,11 @@
   --pk-blue:#3b82f6; --pk-blue-bg:#15243d; --pk-blue-ink:#8fbaf8;
   --pk-deploy:#1a7f37; --pk-deploy-hover:#14682c;
 
+  /* uniform chip widths (parity) — every badge chip is as wide as the longest label
+     ("Marketing"); the larger filter chips share their own uniform width. */
+  --pk-chip-w:92px;      /* team + status badge chips */
+  --pk-chip-w-lg:104px;  /* team-filter pill buttons */
+
   /* type — Inter is the documented FerrariSans substitute; system stack falls back */
   --pk-font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --pk-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;

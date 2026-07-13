@@ -1,6 +1,6 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword, pageName,
     ADMIN_TEAM, buildPanelLogin, buildDropdown, getSession, setSession, clearSession,
-    initTheme, mountThemeToggle } from './config.js';
+    initTheme, mountThemeToggle, ensureDemoSeed } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter); apply the
@@ -102,6 +102,17 @@
       arr = arr.filter((r) => r.id !== rec.id && r.parentId !== rec.id); // root + replies
       localStorage.setItem(key, JSON.stringify(arr));
     }
+    // Re-route: set the raising team (From) and/or directed team (To) on a record.
+    function localSetTeams(rec, team, toTeam) {
+      const key = 'rvc:' + rec.page.path;
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const r = arr.find((x) => x.id === rec.id);
+      if (!r) return { ...rec, team, toTeam };
+      if (team !== undefined) r.team = team;
+      if (toTeam !== undefined) r.toTeam = toTeam;
+      localStorage.setItem(key, JSON.stringify(arr));
+      return { ...r };
+    }
     // No-Worker gate (static/live included): the local store has no server, so check
     // the session password against the configured review password (hash-compared).
     // Throws the same 'unauthorized' the Worker would, so login/init handle it alike.
@@ -119,6 +130,7 @@
           notifications: async () => { await localGuard(); return localNotifs(); },
           markRead: async (ids, read = true) => { await localGuard(); return localMarkRead(ids, read); },
           del: async (rec) => { await localGuard(); localDelete(rec); return { ok: true }; },
+          setTeams: async (rec, team, toTeam) => { await localGuard(); return localSetTeams(rec, team, toTeam); },
         }
       : {
           all: () => apiFetch('/comments'),
@@ -129,6 +141,7 @@
           notifications: () => apiFetch('/notifications'),
           markRead: (ids, read = true) => apiFetch('/notifications/read', { method: 'POST', body: JSON.stringify({ ids, read }) }),
           del: (rec) => apiFetch('/delete', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path }) }),
+          setTeams: (rec, team, toTeam) => apiFetch('/teams', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, team, toTeam }) }),
         };
 
     let login = null, refreshTimer = null;
@@ -161,9 +174,14 @@
         login.button.addEventListener('click', go);
         login.keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       }
-      login.setError(''); login.keyInput.value = ''; login.setTeam('');
+      login.setError(''); login.keyInput.value = '';
+      // "Upgrade access to admin" (and any /reviewdash?login=builder) prefills the Team
+      // dropdown to Builder so the user only needs to enter the admin key.
+      let prefill = '';
+      try { if ((new URLSearchParams(location.search).get('login') || '').toLowerCase() === ADMIN_TEAM.toLowerCase()) prefill = ADMIN_TEAM; } catch {}
+      login.setTeam(prefill);
       document.body.appendChild(login.el);
-      login.focusTeam();
+      if (prefill) login.keyInput.focus(); else login.focusTeam();
     }
     function hideLogin() { login && login.el.remove(); }
 
@@ -187,6 +205,7 @@
     }
 
     function init() {
+      if (LOCAL) ensureDemoSeed(); // demo mode: populate ~20 dummy comments once
       const s = getSession();
       // Already signed in this tab as a team (not admin) → their team dashboard.
       if (s.key && s.team && s.team !== ADMIN_TEAM) { location.replace('/teamdash'); return; }
@@ -223,6 +242,14 @@
       if (!team) return '';
       const s = teamStyle(team);
       return `<span class="rvd-team-chip" style="background:${s.bg};color:${s.fg};border:1px solid ${s.bd}">${esc(team)}</span>`;
+    };
+    // "From → To": which team raised the comment (team) and which it's directed to (toTeam).
+    // Renders as an arrow between two chips; falls back to just the from-chip if undirected.
+    const routeChips = (c) => {
+      const from = teamChip(c.team);
+      if (!c.toTeam) return from;
+      return `${from || '<span class="rvd-team-chip rvd-team-none">—</span>'}` +
+        `<span class="rvd-route-arrow" aria-label="directed to">→</span>${teamChip(c.toTeam)}`;
     };
     // ---- lifecycle (deploy gate) ----
     // Working status the admin controls (legacy 'resolved' ⇒ 'completed').
@@ -264,6 +291,7 @@
     };
     let all = [], notifs = [], tab = 'all', teamFilter = '', entryDetail = null, view = 'dash', search = '', sort = 'new', deployResult = '';
     const sel = new Set(); // bulk-selected root ids
+    let selectMode = false; // multi-select armed? (checkboxes only show in this mode)
 
     // ---- unread: comments arrived since the last dashboard visit ----
     const SEEN_KEY = 'reviewLastSeen';
@@ -275,7 +303,7 @@
     function matchesSearch(c) {
       if (!search) return true;
       const a = c.anchor || {};
-      return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, a.snippet, a.tag]
+      return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, c.toTeam, a.snippet, a.tag]
         .filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase());
     }
     function sortRoots(rs) {
@@ -322,7 +350,7 @@
       const lines = ['# Content review — ' + list.length + ' change' + (list.length === 1 ? '' : 's'), ''];
       list.forEach((c) => {
         const a = c.anchor || {};
-        lines.push(`- **${c.page.path}** — ${c.team || '—'} · ${statusLabel(c)}`);
+        lines.push(`- **${c.page.path}** — ${c.team || '—'} → ${c.toTeam || '—'} · ${statusLabel(c)}`);
         lines.push(`  - ${c.comment}${a.snippet ? ` _(on “${a.snippet}”)_` : ''}`);
         if (c.changeTo) lines.push(`  - Change to: “${c.changeTo}”`);
       });
@@ -338,12 +366,15 @@
     function buildTeamChips() {
       const one = (label, team) => {
         const active = teamFilter === team;
+        // Active = a vibrant SOLID fill (was just a stroke). A team chip fills with its
+        // OWN identity colour; only "All Teams" fills red.
         let style;
-        if (team) { const s = teamStyle(team); style = `background:${s.bg};color:${s.fg};border-color:${active ? '#da291c' : s.bd}`; }
-        else style = active ? 'background:#da291c;color:#fff;border-color:#da291c'
-          : isLight() ? 'background:#f0efe9;color:#565650;border-color:#e4e1d9'
-                      : 'background:#242424;color:#c9c9c9;border-color:#333';
-        return `<button class="rvd-tchip" data-team="${esc(team)}" style="${style}">${esc(label)}</button>`;
+        if (active && team) { const accent = (TEAM_COLORS[team] || [])[1] || '#da291c'; style = `background:${accent};color:#fff;border-color:${accent}`; }
+        else if (active) style = 'background:#da291c;color:#fff;border-color:#da291c'; // All = red
+        else if (team) { const s = teamStyle(team); style = `background:${s.bg};color:${s.fg};border-color:${s.bd}`; }
+        else style = isLight() ? 'background:#f0efe9;color:#565650;border-color:#e4e1d9'
+                               : 'background:#242424;color:#c9c9c9;border-color:#333';
+        return `<button class="rvd-tchip${active ? ' is-active' : ''}" data-team="${esc(team)}" style="${style}">${esc(label)}</button>`;
       };
       $('#rvd-teamchips').innerHTML = one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
       $('#rvd-teamchips').querySelectorAll('.rvd-tchip').forEach((b) => {
@@ -380,47 +411,67 @@
       const nd = $('#rvd-badge-notifs'); if (nd) { nd.textContent = unread; nd.hidden = !unread; }
     }
 
-    // Scalable comment card — HEADER / BODY / CALLOUT / FOOTER. Shared by the
-    // Overview list and the Deploy bucket. Stays clean for 1 or 50 lines of comment,
-    // short or long Change-to copy, and 0 or many replies (see the F-section CSS).
+    // The route row — raising team → directed team, just the two chips and an arrow
+    // (no "From"/"To" labels; the arrow reads as the direction on its own).
+    function routeRow(root) {
+      const chip = (t) => t ? teamChip(t) : `<span class="rvd-team-chip rvd-team-none">—</span>`;
+      return `<div class="rvd-route">` + chip(root.team) +
+        `<span class="rvd-route-arrow" aria-hidden="true">→</span>` + chip(root.toTeam) + `</div>`;
+    }
+
+    // The comment card, reorganised into clean geometric bands:
+    //   META (select · status · page · time) → COMMENT (+anchor) → ROUTE (From→To)
+    //   → CALLOUT (legacy change-to, only if present) → ACTION FOOTER (replies · actions).
+    // The left edge is colour-keyed to the lifecycle state for at-a-glance scanning.
+    // Shared by the Overview list, the By-Page groups and the Deploy bucket.
     function card(root) {
       const a = root.anchor || {};
+      const id = esc(root.id);
       const replies = repliesOf(root.id);
-      const repliesHtml = replies.length
-        ? `<button class="rvd-repliestoggle" type="button" data-replies="${esc(root.id)}">` +
-            `<span class="rvd-caret">▸</span>${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}</button>` +
-          `<div class="rvd-replies" hidden>` + replies.map((r) =>
+      const repliesToggle = replies.length
+        ? `<button class="rvd-repliestoggle" type="button" data-replies="${id}">` +
+            `<span class="rvd-caret">▸</span>${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}</button>`
+        : '';
+      const repliesBlock = replies.length
+        ? `<div class="rvd-replies" data-replies-for="${id}" hidden>` + replies.map((r) =>
             `<div class="rvd-reply">${teamChip(r.team)}<div class="rvd-rtxt">${esc(r.comment)}</div>` +
             (r.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(r.changeTo)}</div></div>` : '') +
             `<div class="rvd-rmeta">${esc(fmt(r.createdAt))}</div></div>`).join('') + `</div>`
         : '';
+      const selected = sel.has(root.id);
       return (
-        `<article class="rvd-item">` +
-          // HEADER
-          `<header class="rvd-card-head">` +
-            `<input type="checkbox" class="rvd-sel" data-id="${esc(root.id)}"${sel.has(root.id) ? ' checked' : ''} aria-label="Select">` +
+        `<article class="rvd-item${selectMode && selected ? ' is-selected' : ''}" data-state="${displayState(root)}">` +
+          // META — [checkbox in select mode] · status · New · (right) page · time
+          `<div class="rvd-card-top">` +
+            (selectMode ? `<input type="checkbox" class="rvd-sel" data-id="${id}"${selected ? ' checked' : ''} aria-label="Select">` : '') +
             (isNew(root) ? `<span class="rvd-chip rvd-new">New</span>` : '') +
             statusChip(root) +
-            teamChip(root.team) +
-            `<a class="rvd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(pageName(root.page.path))}</a>` +
-            `<span class="rvd-time">${esc(fmt(root.createdAt))}</span>` +
-            `<div class="rvd-acts">` +
-              `<a class="rvd-openpin" href="${esc(root.page.path)}?review=1#c=${esc(root.id)}" target="_blank" rel="noopener">Open Pin</a>` +
-              lifecycleActions(root) +
-              `<button class="rvd-del delete" data-id="${esc(root.id)}">Delete</button>` +
-            `</div>` +
-          `</header>` +
-          // BODY (comment, clamped until expanded)
+            `<span class="rvd-loc">` +
+              `<a class="rvd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(pageName(root.page.path))}</a>` +
+              `<span class="rvd-time">${esc(fmt(root.createdAt))}</span>` +
+            `</span>` +
+          `</div>` +
+          // COMMENT — primary text (clamped) + the anchored element
           `<div class="rvd-card-body">` +
             `<div class="rvd-comment-text rvd-clamp">${esc(root.comment)}</div>` +
             `<button class="rvd-morebtn" type="button" hidden>Show more</button>` +
             (a.snippet ? `<div class="rvd-snip">on “${esc(a.snippet)}”</div>` : '') +
             validLine(root) +
           `</div>` +
-          // CALLOUT (Change-to)
+          // ROUTE — From → To
+          routeRow(root) +
+          // CALLOUT — legacy change-to (only when present)
           (root.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(root.changeTo)}</div></div>` : '') +
-          // FOOTER (replies)
-          repliesHtml +
+          // ACTION FOOTER — replies toggle (left) · actions (right)
+          `<div class="rvd-card-foot">` +
+            `<div class="rvd-foot-left">${repliesToggle}</div>` +
+            `<div class="rvd-acts">` +
+              `<a class="rvd-openpin" href="${esc(root.page.path)}?review=1#c=${id}" target="_blank" rel="noopener">Open Pin</a>` +
+              lifecycleActions(root) +
+              `<button class="rvd-del delete" data-id="${id}">Delete</button>` +
+            `</div>` +
+          `</div>` +
+          repliesBlock +
         `</article>`
       );
     }
@@ -450,6 +501,103 @@
       return btns;
     }
 
+    // ---- shared row actions (Master Log "More options" menu) ----
+    async function rowStatus(root, status) {
+      try { Object.assign(root, await store.status(root, status)); counts(); render(); }
+      catch (e) { alert('Could not update — ' + e.message); }
+    }
+    async function rowDelete(root) {
+      if (!confirm('Delete this whole thread (comment + all replies)? This cannot be undone.')) return;
+      try { await store.del(root); all = all.filter((c) => c.id !== root.id && c.parentId !== root.id); counts(); render(); }
+      catch (e) { alert('Could not delete — ' + e.message); }
+    }
+    // Every action available on an Overview card, plus Edit teams — the Master Log's
+    // per-row menu. Lifecycle labels track the record's working status.
+    function rowMenuItems(root) {
+      const st = workingStatus(root);
+      const items = [
+        { label: 'View details', onSelect: () => { entryDetail = root.id; render(); } },
+        { label: 'Open pin', onSelect: () => window.open(root.page.path + '?review=1#c=' + encodeURIComponent(root.id), '_blank', 'noopener') },
+        { label: 'Edit teams (From / To)', onSelect: () => openEditTeams(root) },
+      ];
+      if (st === 'open') items.push({ label: 'Mark complete', onSelect: () => rowStatus(root, 'completed') });
+      else items.push({ label: 'Reopen', onSelect: () => rowStatus(root, 'open') });
+      if (st !== 'closed') items.push({ label: 'Close', onSelect: () => rowStatus(root, 'closed') });
+      items.push({ label: 'Copy prompt', onSelect: () => copyToClip(localPrompt(root), null) });
+      items.push({ label: 'Delete', danger: true, onSelect: () => rowDelete(root) });
+      return items;
+    }
+    // A fixed-position action menu anchored to a trigger button — appended to <body> so
+    // it's never clipped by the log's horizontal scroll container.
+    let rowMenuEl = null;
+    function closeRowMenu() {
+      if (!rowMenuEl) return;
+      rowMenuEl.remove(); rowMenuEl = null;
+      document.removeEventListener('click', onRowMenuDoc, true);
+      document.removeEventListener('keydown', onRowMenuKey, true);
+      window.removeEventListener('scroll', closeRowMenu, true);
+      window.removeEventListener('resize', closeRowMenu);
+    }
+    function onRowMenuDoc(e) { if (rowMenuEl && !rowMenuEl.contains(e.target)) closeRowMenu(); }
+    function onRowMenuKey(e) { if (e.key === 'Escape') closeRowMenu(); }
+    function openRowMenu(btn, root) {
+      closeRowMenu();
+      const items = rowMenuItems(root);
+      const menu = document.createElement('div'); menu.className = 'rvd-rowmenu';
+      menu.innerHTML = items.map((it, i) =>
+        `<button type="button" class="rvd-rowmenu-item${it.danger ? ' danger' : ''}" data-i="${i}">${esc(it.label)}</button>`).join('');
+      document.body.appendChild(menu); rowMenuEl = menu;
+      const r = btn.getBoundingClientRect();
+      const mw = menu.offsetWidth, mh = menu.offsetHeight;
+      // Anchor to the button's right edge, but clamp fully inside the viewport (the wide
+      // log can overflow horizontally, so the button itself may be near/over an edge).
+      let left = r.right - mw;
+      if (left + mw > innerWidth - 8) left = innerWidth - mw - 8;
+      if (left < 8) left = 8;
+      let top = r.bottom + 6;
+      if (top + mh > innerHeight - 8) top = r.top - mh - 6;
+      if (top < 8) top = 8;
+      menu.style.left = left + 'px'; menu.style.top = top + 'px';
+      menu.querySelectorAll('.rvd-rowmenu-item').forEach((b) =>
+        b.addEventListener('click', () => { const it = items[+b.dataset.i]; closeRowMenu(); it.onSelect(); }));
+      setTimeout(() => {
+        document.addEventListener('click', onRowMenuDoc, true);
+        document.addEventListener('keydown', onRowMenuKey, true);
+        window.addEventListener('scroll', closeRowMenu, true);
+        window.addEventListener('resize', closeRowMenu);
+      }, 0);
+    }
+
+    // Edit the From/To teams of a comment (admin re-route). A small modal with the same
+    // custom dropdowns used everywhere; Builder is offered as a To target (divider).
+    function openEditTeams(root) {
+      const el = document.createElement('div'); el.className = 'rvd-editmodal';
+      el.innerHTML =
+        `<div class="rvd-editcard" role="dialog" aria-modal="true">` +
+          `<div class="rvd-edithead"><div class="rvd-edittitle">Edit teams</div>` +
+            `<button class="rvd-editx" aria-label="Close">×</button></div>` +
+          `<p class="rvd-editsub">Re-route this comment — who raised it (From) and which team should action it (To).</p>` +
+          `<div class="rvd-editfield"><span class="rvd-editlbl">From</span><div class="rvd-editfrom"></div></div>` +
+          `<div class="rvd-editfield"><span class="rvd-editlbl">Directed to</span><div class="rvd-editto"></div></div>` +
+          `<div class="rvd-editactions"><button class="rvd-editbtn rvd-editcancel">Cancel</button>` +
+            `<button class="rvd-editbtn rvd-editsave">Save</button></div>` +
+        `</div>`;
+      document.body.appendChild(el);
+      const fromDD = buildDropdown({ items: TEAMS.map((t) => ({ value: t, label: t })), value: root.team || '', placeholder: 'Select team', block: true });
+      const toDD = buildDropdown({ items: TEAMS.map((t) => ({ value: t, label: t })).concat([{ value: ADMIN_TEAM, label: ADMIN_TEAM, dividerBefore: true }]), value: root.toTeam || '', placeholder: 'Select team', block: true });
+      el.querySelector('.rvd-editfrom').appendChild(fromDD.el);
+      el.querySelector('.rvd-editto').appendChild(toDD.el);
+      const close = () => el.remove();
+      el.querySelector('.rvd-editx').addEventListener('click', close);
+      el.querySelector('.rvd-editcancel').addEventListener('click', close);
+      el.addEventListener('click', (e) => { if (e.target === el) close(); });
+      el.querySelector('.rvd-editsave').addEventListener('click', async () => {
+        const save = el.querySelector('.rvd-editsave'); save.disabled = true; save.textContent = 'Saving…';
+        try { Object.assign(root, await store.setTeams(root, fromDD.getValue(), toDD.getValue())); close(); counts(); render(); }
+        catch (e) { save.disabled = false; save.textContent = 'Save'; alert('Could not save — ' + e.message); }
+      });
+    }
+
     // ---- Master Log: tabular log of every root change, with drill-in detail ----
     function renderEntries() {
       if (entryDetail) { renderEntryDetail(); return; }
@@ -459,28 +607,38 @@
       $('#rvd-entries').innerHTML =
         `<div class="rvd-entrieshead"><h2>Master Log <span style="font-weight:500;color:var(--pk-muted)">(${rs.length})</span></h2></div>` +
         `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
-        `<th>When</th><th>Page</th><th>Element</th><th>Team</th><th>Status</th><th>Prompt</th>` +
+        `<th>When</th><th>Page</th><th>Element</th><th>Requirement</th><th>From</th><th>Directed to</th><th>Status</th><th>More</th>` +
         `</tr></thead><tbody>` +
         rs.map((c) => {
           const a = c.anchor || {};
           const el = a.snippet ? '“' + esc(a.snippet.slice(0, 40)) + '”' : esc(a.tag || '—');
+          const req = (c.comment || '').trim();
+          const reqShort = req ? esc(req.slice(0, 120)) + (req.length > 120 ? '…' : '') : '—';
           return `<tr class="rvd-logrow" data-id="${esc(c.id)}">` +
             `<td>${esc(fmt(c.createdAt))}</td>` +
             `<td><a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a></td>` +
             `<td>${el}</td>` +
+            `<td class="rvd-log-req">${reqShort}</td>` +
             `<td>${teamChip(c.team) || '—'}</td>` +
+            `<td>${teamChip(c.toTeam) || '—'}</td>` +
             `<td>${statusChip(c)}</td>` +
-            `<td><button class="rvd-prompt-btn" data-more="${esc(c.id)}">View more</button></td>` +
+            `<td><button class="rvd-moreopts" data-more="${esc(c.id)}">More options <span class="rvd-moreopts-chev">▾</span></button></td>` +
           `</tr>`;
         }).join('') +
         `</tbody></table></div>`;
-      // Clicking a row (or its "View more") opens the entry detail. The page link + the
-      // View-more button are handled separately so they don't double-fire.
+      // Clicking a row opens the entry detail; the More-options button opens the action
+      // menu (all overview actions + Edit teams). Both are kept from double-firing.
       const open = (id) => { entryDetail = id; render(); };
       $('#rvd-entries').querySelectorAll('.rvd-logrow').forEach((tr) => {
         tr.addEventListener('click', (e) => {
-          if (e.target.closest('a')) return; // let the page link through
+          if (e.target.closest('a, .rvd-moreopts')) return; // links + the menu button handle themselves
           open(tr.dataset.id);
+        });
+      });
+      $('#rvd-entries').querySelectorAll('.rvd-moreopts').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rec = all.find((c) => c.id === b.dataset.more); if (rec) openRowMenu(b, rec);
         });
       });
     }
@@ -529,12 +687,13 @@
         `<button class="rvd-back" id="rvd-back">← Back to Master Log</button>` +
         `<article class="rvd-detail">` +
           `<h2 class="rvd-detail-title">${esc(c.comment)}</h2>` +
-          `<div class="rvd-detail-chips">${statusChip(c)}${teamChip(c.team)}` +
+          `<div class="rvd-detail-chips">${statusChip(c)}${routeChips(c)}` +
             `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">Open pin</a></div>` +
           `<div class="rvd-fields">` +
             field('Page', `<a href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a> <span style="color:var(--pk-muted)">${esc(c.page.path)}</span>`) +
             field('Element / anchor', where) +
-            field('Reviewer', esc(c.name || 'anonymous') + (c.team ? ' · ' + esc(c.team) : '')) +
+            field('From (raised by)', esc(c.name || 'anonymous') + (c.team ? ' · ' + esc(c.team) : '')) +
+            field('Directed to', c.toTeam ? teamChip(c.toTeam) : '—') +
             field('Submitted', esc(fmt(c.createdAt))) +
             (c.changeTo ? `<div class="rvd-field"><div class="rvd-field-k">Change to</div><div class="rvd-change"><div>${esc(c.changeTo)}</div></div></div>` : '') +
             field('Current status', esc(statusLabel(c))) +
@@ -692,13 +851,30 @@
       emp.hidden = rs.length > 0;
       if (!rs.length) emp.textContent = search ? 'No comments match your search.' : 'No comments yet.';
       bindActions();
+      updateSelectToggle();
     }
 
     function updateBulk() {
       const n = sel.size;
       const bar = $('#rvd-bulk');
-      bar.hidden = n === 0;
+      // The bottom action overlay shows only in select mode with ≥1 selected.
+      bar.hidden = !(selectMode && n > 0);
       if (n) $('#rvd-bulk-n').textContent = n + ' selected';
+      updateSelectToggle();
+    }
+
+    // The toolbar toggle: "Select" arms multi-select (checkboxes appear); once armed it
+    // reads "Deselect All" and clicking it clears the selection + leaves select mode.
+    function updateSelectToggle() {
+      const btn = $('#rvd-selectall'); if (!btn) return;
+      btn.textContent = selectMode ? 'Deselect All' : 'Select';
+      btn.classList.toggle('is-active', selectMode);
+    }
+    // Enter/leave select mode. Leaving always clears the selection.
+    function setSelectMode(on) {
+      selectMode = on;
+      if (!on) sel.clear();
+      updateBulk(); render();
     }
 
     function bindActions(scope) {
@@ -706,7 +882,7 @@
       host.querySelectorAll('.rvd-sel').forEach((cb) => {
         cb.addEventListener('change', () => {
           cb.checked ? sel.add(cb.dataset.id) : sel.delete(cb.dataset.id);
-          updateBulk();
+          updateBulk(); render(); // re-render so the selected card's vibrant fill updates
         });
       });
       host.querySelectorAll('.rvd-a[data-status]').forEach((btn) => {
@@ -737,10 +913,12 @@
           btn.textContent = clamped ? 'Show more' : 'Show less';
         });
       });
-      // footer: expand / collapse replies
+      // footer: expand / collapse replies (block located by id — it's not the toggle's
+      // sibling anymore; the toggle lives in the action footer, the block at card end)
       host.querySelectorAll('.rvd-repliestoggle').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const wrap = btn.nextElementSibling; if (!wrap) return;
+          const wrap = host.querySelector('.rvd-replies[data-replies-for="' + btn.dataset.replies + '"]');
+          if (!wrap) return;
           const open = wrap.hasAttribute('hidden');
           if (open) wrap.removeAttribute('hidden'); else wrap.setAttribute('hidden', '');
           btn.classList.toggle('is-open', open);
@@ -787,6 +965,8 @@
     });
     // ---- toolbar: search / sort / export / copy-all-prompts ----
     $('#rvd-search').addEventListener('input', (e) => { search = e.target.value.trim(); render(); });
+    // Toolbar toggle: arm select mode ("Select") / clear + leave it ("Deselect All").
+    $('#rvd-selectall').addEventListener('click', () => setSelectMode(!selectMode));
     // Toolbar dropdown icons (Lucide-style; inherit currentColor).
     const IC = {
       newest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>',
@@ -824,6 +1004,7 @@
     $('#rvd-bulk').addEventListener('click', async (e) => {
       const b = e.target.closest('.rvd-bulk-a'); if (!b) return;
       const act = b.dataset.act;
+      if (act === 'all') { currentRoots().forEach((c) => sel.add(c.id)); updateBulk(); render(); return; }
       const recs = [...sel].map((id) => all.find((c) => c.id === id)).filter(Boolean);
       if (!recs.length) return;
       if (act === 'copy') { copyToClip(promptsText(recs), b, 'Copied ✓'); return; }
@@ -843,5 +1024,21 @@
     $('#rvd-bulk-clear').addEventListener('click', () => { sel.clear(); updateBulk(); render(); });
 
     buildTeamChips();
+
+    // "Team dashboards" — admin can open ANY team's board at will, with full access.
+    // Opens /teamdash?team=<T> in a new tab; the admin session is adopted there (shared
+    // session), and the admin key gives full read access to that team's inbox.
+    const teamViewMount = $('#rvd-teamview-mount');
+    if (teamViewMount) {
+      const teamViewDD = buildDropdown({
+        block: true, fixedLabel: 'Jump To Team',
+        items: TEAMS.map((t) => ({
+          value: t, label: t,
+          onSelect: () => window.open('/teamdash?team=' + encodeURIComponent(t), '_blank', 'noopener'),
+        })),
+      });
+      teamViewMount.appendChild(teamViewDD.el);
+    }
+
     init();
   })();

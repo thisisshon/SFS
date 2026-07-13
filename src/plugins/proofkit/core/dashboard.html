@@ -26,7 +26,7 @@
           <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
         </svg>
         <span class="rvd-word">ProofKit</span>
-        <span class="rvd-tag">Content Review | Shriram FS</span>
+        <span class="rvd-tag">Content Review | <span class="rvd-tag-brand">Shriram FS</span></span>
       </div>
       <div class="rvd-actions">
         <a class="rvd-btn rvd-btn-primary" href="/">Go to site</a>
@@ -61,6 +61,10 @@
         <button class="rvd-nav" data-view="deploy">Deploy<span class="rvd-navbadge" id="rvd-badge-deploy" hidden>0</span></button>
         <button class="rvd-nav" data-view="notifs">Notifications<span class="rvd-navbadge rvd-navbadge-alert" id="rvd-badge-notifs" hidden>0</span></button>
         <button class="rvd-nav" data-view="entries">Master Log</button>
+        <div class="rvd-teamview">
+          <span class="rvd-teamview-label">Team dashboards</span>
+          <div id="rvd-teamview-mount"></div>
+        </div>
       </aside>
 
       <div class="rvd-content">
@@ -70,6 +74,7 @@
             <input id="rvd-search" class="rvd-search" type="search" placeholder="Search comments, pages, reviewers…" autocomplete="off" spellcheck="false" />
             <div id="rvd-sort-mount"></div>
             <span class="rvd-toolbar-sp"></span>
+            <button id="rvd-selectall" class="rvd-selectall" type="button">Select</button>
             <div id="rvd-copy-mount"></div>
           </div>
           <div class="rvd-tabs" id="rvd-tabs" role="tablist">
@@ -102,6 +107,7 @@
     <!-- bulk-select action bar (shows when ≥1 comment is selected) -->
     <div class="rvd-bulk" id="rvd-bulk" hidden>
       <span class="rvd-bulk-n" id="rvd-bulk-n">0 selected</span>
+      <button class="rvd-bulk-a" type="button" data-act="all">Select all</button>
       <button class="rvd-bulk-a" type="button" data-act="complete">Mark Complete</button>
       <button class="rvd-bulk-a" type="button" data-act="reopen">Reopen</button>
       <button class="rvd-bulk-a" type="button" data-act="close">Close</button>

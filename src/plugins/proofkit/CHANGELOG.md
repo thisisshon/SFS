@@ -6,6 +6,113 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.13.2 — 2026-07-13 — fix: `/review` sometimes didn't open the login (armed but signed-out)
+
+- **Fix: an armed-but-signed-out tab showed nothing.** `/review` arms the tab (`reviewMode=1`) via the
+  one-shot `pkAutoReview` flag, but that flag is consumed on the first paint. The overlay only opened the
+  login when `AUTO` (or an Open-Pin `#c=`) was present, so any *reload* of the armed page — including a Vite
+  dev full-reload — left the tab armed, signed-out, and blank: no login, no dock. `core/overlay.js` now
+  **always opens the Team+Key login when the tab is armed and not authenticated** (the arm gate already
+  guarantees real visitors never reach this path).
+- **Dismissing the login now fully exits review.** Because the login is now shown on every armed load,
+  clicking its backdrop clears `reviewMode` too (previously it only removed the element, so it would
+  immediately reappear). Re-open via `/review` (or `/<page>/review`) re-arms.
+- **Uniform chip widths (parity).** Every badge chip is now the same width as the longest label
+  ("Marketing") via a shared token `--pk-chip-w` (92px), and the larger team-filter pills share
+  `--pk-chip-w-lg` (104px) — applied across the admin dashboard, team dashboard and the on-page overlay
+  (team chips, status chips, the "—" placeholder, filter chips). Content is centered; ragged chip rows are gone.
+
+## 2.13.1 — 2026-07-13 — "Direct to" excludes the reviewer's own team
+
+- **You can no longer direct a comment to your own team.** The on-page composer's "Direct to" list
+  (`directItems()` in `core/overlay.js`) now filters out `getSession().team` — e.g. logged in as SEO,
+  SEO is absent from the list. Applies to every team, and to Builder (when the reviewer is Builder,
+  Builder is dropped too).
+- **Default target stays Builder**, except when Builder is the one filtered out (reviewer IS Builder):
+  the default then falls back to the first remaining team so the control is never empty. No record
+  shape, endpoint, auth, or config change — purely the composer's option set + default.
+
+## 2.13.0 — 2026-07-13 — directed comments + Builder admin (Design demoted to a team)
+
+- **Comments are now directed to a team.** The on-page composer gains a "Direct to" select (defaults to
+  **Builder**; every team is selectable). The choice is persisted as a new record field `toTeam`; replies
+  inherit their root's `toTeam`. A directed comment sits in that team's `/teamdash` **for action**.
+- **`/teamdash` is now a directed-work inbox.** The team-scoped read (`GET /comments?team=X` and the LOCAL
+  demo path) filters by `toTeam === X` instead of the author's `team`. Each card shows a `from <team>`
+  chip so the receiving team sees who raised it. Copy reframed: "For Your Team" / "For Action" /
+  "Nothing directed to your team yet." (Auth unchanged — a team key still reads only its own inbox.)
+- **Admin log carries from → to.** `maskForTeam` now exposes `toTeam`. In `/reviewdash`, every card and the
+  Master Log show the route (raising team → directed team; new **Directed to** column + detail field);
+  search and MD export include `toTeam`.
+- **Roles: Design is no longer admin — `Builder` is.** `ADMIN_TEAM` changed `Design → Builder`; `Design`
+  moved into `TEAMS` as an ordinary team (with its own chip colour); `Builder` gets a chip colour too since
+  it is a directable target. Builder is the admin with access to everything **and** the default target for
+  on-site changes. **Deploy note:** give `Design` a `TEAM_KEYS` entry; `Builder` signs in with `ADMIN_PASS`
+  (no `TEAM_KEYS` entry), exactly as `Design` used to.
+- **"Upgrade access to admin".** A faded, centered link at the bottom of `/teamdash` clears the team session
+  and opens `/reviewdash`, where the user can authenticate as Builder.
+- **Admin can open any team's board.** A "Team dashboards" picker in the `/reviewdash` sidebar opens
+  `/teamdash?team=<T>` (new tab) — `teamdash.js` honours `?team=` only for an admin session and loads that
+  team's inbox with the admin key (full access); a red "Admin view" ribbon + "Back to admin" makes the
+  impersonation explicit. Non-admins can't use the param (the Worker enforces it regardless).
+- **Session adopted across tabs — no second login.** The session is still per-tab (sessionStorage) but is
+  now mirrored into localStorage; a link opened in a NEW tab (where the browser won't copy sessionStorage
+  across `rel="noopener"`) ADOPTS it, so dashboard hyperlinks (Open Pin, team boards, page links) no longer
+  prompt for a re-login. Logout clears both.
+- **On-page overlay:** the dock's "Dashboard" button is now **"Go To Dashboard"**, moved to its own fixed
+  control at the **bottom-left** (clear of the right-hand comment dock).
+- **Select all / none.** The `/reviewdash` toolbar gains a one-button toggle that selects (or clears) every
+  root currently in view — respecting the active tab/team/search filter — feeding the existing bulk-action
+  bar. Label flips to "Select none" once all listed items are selected; disabled on an empty list.
+- **One dropdown format everywhere.** The composer's "Direct to" was the last native `<select>`; it's now the
+  shared custom `buildDropdown` (`.pk-dropdown`) like every other Proofkit control (login team picker, Sort,
+  Copy, team-board picker). The composer popover dropped `overflow:hidden` (square corners never needed it)
+  so the menu isn't clipped, and "Direct to" sits at the TOP of the composer (pick the direction first, then
+  write) so its menu opens over the fields rather than off-screen.
+- **New team: Business.** Added to `TEAMS` (own chip colour) — an ordinary team, same access as the others,
+  NO admin. (Give it a `TEAM_KEYS` entry at deploy like any team.)
+- **Identical entry for every team.** The composer no longer special-cases Content — every team sees the same
+  two fields: the note (now placeholder **"Elaborate on the change request."**) and an **optional** "Change
+  it to… (optional new content)". Nothing is required per-team anymore. Same applies to the reply box.
+- **Composer title:** "Add a comment" → **"Mark a comment"**.
+- **Divider before Builder.** `buildDropdown` items support `dividerBefore`; every list that ends in Builder
+  (the login team picker and the composer's "Direct to") now shows a thin separator fencing Builder (admin)
+  off from the ordinary teams. Builder is listed last (still the "Direct to" default).
+- **Fix: "Go To Dashboard" was opening the comment composer.** Now that the button lives outside `.rv-dock`,
+  the on-page "click anywhere to comment" handler was catching it; `.rv-dash` is now in that handler's ignore
+  list, so the button navigates as intended.
+- **Admin "Team dashboards" picker** label is now **"Select A Team"** (was the truncated "View a team's board").
+- **"Upgrade access to admin" prefills Builder.** The link now carries `/reviewdash?login=builder`; the admin
+  login reads `?login=<ADMIN_TEAM>` and pre-selects Builder in the Team dropdown, focusing the key field.
+- **Brand accent in the header.** "Shriram FS" in both dashboards' brand tag renders in the Shriram brand gold
+  (`#f3b83f`) in dark mode; stays neutral (muted) in light mode.
+- **Removed the composer "Change it to…" field** (composer + reply). Entry is now a single note for every team;
+  the admin card still renders a legacy `changeTo` callout when older records carry one.
+- **Redesigned the admin comment card.** Reorganised from one crowded header row into clean geometric bands:
+  META (select · status · page · time) → COMMENT (+ anchored element) → **ROUTE (From → To, both ends
+  labelled)** → optional legacy callout → an ACTION FOOTER (replies toggle left, actions right) fenced by a
+  hairline. The card's **left edge is now colour-keyed to the lifecycle state** (open=amber · bucket=blue ·
+  deployed=green · closed=muted) for at-a-glance scanning. From/To is now a first-class row on the card
+  (context added), not just a chip pair in the header.
+- **Selection is now an explicit mode.** Cards have NO checkboxes by default. A toolbar **"Select"** button arms
+  multi-select (checkboxes appear); it then reads **"Deselect All"** and clicking it clears the selection and
+  leaves the mode. The bottom bulk-action overlay shows only in select mode with ≥1 selected (and gained a
+  "Select all"). Selected cards get a **vibrant red-filled state**. The active **team filter chip** is now a
+  vibrant SOLID fill (was just a stroke) — a team chip fills with its **own identity colour**, only "All
+  Teams" fills red.
+- **Card route is label-free.** The card's route band drops the "From"/"To" words — just `chip → chip`.
+- **"Jump To Team"** — the admin's team-board picker label (was "Select A Team").
+- **Demo seed (LOCAL/no-Worker only).** On first load the dashboards populate ~20 dummy comments covering every
+  lifecycle state (open · in-bucket completed · in-bucket closed · deployed · closed-live) ≥2× across
+  teams/pages, with two threads and legacy change-to callouts. Runs once (`pkDemoSeeded`), wiping prior demo
+  rows first; never runs against a Worker.
+- **Master Log: "Requirement" column + per-row "More options".** The log gained a Requirement column (the
+  comment text). "View more" became a **More options** menu carrying every Overview action — View details ·
+  Open pin · **Edit teams (From/To)** · Mark complete/Reopen · Close · Copy prompt · Delete — rendered as a
+  body-anchored popover so the log's horizontal scroll never clips it.
+- **Admin can re-route a comment's From/To.** New Worker endpoint `POST /teams` (admin) updates a record's
+  `team`/`toTeam`; the Master Log's "Edit teams" opens a modal with the two team dropdowns. (LOCAL demo mirrors it.)
+
 ## 2.12.0 — 2026-07-13 — one login per tab: unified session + modern on-page login
 
 - **The on-page overlay login is now the shared modern login** (`.pk-login`), matching the dashboards —

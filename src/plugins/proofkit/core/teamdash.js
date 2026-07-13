@@ -1,5 +1,5 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, pageName, ADMIN_TEAM,
-    buildPanelLogin, getSession, setSession, clearSession, initTheme } from './config.js';
+    buildPanelLogin, getSession, setSession, clearSession, initTheme, ensureDemoSeed } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter). This is a
@@ -8,8 +8,20 @@
     initTheme();
     const LOCAL = !WORKER_URL;
 
-    // The signed-in team comes from the ONE shared per-tab session (config).
-    const team = () => getSession().team;
+    // Admin override: Builder (admin) can open ANY team's board via /teamdash?team=<T>
+    // (the "View a team's board" dropdown on the admin dashboard). The admin key has
+    // full access on the Worker, so it returns that team's inbox. Non-admins can never
+    // impersonate — the param is honoured only for an admin session, and the Worker
+    // enforces it regardless.
+    const OVERRIDE = (() => {
+      try {
+        const t = new URLSearchParams(location.search).get('team');
+        return t && TEAMS.includes(t) && getSession().team === ADMIN_TEAM ? t : '';
+      } catch { return ''; }
+    })();
+
+    // The effective team: the admin-chosen override, else the signed-in team (config).
+    const team = () => OVERRIDE || getSession().team;
 
     // ---- transport: Worker (X-Review-Pass) or the localStorage demo store ----
     async function apiFetch(path, opts = {}) {
@@ -23,18 +35,19 @@
     }
     // The team-visible projection (matches the Worker's maskForTeam) for LOCAL mode.
     const maskLocal = (c) => ({
-      id: c.id, parentId: c.parentId || null, createdAt: c.createdAt, team: c.team || '',
+      id: c.id, parentId: c.parentId || null, createdAt: c.createdAt, team: c.team || '', toTeam: c.toTeam || '',
       name: c.name || '', comment: c.comment, changeTo: c.changeTo || '', page: c.page, anchor: c.anchor || {},
       status: c.published ? (c.publishedStatus || 'open') : 'open', // masked
       publishedAt: c.publishedAt || '',
     });
+    // Directed inbox: comments routed TO this team (toTeam) for it to action.
     function localComments(t) {
       const out = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (k && k.startsWith('rvc:')) { try { out.push(...JSON.parse(localStorage.getItem(k) || '[]')); } catch {} }
       }
-      return out.filter((c) => (c.team || '') === t).map(maskLocal).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      return out.filter((c) => (c.toTeam || '') === t).map(maskLocal).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     }
     function localNotifs(t) {
       let arr = [];
@@ -156,6 +169,7 @@
         `<article class="tmd-item">` +
           `<div class="tmd-line">` +
             statusChip(root) +
+            (root.team ? `<span class="tmd-from">from ${teamChip(root.team)}</span>` : '') +
             `<div class="tmd-headline">` +
               `<div class="tmd-comment">${esc(root.comment)}` +
                 (replies.length ? `<span class="tmd-n">${replies.length + 1} comments</span>` : '') + `</div>` +
@@ -191,7 +205,7 @@
       }
       const emp = $('#tmd-empty');
       emp.hidden = rs.length > 0;
-      if (!rs.length) emp.textContent = filter === 'all' ? 'No comments from your team yet.' : 'Nothing in this filter.';
+      if (!rs.length) emp.textContent = filter === 'all' ? 'Nothing directed to your team yet.' : 'Nothing in this filter.';
     }
 
     function noteItem(n) {
@@ -251,8 +265,9 @@
       if (!key) { login.keyInput.focus(); return; }
       setSession(t, key); // the one shared per-tab session
       login.setBusy(true, 'Authenticating'); login.setError('');
-      // ADMIN_TEAM ('Design') is the admin door → hand off to /reviewdash.
-      if (t === ADMIN_TEAM) { location.replace('/reviewdash'); return; }
+      // ADMIN_TEAM ('Builder') is the admin door → hand off to /reviewdash, UNLESS an
+      // admin is opening a specific team's board here (?team=…), which we render inline.
+      if (t === ADMIN_TEAM && !OVERRIDE) { location.replace('/reviewdash'); return; }
       // Team: validate the key against the team-scoped read.
       try { await loadData(); hideLogin(); startAutoRefresh(); }
       catch (e) {
@@ -264,11 +279,14 @@
     }
 
     function init() {
+      if (LOCAL) ensureDemoSeed(); // demo mode: populate ~20 dummy comments once
       const s = getSession();
-      // A live admin session (Design) → straight to the admin panel.
-      if (s.key && s.team === ADMIN_TEAM) { location.replace('/reviewdash'); return; }
-      // A team session → load it; otherwise ask to log in once.
-      if (s.key && s.team) {
+      if (OVERRIDE) mountAdminBar(); // admin is viewing a specific team's board
+      // A live admin session (Builder) → straight to the admin panel, UNLESS viewing a
+      // specific team's board (?team=…), which loads below with the admin key.
+      if (s.key && s.team === ADMIN_TEAM && !OVERRIDE) { location.replace('/reviewdash'); return; }
+      // A team session (or an admin viewing a team) → load it; else ask to log in once.
+      if (s.key && (s.team || OVERRIDE)) {
         loadData().then(startAutoRefresh).catch((e) => {
           if (e.message === 'unauthorized') { clearSession(); showLogin(); }
           else { $('#tmd-empty').hidden = false; $('#tmd-empty').textContent = 'Could not load — ' + e.message; }
@@ -326,6 +344,27 @@
       try { await loadData(); await wait(Math.max(0, 550 - (Date.now() - t0))); }
       catch (err) { alert('Could not refresh — ' + err.message); }
       finally { btn.classList.remove('is-refreshing'); }
+    });
+
+    // Admin-view ribbon: shown when Builder is viewing a specific team's board. Makes
+    // the impersonation explicit and offers a one-click way back to the admin panel.
+    function mountAdminBar() {
+      const app = $('.tmd-app'); if (!app || $('#tmd-adminbar')) return;
+      const bar = document.createElement('div');
+      bar.className = 'tmd-adminbar'; bar.id = 'tmd-adminbar';
+      bar.innerHTML = `<span class="tmd-adminbar-txt">Admin view — <b>${esc(OVERRIDE)}</b> team board (full access)</span>` +
+        `<a class="tmd-adminbar-back" href="/reviewdash">← Back to admin</a>`;
+      app.prepend(bar);
+      const foot = $('.tmd-foot'); if (foot) foot.hidden = true; // no "upgrade to admin" while already admin
+    }
+
+    // "Upgrade access to admin" — drop this team session and go to the admin door
+    // (/reviewdash), where the user can sign in as Builder (admin, access to everything).
+    const upgrade = $('#tmd-upgrade');
+    if (upgrade) upgrade.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearSession();
+      location.href = '/reviewdash?login=builder'; // prefill the login's Team to Builder
     });
 
     init();

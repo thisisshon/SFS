@@ -41,7 +41,7 @@ const ALL_FEATURES = [
   'Framework-neutral core + standalone HTML', 'One-switch enable/disable, fully portable',
 ];
 
-const VERTICALS = ['Product', 'SEO', 'Marketing', 'Content'];
+const VERTICALS = ['Product', 'SEO', 'Marketing', 'Content', 'Design', 'Business'];
 ---
 
 <!doctype html>
@@ -144,14 +144,15 @@ const VERTICALS = ['Product', 'SEO', 'Marketing', 'Content'];
         <div class="prd-sec-head">
           <span class="pk-eyebrow">Across verticals</span>
           <h2 class="prd-h2">One queue for every team</h2>
-          <p class="prd-sub">Product, SEO, Marketing and Content review the same live pages and
-            drop notes side by side. Each team sees only its own items, the admin sees everything,
-            and nobody waits on a shared doc, a screenshot thread, or a staging deploy to weigh in.
-            Cross-vertical review that used to sprawl across tools collapses into one timeline.</p>
+          <p class="prd-sub">Product, SEO, Marketing, Content, Design and Business review the same live pages and
+            drop notes side by side — each one directed to the team that will action it. Every team
+            sees the queue directed to it; Builder sees everything and ships. Nobody waits on a shared
+            doc, a screenshot thread, or a staging deploy to weigh in — cross-vertical review that used
+            to sprawl across tools collapses into one timeline.</p>
         </div>
         <div class="prd-chips">
           {VERTICALS.map((v) => <span class="pk-chip">{v}</span>)}
-          <span class="pk-chip pk-chip--red">Admin sees all</span>
+          <span class="pk-chip pk-chip--red">Builder sees all</span>
         </div>
       </section>
 

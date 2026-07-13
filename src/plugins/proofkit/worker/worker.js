@@ -150,7 +150,8 @@ export default {
           history: [{ status: 'open', at: nowIso, event: 'created', published: false }], // audit trail: current + past status
           parentId: b.parentId || null, // set on replies -> threads a comment
           sessionId: b.sessionId ? String(b.sessionId).slice(0, 64) : '', // groups a review sitting
-          team: b.team ? String(b.team).slice(0, 40) : '',
+          team: b.team ? String(b.team).slice(0, 40) : '',      // FROM: the reviewer's own team
+          toTeam: b.toTeam ? String(b.toTeam).slice(0, 40) : '', // TO: the team this is directed to for action
           name: String(b.name || 'anonymous').slice(0, 80),
           comment: comment.slice(0, 4000),
           changeTo: b.changeTo ? String(b.changeTo).slice(0, 4000) : '', // Content: suggested new copy
@@ -181,10 +182,11 @@ export default {
           return json(arr, 200, cors);
         }
         if (team) {
-          // Team-scoped: admin may read any team; a team key may read only its own.
+          // Team-scoped INBOX: comments DIRECTED to this team (toTeam), for it to action.
+          // Admin may read any team; a team key may read only its own.
           if (!isAdmin && passTeam !== team) return deny();
           const all = await readAll(kv);
-          const masked = all.filter((r) => (r.team || '') === team).map(maskForTeam);
+          const masked = all.filter((r) => (r.toTeam || '') === team).map(maskForTeam);
           masked.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
           return json(masked, 200, cors);
         }
@@ -233,6 +235,22 @@ export default {
         // audit trail: record every working-status transition (current + past status).
         if (!Array.isArray(rec.history)) rec.history = [];
         rec.history.push({ status, at: nowIso, event: 'status', published: !!rec.published });
+        await kv.put(keyFor(path), JSON.stringify(arr));
+        return json(rec, 200, cors);
+      }
+
+      // ---- edit the From/To teams of a comment (admin) ----
+      // Body: { id, path, team?, toTeam? }. Updates the raising team and/or the directed
+      // team on a root record — lets the admin re-route a comment after the fact.
+      if (request.method === 'POST' && url.pathname === '/teams') {
+        if (!isAdmin) return deny();
+        const b = await request.json();
+        const path = b.path || '/';
+        const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
+        const rec = arr.find((r) => r.id === b.id);
+        if (!rec) return json({ error: 'not found' }, 404, cors);
+        if (b.team !== undefined) rec.team = String(b.team || '').slice(0, 40);
+        if (b.toTeam !== undefined) rec.toTeam = String(b.toTeam || '').slice(0, 40);
         await kv.put(keyFor(path), JSON.stringify(arr));
         return json(rec, 200, cors);
       }
@@ -341,7 +359,8 @@ function maskForTeam(r) {
     id: r.id,
     parentId: r.parentId || null,
     createdAt: r.createdAt,
-    team: r.team || '',
+    team: r.team || '',       // FROM: which team raised it
+    toTeam: r.toTeam || '',   // TO: which team it is directed to (this team)
     name: r.name || '',
     comment: r.comment,
     changeTo: r.changeTo || '',

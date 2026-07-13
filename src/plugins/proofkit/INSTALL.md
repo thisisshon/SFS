@@ -117,9 +117,12 @@ Worker details an integrator should know:
   a completed content change against the live page. Set it to the real live origin (not `*`) or the
   content-copy-match auto-verification silently degrades to `manual`.
 - **Admin sign-in has two doors.** Direct password login at `/review`, **or** the `/teamdash` login
-  dropdown's **Design (Admin)** option (`config.ts` `ADMIN_TEAM = 'Design'`) — a login-only identity
-  that maps to admin. Design's "key" is the admin password (`ADMIN_PASS`); it has no `TEAM_KEYS` entry,
-  so the Worker sees the admin pass and treats it as admin automatically.
+  dropdown's **Builder** option (`config.ts` `ADMIN_TEAM = 'Builder'`) — a login-only identity
+  that maps to admin. Builder's "key" is the admin password (`ADMIN_PASS`); it has no `TEAM_KEYS` entry,
+  so the Worker sees the admin pass and treats it as admin automatically. (`Design` is now an ordinary
+  team — give it a `TEAM_KEYS` entry like any other team.)
+- **Directed comments.** Each comment carries `toTeam` (the composer's "Direct to", default `Builder`);
+  `GET /comments?team=X` returns the inbox **directed to** X (`toTeam === X`), not authored by X.
 - **Endpoints:** `GET /comments?team=X` (masked, team dashboard), `POST /status` (working status +
   validation; `/resolve` kept as a back-compat alias), `POST /deploy` (publish the bucket + notify),
   `GET /notifications` (+`?team=X`), `POST /notifications/read` (body `{ ids, read?:boolean=true }` —

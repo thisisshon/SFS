@@ -56,6 +56,9 @@
   .rvd .rvd-word{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--pk-ink)}
   .rvd .rvd-tag{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
     color:var(--pk-muted);padding-left:12px;border-left:1px solid var(--pk-hair)}
+  /* "Shriram FS" in the Shriram brand gold (dark mode); neutral in light mode. */
+  .rvd .rvd-tag-brand{color:#f3b83f}
+  :root[data-pk-theme="light"] .rvd .rvd-tag-brand{color:var(--pk-muted)}
 
   /* ---- headline ---- */
   .rvd .rvd-headband{padding:44px 0 4px}
@@ -120,11 +123,22 @@
     font:700 10px/1 var(--pk-font);letter-spacing:.02em;vertical-align:middle;font-variant-numeric:tabular-nums}
   .rvd .rvd-navbadge[hidden]{display:none}
   .rvd .rvd-navbadge-alert{background:var(--pk-red)}
+  /* "Team dashboards" — admin's per-team board picker, under the nav. */
+  .rvd .rvd-teamview{margin-top:18px;padding-top:16px;border-top:1px solid var(--pk-hair);
+    display:flex;flex-direction:column;gap:9px}
+  .rvd .rvd-teamview-label{padding:0 2px;font:700 10px/1 var(--pk-font);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--pk-muted)}
   .rvd .rvd-content{flex:1;min-width:0}
 
   /* ---- toolbar: search + sort + export/copy actions ---- */
   .rvd .rvd-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px}
   .rvd .rvd-toolbar-sp{flex:1 1 24px}
+  /* select all / none toggle (mirrors the small dropdown triggers) */
+  .rvd .rvd-selectall{height:42px;padding:0 14px;border:1px solid var(--pk-hair);border-radius:0;cursor:pointer;
+    background:var(--pk-input);color:var(--pk-body);font:600 12px/1 var(--pk-font);letter-spacing:.04em;
+    white-space:nowrap;transition:border-color .15s,color .15s}
+  .rvd .rvd-selectall.is-active{background:var(--pk-red);color:#fff;border-color:var(--pk-red)}
+  .rvd .rvd-selectall:disabled{opacity:.5;cursor:default}
   .rvd .rvd-search{flex:1 1 220px;min-width:180px;height:42px;padding:0 14px;border:1px solid var(--pk-hair);
     border-radius:0;background:var(--pk-input);color:var(--pk-ink);font:400 14px/1.5 var(--pk-font)}
   .rvd .rvd-search::placeholder{color:var(--pk-muted)}
@@ -168,7 +182,7 @@
   .rvd .rvd-teamchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
   .rvd .rvd-tchip{height:30px;padding:0 14px;border:1.5px solid transparent;border-radius:9999px;cursor:pointer;
     font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
-    display:inline-flex;align-items:center;transition:transform .12s}
+    display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w-lg);box-sizing:border-box;transition:transform .12s}
 
   /* ---- list ---- */
   .rvd .rvd-grid{display:flex;flex-direction:column;gap:10px}
@@ -178,16 +192,29 @@
   .rvd .rvd-gh a{color:var(--pk-ink);text-decoration:none;border-bottom:1px solid var(--pk-hair)}
   .rvd .rvd-gh span{font-size:12px;font-weight:500;color:var(--pk-muted);letter-spacing:0;text-transform:none}
 
-  /* ---- comment card (scalable: HEADER / BODY / CALLOUT / FOOTER) ---- */
-  .rvd .rvd-item{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border-radius:0;max-width:100%;
-    background:var(--pk-card);border:1px solid var(--pk-hair);border-left:2px solid var(--pk-hair);
+  /* ---- comment card — geometric bands: META / COMMENT / ROUTE / CALLOUT / FOOTER ---- */
+  .rvd .rvd-item{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border-radius:0;max-width:100%;
+    background:var(--pk-card);border:1px solid var(--pk-hair);border-left:3px solid var(--pk-hair);
     transition:border-color .15s,background .15s;overflow-wrap:anywhere}
-  /* HEADER: checkbox · status · team · page · time · actions */
-  .rvd .rvd-card-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px 10px}
-  .rvd .rvd-card-head .rvd-sel{margin-top:0}
-  .rvd .rvd-card-head .rvd-slug{margin-left:2px}
-  .rvd .rvd-card-head .rvd-acts{margin-left:auto}
-  .rvd .rvd-acts{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  /* left edge colour-keyed to lifecycle state (fast visual scan; hover still wins → red) */
+  .rvd .rvd-item[data-state="open"]{border-left-color:var(--pk-amber)}
+  .rvd .rvd-item[data-state="bucket"]{border-left-color:var(--pk-blue-ink)}
+  .rvd .rvd-item[data-state="deployed"]{border-left-color:var(--pk-green)}
+  .rvd .rvd-item[data-state="closed"]{border-left-color:var(--pk-muted)}
+  /* SELECTED (multi-select) — a vibrant red-filled state that stands right out */
+  .rvd .rvd-item.is-selected{background:#3a1512;border-color:var(--pk-red);border-left-color:var(--pk-red)}
+  :root[data-pk-theme="light"] .rvd .rvd-item.is-selected{background:#fce8e5;border-color:var(--pk-red);border-left-color:var(--pk-red)}
+  /* META band: select · status · New · (pushed right) page · time */
+  .rvd .rvd-card-top{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  .rvd .rvd-card-top .rvd-sel{margin-top:0}
+  .rvd .rvd-loc{margin-left:auto;display:inline-flex;align-items:center;gap:10px;min-width:0}
+  /* ROUTE band: <chip> → <chip> (raising team → directed team) */
+  .rvd .rvd-route{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  /* ACTION FOOTER: replies toggle (left) · actions (right), fenced by a hairline */
+  .rvd .rvd-card-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    padding-top:14px;border-top:1px solid var(--pk-hair)}
+  .rvd .rvd-foot-left{display:flex;align-items:center;min-height:32px}
+  .rvd .rvd-acts{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-left:auto}
   /* BODY: the comment, clamped to ~4 lines until expanded */
   .rvd .rvd-card-body{display:flex;flex-direction:column;gap:6px;min-width:0}
   .rvd .rvd-comment-text{font-size:15px;font-weight:500;line-height:1.5;color:var(--pk-ink);
@@ -214,8 +241,9 @@
   .rvd .rvd-del{height:32px;background:none;border:none;padding:0 6px;cursor:pointer;white-space:nowrap;
     font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;color:var(--pk-muted);transition:color .15s}
 
-  /* status + team chips (badge pills) */
-  .rvd .rvd-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  /* status + team chips (badge pills) — uniform width for parity (see --pk-chip-w) */
+  .rvd .rvd-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
   .rvd .rvd-chip.open{background:#3a2a12;color:var(--pk-amber)}
   /* "in bucket" = completed/closed but not yet deployed → the ship-ready blue tone */
   .rvd .rvd-chip.bucket{background:var(--pk-blue-bg);color:var(--pk-blue-ink)}
@@ -227,7 +255,11 @@
   .rvd .rvd-valid.ok{color:var(--pk-green)}
   .rvd .rvd-valid.warn{color:var(--pk-amber)}
   .rvd .rvd-team-chip{padding:4px 10px;border-radius:9999px;font-weight:700;font-size:10px;
-    text-transform:uppercase;letter-spacing:.08em}
+    text-transform:uppercase;letter-spacing:.08em;
+    display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
+  /* From → To route: an arrow between the raising team and the directed team */
+  .rvd .rvd-route-arrow{color:var(--pk-muted);font-weight:700;font-size:12px;margin:0 1px}
+  .rvd .rvd-team-none{background:var(--pk-elev);color:var(--pk-muted);border:1px solid var(--pk-hair)}
 
   /* "change to" callout */
   .rvd .rvd-change{padding:12px 14px;border-radius:0;background:#241a10;border:1px solid #4a3417;border-left:2px solid var(--pk-amber)}
@@ -291,6 +323,45 @@
   .rvd .rvd-logrow{cursor:pointer;transition:background .12s}
   .rvd .rvd-log td.num{font-weight:700;text-align:center;color:var(--pk-ink);font-variant-numeric:tabular-nums}
   .rvd .rvd-log .rvd-team-chip{margin-right:4px}
+  /* Requirement column — the comment text, clamped to two lines */
+  .rvd .rvd-log-req{color:var(--pk-ink);max-width:320px}
+  .rvd .rvd-log-req{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* "More options" trigger */
+  .rvd .rvd-moreopts{height:32px;padding:0 14px;border-radius:0;border:1px solid var(--pk-hair);background:transparent;cursor:pointer;
+    white-space:nowrap;color:var(--pk-ink);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;gap:8px;transition:border-color .15s,color .15s}
+  .rvd .rvd-moreopts-chev{font-size:11px;color:var(--pk-muted)}
+  /* fixed-position row action menu (appended to <body>, so never clipped) */
+  .rvd-rowmenu{position:fixed;z-index:2147483400;min-width:200px;display:flex;flex-direction:column;gap:2px;padding:6px;
+    background:var(--pk-card);border:1px solid var(--pk-hair);box-shadow:var(--pk-shadow-md);
+    animation:pk-dd-panel .16s var(--pk-ease) both}
+  .rvd-rowmenu-item{display:flex;align-items:center;width:100%;text-align:left;white-space:nowrap;border:0;border-radius:0;
+    cursor:pointer;padding:11px 14px;background:transparent;color:var(--pk-body);
+    font:600 12px/1 var(--pk-font);letter-spacing:.04em;transition:background .12s,color .12s}
+  .rvd-rowmenu-item.danger{color:var(--pk-softred)}
+  @media (min-width:1024px) and (hover:hover){.rvd-rowmenu-item:hover{background:var(--pk-elev);color:var(--pk-ink)}
+    .rvd-rowmenu-item.danger:hover{color:var(--pk-softred)}}
+
+  /* ---- Edit-teams modal (re-route From/To) ---- */
+  .rvd-editmodal{position:fixed;inset:0;z-index:2147483300;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:rgba(8,8,8,.62);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .rvd-editcard{width:420px;max-width:100%;background:var(--pk-card);border:1px solid var(--pk-hair);
+    box-shadow:var(--pk-shadow-md);padding:26px;box-sizing:border-box;font-family:var(--pk-font)}
+  .rvd-edithead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .rvd-edittitle{font:700 16px/1.2 var(--pk-font);color:var(--pk-ink)}
+  .rvd-editx{background:none;border:none;cursor:pointer;font-size:20px;line-height:1;color:var(--pk-muted)}
+  .rvd-editsub{margin:8px 0 22px;font-size:13px;line-height:1.5;color:var(--pk-muted)}
+  .rvd-editfield{display:flex;flex-direction:column;gap:9px;margin-bottom:18px}
+  .rvd-editlbl{font:700 10px/1 var(--pk-font);letter-spacing:.12em;text-transform:uppercase;color:var(--pk-muted)}
+  .rvd-editactions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+  .rvd-editbtn{height:40px;padding:0 20px;border-radius:0;border:1px solid var(--pk-hair);background:transparent;cursor:pointer;
+    color:var(--pk-body);font:700 10px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;transition:border-color .15s,color .15s,background .15s}
+  .rvd-editsave{border-color:var(--pk-red);color:#fff;background:var(--pk-red)}
+  .rvd-editsave:disabled{opacity:.6;cursor:default}
+  @media (min-width:1024px) and (hover:hover){
+    .rvd-editcancel:hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd-editsave:hover{background:var(--pk-red-2);border-color:var(--pk-red-2)}}
   .rvd .rvd-back{margin-bottom:16px;background:none;border:none;cursor:pointer;padding:0;
     font:700 11px/1 var(--pk-font);letter-spacing:.08em;text-transform:uppercase;color:var(--pk-body);transition:color .15s}
   .rvd .rvd-detailhead{font-size:13px;color:var(--pk-muted);margin-bottom:20px}
@@ -347,11 +418,13 @@
   /* ===== responsive ===== */
   @media (max-width:768px){
     .rvd .rvd-shell{flex-direction:column;gap:20px}
-    .rvd .rvd-side{flex-direction:row;width:auto;position:static;flex-wrap:wrap}
+    .rvd .rvd-side{flex-direction:row;width:auto;position:static;flex-wrap:wrap;align-items:center}
+    .rvd .rvd-teamview{margin-top:0;padding-top:0;border-top:none;flex-direction:row;align-items:center;gap:10px}
   }
   @media (max-width:560px){
     .rvd #rvd-counts{grid-template-columns:1fr}
-    .rvd .rvd-card-head .rvd-acts{width:100%;margin-left:0}
+    .rvd .rvd-loc{margin-left:0;width:100%}
+    .rvd .rvd-card-foot .rvd-acts{margin-left:0}
   }
 
   /* ===== hover (desktop only, gated) ===== */
@@ -363,6 +436,8 @@
     .rvd .rvd-tchip:hover{transform:translateY(-1px)}
     .rvd .rvd-item:hover{border-left-color:var(--pk-red);background:var(--pk-elev)}
     .rvd .rvd-openpin:hover,.rvd .rvd-prompt-btn:hover,.rvd .rvd-tbtn:hover,.rvd .rvd-gh-copy:hover,.rvd .rvd-bulk-a:hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd .rvd-selectall:not(.is-active):hover{border-color:var(--pk-red);color:var(--pk-red)}
+    .rvd .rvd-moreopts:hover{border-color:var(--pk-red);color:var(--pk-red)}
     .rvd .rvd-deploy-btn:not(:disabled):hover{background:var(--pk-deploy-hover);border-color:var(--pk-deploy-hover)}
     .rvd .rvd-notif:hover{border-left-color:var(--pk-red)}
     .rvd .rvd-bulk-a.danger:hover{border-color:var(--pk-softred);color:var(--pk-softred)}

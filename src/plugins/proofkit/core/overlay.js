@@ -1,5 +1,5 @@
-  import { TEAM_COLORS, WORKER_URL, HIDE_SELECTORS, PROOFKIT_ENABLED, ADMIN_TEAM,
-    getSession, setSession, clearSession, buildPanelLogin } from './config.js';
+  import { TEAMS, TEAM_COLORS, WORKER_URL, HIDE_SELECTORS, PROOFKIT_ENABLED, ADMIN_TEAM,
+    getSession, setSession, clearSession, buildPanelLogin, buildDropdown } from './config.js';
   // The design system, inlined — injected only when review mode arms (real visitors
   // download nothing), so the on-page login matches the dashboards (.pk-login).
   import pkTokensCss from './design/tokens.css?inline';
@@ -83,8 +83,9 @@
         const go = () => tryLogin();
         login.button.addEventListener('click', go);
         login.keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-        // overlay context: clicking the backdrop backs out of review
-        login.el.addEventListener('click', (e) => { if (e.target === login.el) hideLogin(); });
+        // Clicking the backdrop backs FULLY out of review — disarm the tab too, else
+        // (with the login now always shown while armed) it would just reappear.
+        login.el.addEventListener('click', (e) => { if (e.target === login.el) { sessionStorage.removeItem(KEY); hideLogin(); } });
       }
       login.setError(''); login.keyInput.value = ''; login.setTeam(getSession().team || '');
       document.body.appendChild(login.el);
@@ -123,8 +124,9 @@
         font:600 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.28)}
       .rv-fab[data-on="1"]{background:var(--pk-red)}
       .rv-fab svg{width:20px;height:20px;flex:none}
-      /* "Go to Dashboard" — sits in the dock next to the Save/Comment FAB */
-      .rv-dash{display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border:none;border-radius:24px;
+      /* "Go To Dashboard" — pinned to the bottom-LEFT, clear of the right-hand dock */
+      .rv-dash{position:fixed;left:24px;bottom:24px;z-index:2147483040;
+        display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border:none;border-radius:24px;
         background:#1d1d1d;color:#fff;cursor:pointer;text-decoration:none;
         font:600 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.28)}
       .rv-dash svg{width:20px;height:20px;flex:none}
@@ -143,7 +145,7 @@
         .rv-dock{right:16px;bottom:16px;gap:14px}
         .rv-nav{gap:10px}
         .rv-nav button{width:40px;height:40px}
-        .rv-dash{padding:0 14px}
+        .rv-dash{left:16px;bottom:16px;padding:0 14px}
         .rv-dash span{display:none}
       }
       .rv-pin{position:fixed;z-index:2147483000;min-width:26px;height:26px;padding:0 7px;
@@ -153,7 +155,7 @@
       .rv-pin.resolved{background:var(--pk-muted)}
       .rv-pin.active{background:#1d1d1d;transform:translate(-50%,-100%) scale(1.12)}
       .rv-pop{position:fixed;z-index:2147483003;width:344px;max-width:calc(100vw - 32px);
-        background:var(--pk-card);color:var(--pk-ink);border:1px solid var(--pk-hair);border-radius:0;overflow:hidden;
+        background:var(--pk-card);color:var(--pk-ink);border:1px solid var(--pk-hair);border-radius:0;
         box-shadow:0 24px 64px rgba(0,0,0,.6);font:400 14px/1.5 Outfit,system-ui,sans-serif}
       .rv-pop header{padding:20px 22px 16px;background:var(--pk-elev);border-bottom:1px solid var(--pk-hair);
         display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -165,11 +167,15 @@
         border-radius:4px;font:inherit;color:var(--pk-ink);background:var(--pk-input);box-sizing:border-box}
       .rv-pop input::placeholder,.rv-pop textarea::placeholder{color:var(--pk-muted)}
       .rv-pop select{height:44px;cursor:pointer}
+      /* "Direct to" — which team this comment is routed to for action */
+      .rv-directto{display:flex;flex-direction:column;gap:8px}
+      .rv-directlabel{font:700 10px/1 Outfit,system-ui,sans-serif;text-transform:uppercase;
+        letter-spacing:.06em;color:var(--pk-muted)}
       .rv-pop textarea{min-height:96px;resize:vertical}
       .rv-pop input:focus,.rv-pop textarea:focus,.rv-pop select:focus{outline:2px solid var(--pk-red);border-color:var(--pk-red)}
-      .rv-change,.rv-rchange{border-color:var(--pk-red) !important;background:#241a10 !important}
       .rv-team-chip{padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;
-        text-transform:uppercase;letter-spacing:.02em}
+        text-transform:uppercase;letter-spacing:.02em;
+        display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
       .rv-change-view{margin-top:2px;padding:8px 10px;border-radius:8px;background:#241a10;border:1px solid #4a3417}
       .rv-change-view>span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;
         color:var(--pk-amber);letter-spacing:.04em;margin-bottom:2px}
@@ -199,7 +205,8 @@
       .rv-reply textarea{min-height:64px;resize:vertical}
       .rv-reply input:focus,.rv-reply textarea:focus{outline:2px solid var(--pk-red);border-color:var(--pk-red)}
       .rv-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--pk-muted)}
-      .rv-chip{padding:2px 8px;border-radius:10px;font-weight:600;font-size:11px}
+      .rv-chip{padding:2px 8px;border-radius:10px;font-weight:600;font-size:11px;
+        display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
       .rv-chip.open{background:#3a2a12;color:var(--pk-amber)}
       .rv-chip.resolved{background:#16281c;color:var(--pk-green)}
       .rv-chip.closed{background:#2a2a2a;color:var(--pk-muted)}
@@ -329,23 +336,24 @@
     setFab(false);
     fab.addEventListener('click', () => (reviewOn ? exit() : startReview()));
 
-    // "Go to Dashboard" — every authenticated reviewer gets it in the dock, next to
-    // the Save/Comment FAB. Admins (ADMIN_TEAM) land on /reviewdash; teams on /teamdash.
+    // "Go To Dashboard" — every authenticated reviewer gets it, pinned to the bottom
+    // LEFT (its own fixed control, clear of the right-hand dock). Admins (ADMIN_TEAM)
+    // land on /reviewdash; teams on /teamdash.
     const dashBtn = document.createElement('button');
     dashBtn.className = 'rv-dash'; dashBtn.type = 'button';
     const ICON_GRID = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
       'stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/>' +
       '<rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' +
       '<rect x="3" y="14" width="7" height="7" rx="1"/></svg>';
-    dashBtn.innerHTML = ICON_GRID + '<span>Dashboard</span>';
+    dashBtn.innerHTML = ICON_GRID + '<span>Go To Dashboard</span>';
     dashBtn.style.display = 'none'; // shown by revealDock() once authenticated
     dashBtn.addEventListener('click', () => {
       const team = getSession().team;
       location.href = team === ADMIN_TEAM ? '/reviewdash' : '/teamdash';
     });
+    document.body.appendChild(dashBtn); // bottom-left, independent of the dock
 
     dock.appendChild(nav);
-    dock.appendChild(dashBtn);
     dock.appendChild(fab);
     dock.style.display = 'none'; // hidden until the review session is authenticated (revealDock)
     document.body.appendChild(dock);
@@ -462,7 +470,9 @@
       if (!reviewOn) return;
       const t = e.target;
       if (!(t instanceof Element)) return;
-      if (t.closest('.rv-pin, .rv-pop, .rv-dock, .rv-toast')) return;
+      // Ignore clicks on Proofkit's own controls — including the bottom-left
+      // "Go To Dashboard" button (.rv-dash), which lives outside the .rv-dock now.
+      if (t.closest('.rv-pin, .rv-pop, .rv-dock, .rv-dash, .rv-toast')) return;
       e.preventDefault(); e.stopPropagation();
       openComposer(t, e.clientX, e.clientY, e.pageX, e.pageY);
     }, true);
@@ -486,44 +496,62 @@
       document.body.appendChild(tempMarker);
 
       const pop = document.createElement('div'); pop.className = 'rv-pop';
+      // "Direct to" sits at the TOP so the reviewer picks the direction first, THEN
+      // writes the note. Fields are IDENTICAL for every team (no per-team divergence).
       pop.innerHTML =
-        '<header><div><div class="t">Add a comment</div><div class="rv-snip"></div></div>' +
+        '<header><div><div class="t">Mark a comment</div><div class="rv-snip"></div></div>' +
         '<button class="rv-x" aria-label="Close">×</button></header>' +
         '<div class="rv-body">' +
-        '<textarea class="rv-text" placeholder="What should change here? (⌘/Ctrl+Enter to save)"></textarea>' +
-        '<textarea class="rv-change" placeholder="Change it to… (the new content)" hidden></textarea>' +
+        '<div class="rv-directto"><span class="rv-directlabel">Direct to</span>' +
+          '<div class="rv-dd-slot"></div></div>' +
+        '<textarea class="rv-text" placeholder="Elaborate on the change request. (⌘/Ctrl+Enter to save)"></textarea>' +
         '<div class="rv-actions"><button class="rv-btn ghost rv-cancel">Cancel</button>' +
         '<button class="rv-btn primary rv-send">Send</button></div></div>';
       pop.querySelector('.rv-snip').textContent = anchor.snippet ? 'Selected - “' + anchor.snippet + '”' : 'Selected - ' + anchor.tag;
       document.body.appendChild(pop);
       placePop(pop, cx, cy);
 
-      const textI = pop.querySelector('.rv-text'), changeI = pop.querySelector('.rv-change');
-      const team = getSession().team; // session-global team, chosen at login
-      // Content is the only team that suggests replacement copy -> reveal 2nd field.
-      changeI.hidden = team !== 'Content';
+      const textI = pop.querySelector('.rv-text');
+      // "Direct to" — route this comment to a team's dashboard for action. Defaults to
+      // Builder (site changes); every OTHER team is selectable. Uses the SAME custom
+      // dropdown (.pk-dropdown) as every other Proofkit control — one consistent format.
+      const dItems = directItems();
+      // Default is Builder, unless the reviewer IS Builder (then Builder is absent) — fall
+      // back to the first available team so the control is never empty.
+      const dValue = dItems.some((i) => i.value === ADMIN_TEAM) ? ADMIN_TEAM : dItems[0].value;
+      const toDD = buildDropdown({ items: dItems, value: dValue, block: true });
+      pop.querySelector('.rv-dd-slot').appendChild(toDD.el);
       placePop(pop, cx, cy);
       textI.focus();
 
-      const submit = () => send(pop, textI, changeI, anchor);
+      const submit = () => send(pop, textI, anchor, toDD);
       pop.querySelector('.rv-x').addEventListener('click', closePop);
       pop.querySelector('.rv-cancel').addEventListener('click', closePop);
       pop.querySelector('.rv-send').addEventListener('click', submit);
       const onKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); } };
       textI.addEventListener('keydown', onKey);
-      changeI.addEventListener('keydown', onKey);
     }
 
-    async function send(pop, textI, changeI, anchor) {
+    // "Direct to" options: every team EXCEPT the reviewer's own (you can't route a
+    // request to your own team), then Builder at the END, fenced off by a divider.
+    // Builder stays the default (site changes) even though it's listed last — unless the
+    // reviewer IS Builder, in which case Builder is dropped too.
+    function directItems() {
+      const me = getSession().team;
+      const teams = TEAMS.filter((t) => t !== me).map((t) => ({ value: t, label: t }));
+      if (me !== ADMIN_TEAM) teams.push({ value: ADMIN_TEAM, label: ADMIN_TEAM, dividerBefore: true });
+      return teams;
+    }
+
+    async function send(pop, textI, anchor, toDD) {
       const team = getSession().team; // session-global team from login
+      const toTeam = (toDD && toDD.getValue()) || ADMIN_TEAM; // directed target
       const comment = textI.value.trim();
-      const changeTo = changeI.value.trim();
       if (!comment) { textI.focus(); return; }
-      if (team === 'Content' && !changeTo) { changeI.focus(); toast('Add the suggested content change.'); return; }
       const btn = pop.querySelector('.rv-send'); btn.disabled = true; btn.textContent = 'Sending…';
       try {
         const rec = await store.add({
-          team, comment, changeTo: team === 'Content' ? changeTo : '', anchor,
+          team, toTeam, comment, anchor,
           sessionId: sessionId(),
           page: { path: pagePath(), url: location.href, title: document.title, slug: slugFromPath() },
         });
@@ -552,8 +580,7 @@
         (root.status === 'resolved' ? 'Resolved' : root.status === 'closed' ? 'Closed' : 'Unresolved') + '</span></div>' +
         '<div class="rv-thread"></div>' +
         '<div class="rv-reply">' +
-        '<textarea class="rv-rtext" placeholder="Add another comment… (⌘/Ctrl+Enter)"></textarea>' +
-        '<textarea class="rv-rchange" placeholder="Change it to… (the new content)" hidden></textarea>' +
+        '<textarea class="rv-rtext" placeholder="Elaborate on the change request… (⌘/Ctrl+Enter)"></textarea>' +
         '<div class="rv-actions"><button class="rv-btn primary rv-radd">Add Comment</button></div></div>';
       pop.querySelector('.rv-snip').textContent = root.anchor && root.anchor.snippet ? '“' + root.anchor.snippet + '”' : '';
       const CHEV = '<svg class="rv-tchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
@@ -581,27 +608,21 @@
       document.body.appendChild(pop);
       const p = pinPos(root); placePop(pop, p.x, p.y);
       // The team is session-global (chosen at login); replies are team-tagged, no name.
-      const rteam = getSession().team;
-      const rchange = pop.querySelector('.rv-rchange');
-      rchange.hidden = rteam !== 'Content'; // Content team reveals the "change to…" field
       placePop(pop, p.x, p.y);
       pop.querySelector('.rv-x').addEventListener('click', () => { closePop(); pinEls.forEach((el) => el.classList.remove('active')); });
       pop.querySelector('.rv-radd').addEventListener('click', () => addReply(pop, root));
       const onRKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addReply(pop, root); } };
       pop.querySelector('.rv-rtext').addEventListener('keydown', onRKey);
-      pop.querySelector('.rv-rchange').addEventListener('keydown', onRKey);
     }
 
     async function addReply(pop, root) {
       const team = getSession().team; // session-global team from login
       const txt = pop.querySelector('.rv-rtext').value.trim();
-      const changeTo = pop.querySelector('.rv-rchange').value.trim();
       if (!txt) { pop.querySelector('.rv-rtext').focus(); return; }
-      if (team === 'Content' && !changeTo) { pop.querySelector('.rv-rchange').focus(); toast('Add the suggested content change.'); return; }
       const btn = pop.querySelector('.rv-radd'); btn.disabled = true; btn.textContent = 'Adding…';
       try {
         const rec = await store.add({
-          team, comment: txt, changeTo: team === 'Content' ? changeTo : '',
+          team, toTeam: root.toTeam || ADMIN_TEAM, comment: txt,
           sessionId: sessionId(), parentId: root.id, anchor: root.anchor, page: root.page,
         });
         comments.push(rec); renderPins(); openThread(root);
@@ -627,14 +648,18 @@
       return '<span class="rv-team-chip" style="background:' + c[0] + ';color:' + c[1] + '">' + escapeHtml(team) + '</span>';
     }
 
-    // Authenticated session (Key present) -> reveal the Comment dock on every armed page,
-    // and auto-enter review on a /<page>/review (AUTO) or Open-Pin (#c=) arrival.
-    // Not yet authenticated -> keep the dock hidden; only the entry flows open the
-    // Team + Key login so the reviewer can authenticate. A plain armed page shows nothing.
+    // We only reach here when the tab is ARMED (reviewMode === '1'; the gate above
+    // returned for everyone else). So:
+    //  • Authenticated → reveal the Comment dock; auto-enter review on a /<page>/review
+    //    (AUTO) or Open-Pin (#c=) arrival.
+    //  • Not authenticated → ALWAYS open the Team + Key login so the reviewer can sign
+    //    in. This must NOT be gated on AUTO: the AUTO flag is consumed on the first
+    //    paint, so a reload (or Vite full-reload) would otherwise leave an armed-but-
+    //    signed-out tab showing nothing — the "/review doesn't trigger the login" bug.
     if (isAuthed()) {
       revealDock();
       if (AUTO || /[#&]c=/.test(location.hash)) startReview();
-    } else if (AUTO || /[#&]c=/.test(location.hash)) {
+    } else {
       showLogin();
     }
   })();

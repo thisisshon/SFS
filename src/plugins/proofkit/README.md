@@ -72,10 +72,11 @@ Comment dock never appears before that. `?review=0` signs out. Plus the two Work
 **Admin dashboard** (`Login.astro` = `/review`, `Dashboard.astro` = `/reviewdash`)
 - **Two doors in.** Either sign in directly at `/review` (the password gate; on success it redirects
   to `/reviewdash`, which keeps its own gate so hitting it directly still prompts), **or** pick
-  **Design (Admin)** in the `/teamdash` login dropdown and enter the admin password — that identity
-  (`config.ts` `ADMIN_TEAM = 'Design'`) maps to admin and redirects to `/reviewdash`. Design is a
-  login identity only — it is **not** in `TEAMS`, so it never appears in the comment composer or team
-  filters. Full access — every team's comments.
+  **Builder** in the `/teamdash` login dropdown and enter the admin password — that identity
+  (`config.ts` `ADMIN_TEAM = 'Builder'`) maps to admin and redirects to `/reviewdash`. Builder is a
+  login identity only — it is **not** in `TEAMS` (so it never appears in team filters), though it *is*
+  a directable target in the composer's "Direct to" (the default: on-site changes go to Builder).
+  Full access — every team's comments. (`Design` is now an ordinary team, not admin.)
 - Left-sidebar IA: **Overview · Deploy · Notifications · Master Log**.
 - Overview tabs: **All / By Page / Open / In Bucket / Deployed / Closed**; team-colour filter chips;
   live counts; 30s auto-refresh + on-focus refresh. The **All** tab is the active worklist —

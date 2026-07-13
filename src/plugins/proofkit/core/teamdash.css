@@ -40,11 +40,15 @@
   .tmd .tmd-word{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--pk-ink)}
   .tmd .tmd-tag{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
     color:var(--pk-muted);padding-left:12px;border-left:1px solid var(--pk-hair)}
+  /* "Shriram FS" in the Shriram brand gold (dark mode); neutral in light mode. */
+  .tmd .tmd-tag-brand{color:#f3b83f}
+  :root[data-pk-theme="light"] .tmd .tmd-tag-brand{color:var(--pk-muted)}
   /* the team name (third section) highlighted in a contrasting blue */
   .tmd .tmd-team-hi{color:var(--pk-blue)}
   .tmd .tmd-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .tmd .tmd-team-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;
-    text-transform:uppercase;letter-spacing:.08em}
+    text-transform:uppercase;letter-spacing:.08em;
+    display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
 
   /* ---- headline ---- */
   .tmd .tmd-headband{padding:44px 0 4px}
@@ -113,6 +117,9 @@
     background:var(--pk-card);border:1px solid var(--pk-hair);border-left:2px solid var(--pk-hair)}
   .tmd .tmd-line{display:flex;align-items:flex-start;gap:14px}
   .tmd .tmd-line .tmd-chip{flex:none;margin-top:1px}
+  /* "from <team>" — who raised the comment that's now directed to us */
+  .tmd .tmd-from{flex:none;display:inline-flex;align-items:center;gap:6px;margin-top:1px;
+    font-size:11px;color:var(--pk-muted)}
   .tmd .tmd-headline{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
   .tmd .tmd-comment{font-size:15px;font-weight:500;line-height:1.5;color:var(--pk-ink);
     display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
@@ -120,7 +127,8 @@
   .tmd .tmd-snip{font-size:12px;color:var(--pk-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* status chips */
-  .tmd .tmd-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  .tmd .tmd-chip{padding:4px 11px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
   .tmd .tmd-chip.pending{background:#3a2a12;color:var(--pk-amber)}
   .tmd .tmd-chip.done{background:#16281c;color:var(--pk-green)}
   .tmd .tmd-chip.closed{background:#2a2a2a;color:var(--pk-muted)}
@@ -162,6 +170,21 @@
 
   .tmd .tmd-empty{margin:64px 0;text-align:center;color:var(--pk-muted);font-size:14px;letter-spacing:.02em}
 
+  /* Admin-view ribbon — Builder viewing a specific team's board. */
+  .tmd .tmd-adminbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    margin:0 0 24px;padding:12px 18px;border:1px solid var(--pk-red);border-left:3px solid var(--pk-red);
+    border-radius:8px;background:var(--pk-elev)}
+  .tmd .tmd-adminbar-txt{font-size:13px;color:var(--pk-body);letter-spacing:.02em}
+  .tmd .tmd-adminbar-txt b{color:var(--pk-ink);font-weight:700}
+  .tmd .tmd-adminbar-back{flex:none;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--pk-red);text-decoration:none;white-space:nowrap}
+
+  /* Faded "upgrade access to admin" — a low-key provision to elevate to Builder. */
+  .tmd .tmd-foot{margin:56px 0 8px;text-align:center}
+  .tmd .tmd-upgrade{display:inline-block;color:var(--pk-muted);opacity:.55;text-decoration:none;
+    font-size:12px;letter-spacing:.06em;border-bottom:1px solid transparent;
+    transition:opacity .15s,color .15s,border-color .15s;cursor:pointer}
+
   /* The login modal now lives in design/components.css (.pk-login), shared by both dashboards. */
 
   /* ===== responsive ===== */
@@ -182,6 +205,8 @@
     .tmd .tmd-filter:hover{color:var(--pk-ink)}
     .tmd .tmd-bypage:hover,.tmd .tmd-markall:hover,.tmd .tmd-note-toggle:hover{border-color:var(--pk-red);color:var(--pk-red)}
     .tmd .tmd-slug:hover{color:var(--pk-red);border-color:var(--pk-red)}
+    .tmd .tmd-upgrade:hover{opacity:1;color:var(--pk-red);border-color:var(--pk-red)}
+    .tmd .tmd-adminbar-back:hover{text-decoration:underline}
     .tmd-login-btn:hover{background:var(--pk-red-2)}
   }
 
