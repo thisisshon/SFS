@@ -228,7 +228,7 @@ export function buildDropdown(opts) {
     '<button type="button" class="pk-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">' +
       '<span class="pk-dropdown-label"></span>' + PK_CHEV +
     '</button>' +
-    '<div class="pk-dropdown-menu' + (opts.menuAlign === 'right' ? ' pk-dropdown-menu--right' : '') + '" role="listbox" hidden></div>';
+    '<div class="pk-dropdown-menu' + (opts.menuAlign === 'right' ? ' pk-dropdown-menu--right' : '') + '" role="listbox"></div>';
   const trigger = wrap.querySelector('.pk-dropdown-trigger');
   const labelEl = wrap.querySelector('.pk-dropdown-label');
   const menu = wrap.querySelector('.pk-dropdown-menu');
@@ -250,13 +250,13 @@ export function buildDropdown(opts) {
     else if (e.key === 'ArrowUp') { e.preventDefault(); (list[i - 1] || list[list.length - 1]).focus(); }
   };
   function open() {
-    isOpen = true; menu.hidden = false; wrap.classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true');
+    isOpen = true; wrap.classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true'); // CSS animates the menu in
     document.addEventListener('click', onDoc, true); document.addEventListener('keydown', onKey, true);
     const sel = menu.querySelector('[aria-selected="true"]') || menu.querySelector('.pk-dropdown-item');
     if (sel) sel.focus();
   }
   function close() {
-    isOpen = false; menu.hidden = true; wrap.classList.remove('is-open'); trigger.setAttribute('aria-expanded', 'false');
+    isOpen = false; wrap.classList.remove('is-open'); trigger.setAttribute('aria-expanded', 'false'); // CSS animates the menu out
     document.removeEventListener('click', onDoc, true); document.removeEventListener('keydown', onKey, true);
   }
   trigger.addEventListener('click', (e) => { e.stopPropagation(); isOpen ? close() : open(); });
@@ -339,7 +339,7 @@ export function buildPanelLogin(opts) {
   const q = (s) => el.querySelector(s);
   // Team = a custom (non-native) dropdown, full-width inside the card.
   const teamItems = [...TEAMS].sort((a, b) => a.localeCompare(b)).map((t) => ({ value: t, label: t }));
-  teamItems.push({ value: ADMIN_TEAM, label: ADMIN_TEAM + ' (Admin)' });
+  teamItems.push({ value: ADMIN_TEAM, label: ADMIN_TEAM });
   const teamDD = buildDropdown({ items: teamItems, placeholder: 'Select Team', block: true });
   q('.pk-login-team').appendChild(teamDD.el);
   return {

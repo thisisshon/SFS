@@ -6,6 +6,16 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.11.1 — 2026-07-13 — dropdown open/close animation + team-dash header + login tidy
+
+- **Dropdowns animate open/close** — the `.pk-dropdown` menu now fades + slides + slightly scales in/out
+  from the top edge (spring on open), with a reduced-motion guard. Driven by the `is-open` class
+  (no more instant `hidden` toggle).
+- **Login:** the admin option now reads just **Design** (dropped the "(Admin)" tag).
+- **Team-dash header** matches the admin brand exactly with the team appended as a third section:
+  `ProofKit │ CONTENT REVIEW | SHRIRAM FS | <Team>` (filled per the signed-in team). The redundant
+  "Your Team" chip is removed.
+
 ## 2.11.0 — 2026-07-13 — custom themed dropdowns + consolidated Copy + login "Authenticating" shimmer
 
 - **Custom, non-native dropdowns.** New `.pk-dropdown` component (`design/components.css`) +

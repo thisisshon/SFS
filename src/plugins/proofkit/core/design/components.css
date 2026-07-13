@@ -140,9 +140,14 @@
 .pk-dropdown.is-open .pk-dropdown-chev{transform:rotate(180deg)}
 .pk-dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:100%;z-index:210;
   display:flex;flex-direction:column;gap:2px;padding:6px;box-sizing:border-box;
-  background:var(--pk-card);border:1px solid var(--pk-hair);box-shadow:var(--pk-shadow-md)}
-.pk-dropdown-menu--right{left:auto;right:0}
-.pk-dropdown-menu[hidden]{display:none}
+  background:var(--pk-card);border:1px solid var(--pk-hair);box-shadow:var(--pk-shadow-md);
+  /* animate open/close: fade + slide-down + slight scale from the top edge */
+  opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-6px) scale(.985);transform-origin:top center;
+  transition:opacity .15s var(--pk-ease),transform .18s var(--pk-ease),visibility 0s linear .18s}
+.pk-dropdown-menu--right{left:auto;right:0;transform-origin:top right}
+.pk-dropdown.is-open .pk-dropdown-menu{opacity:1;visibility:visible;pointer-events:auto;transform:none;
+  transition:opacity .15s var(--pk-ease),transform .2s var(--pk-spring),visibility 0s}
+@media (prefers-reduced-motion:reduce){.pk-dropdown-menu{transition:none}}
 .pk-dropdown-item{display:block;width:100%;text-align:left;white-space:nowrap;border:0;border-radius:0;cursor:pointer;
   padding:11px 16px;background:transparent;color:var(--pk-body);
   font:600 12px/1 var(--pk-font);letter-spacing:.04em;transition:background .12s,color .12s}

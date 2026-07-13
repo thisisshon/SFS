@@ -123,9 +123,9 @@
     }
 
     function renderHeader() {
-      const you = $('#tmd-you');
-      $('#tmd-you-chip').innerHTML = teamChip(team());
-      you.hidden = !team();
+      // Team is the third section of the brand tag: "Content Review | Shriram FS | <Team>".
+      const tt = $('#tmd-tag-team');
+      if (tt) tt.textContent = team() ? ' | ' + team() : '';
       const badge = $('#tmd-navbadge');
       const u = unreadNotes().length;
       badge.textContent = u;
