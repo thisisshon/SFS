@@ -1,5 +1,5 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, pageName, ADMIN_TEAM,
-    initTheme } from './config.js';
+    buildPanelLogin, initTheme } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter). This is a
@@ -229,71 +229,45 @@
       renderHeader();
     }
 
-    // ---- login (Team + Key) ----
-    let loginEl = null;
+    // ---- login (the shared common login — Team + Key) ----
+    let login = null;
     function showLogin() {
-      if (!loginEl) {
-        const teamOpts = [...TEAMS].sort((a, b) => a.localeCompare(b))
-          .map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join('')
-          // ADMIN_TEAM ('Design') is a login-only identity — not in TEAMS. Picking it
-          // + the admin password signs in as admin and lands on /reviewdash.
-          + `<option value="${esc(ADMIN_TEAM)}">${esc(ADMIN_TEAM)} (Admin)</option>`;
-        loginEl = document.createElement('div'); loginEl.className = 'tmd-login';
-        loginEl.innerHTML =
-          '<div class="tmd-login-card" role="dialog" aria-modal="true">' +
-          '<div class="tmd-login-title">Team Review</div>' +
-          '<div class="tmd-login-sub">Select your team and enter your key to see your review items.</div>' +
-          '<label class="tmd-login-label" for="tmd-login-team">Team</label>' +
-          '<select id="tmd-login-team" class="tmd-login-input tmd-login-select">' +
-          '<option value="" disabled selected>Select Team</option>' + teamOpts +
-          '</select>' +
-          '<label class="tmd-login-label tmd-login-label2" for="tmd-login-key">Key</label>' +
-          '<input id="tmd-login-key" class="tmd-login-input" type="password" placeholder="Enter Key" autocomplete="off" spellcheck="false">' +
-          '<div class="tmd-login-err" hidden></div>' +
-          '<div class="tmd-login-actions"><button type="button" class="tmd-login-btn">Sign in</button></div>' +
-          '</div>';
-        const teamSel = loginEl.querySelector('#tmd-login-team');
-        const input = loginEl.querySelector('#tmd-login-key');
-        const go = () => tryLogin(teamSel, input);
-        loginEl.querySelector('.tmd-login-btn').addEventListener('click', go);
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-        teamSel.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      if (!login) {
+        login = buildPanelLogin({ title: 'Panel Login', sub: 'Enter your key to continue.' });
+        const go = () => tryLogin();
+        login.button.addEventListener('click', go);
+        login.keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+        login.teamSel.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       }
-      loginEl.querySelector('.tmd-login-err').hidden = true;
-      const teamSel = loginEl.querySelector('#tmd-login-team');
-      teamSel.value = team() || '';
-      loginEl.querySelector('#tmd-login-key').value = '';
-      document.body.appendChild(loginEl);
-      (teamSel.value ? loginEl.querySelector('#tmd-login-key') : teamSel).focus();
+      login.setError(''); login.keyInput.value = ''; login.teamSel.value = team() || '';
+      document.body.appendChild(login.el);
+      (login.teamSel.value ? login.keyInput : login.teamSel).focus();
     }
-    function hideLogin() { loginEl && loginEl.remove(); }
+    function hideLogin() { login && login.el.remove(); }
 
-    async function tryLogin(teamSel, input) {
-      const t = teamSel.value;
-      const key = input.value.trim();
-      const err = loginEl.querySelector('.tmd-login-err');
-      if (!t) { teamSel.focus(); err.textContent = 'Please choose your team.'; err.hidden = false; return; }
-      if (!key) { input.focus(); return; }
-      const btn = loginEl.querySelector('.tmd-login-btn');
-      // ADMIN_TEAM ('Design') is the admin door: don't attempt a team-scoped read.
-      // Store the key as the admin session token and hand off to /reviewdash, which
-      // validates the password ('website') itself.
+    async function tryLogin() {
+      const t = login.teamSel.value;
+      const key = login.keyInput.value.trim();
+      if (!t) { login.teamSel.focus(); login.setError('Please choose your team.'); return; }
+      if (!key) { login.keyInput.focus(); return; }
+      // ADMIN_TEAM ('Design') is the admin door: store the key as the admin session
+      // token and hand off to /reviewdash, which validates the admin key itself.
       if (t === ADMIN_TEAM) {
         sessionStorage.setItem('reviewAdminPass', key);
         sessionStorage.setItem('reviewMode', '1');
-        btn.disabled = true; btn.textContent = 'Signing in…';
+        login.setBusy(true, 'Signing in…');
         location.replace('/reviewdash');
         return;
       }
       sessionStorage.setItem(TEAM_KEY, t);   // scopes every request to this team
       sessionStorage.setItem(PASS_KEY, key); // validated below against the team-scoped read
-      btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
+      login.setBusy(true, 'Authenticating…'); login.setError('');
       try { await loadData(); hideLogin(); startAutoRefresh(); }
       catch (e) {
         sessionStorage.removeItem(PASS_KEY);
-        btn.disabled = false; btn.textContent = 'Sign in';
-        err.textContent = e.message === 'unauthorized' ? 'Incorrect team or key.' : ('Could not connect — ' + e.message);
-        err.hidden = false; input.focus(); input.select();
+        login.setBusy(false, 'Authenticate');
+        login.setError(e.message === 'unauthorized' ? 'Incorrect team or key.' : ('Could not connect — ' + e.message));
+        login.keyInput.focus(); login.keyInput.select();
       }
     }
 

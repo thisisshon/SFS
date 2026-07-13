@@ -1,5 +1,5 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword, pageName,
-    initTheme, mountThemeToggle } from './config.js';
+    ADMIN_TEAM, buildPanelLogin, initTheme, mountThemeToggle } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter); apply the
@@ -131,7 +131,7 @@
           del: (rec) => apiFetch('/delete', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path }) }),
         };
 
-    let loginEl = null, refreshTimer = null;
+    let login = null, refreshTimer = null;
 
     async function loadData() {
       all = await store.all();
@@ -151,48 +151,45 @@
       window.addEventListener('focus', () => loadData().catch(() => {}));
     }
 
+    // The /reviewdash gate IS the shared common login. Picking "Design (Admin)" + the
+    // admin key opens the admin panel here; picking any other team hands off to that
+    // team's dashboard (/teamdash) — symmetric with /teamdash's admin hand-off.
     function showLogin() {
-      if (!loginEl) {
-        loginEl = document.createElement('div'); loginEl.className = 'rvd-login';
-        loginEl.innerHTML =
-          '<div class="rvd-login-card" role="dialog" aria-modal="true">' +
-          '<span class="rvd-login-eyebrow">Content Review</span>' +
-          '<h1 class="rvd-login-title">Panel Login</h1>' +
-          '<p class="rvd-login-sub">Enter your key to open the panel.</p>' +
-          '<div class="rvd-login-field">' +
-          '<label class="rvd-login-label" for="rvd-login-key">Key</label>' +
-          '<input id="rvd-login-key" class="rvd-login-input" type="password" placeholder="Enter your key" autocomplete="current-password" />' +
-          '</div>' +
-          '<div class="rvd-login-err" hidden></div>' +
-          '<button type="button" class="rvd-login-btn">Authenticate</button>' +
-          '<div class="rvd-login-brand">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-          '<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="var(--pk-red)"/>' +
-          '<circle cx="12" cy="9.5" r="1.6" fill="#fff"/></svg><span>ProofKit</span>' +
-          '</div>' +
-          '</div>';
-        const input = loginEl.querySelector('.rvd-login-input');
-        const go = () => tryLogin(input);
-        loginEl.querySelector('.rvd-login-btn').addEventListener('click', go);
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      if (!login) {
+        login = buildPanelLogin({ title: 'Panel Login', sub: 'Enter your key to continue.' });
+        const go = () => tryLogin();
+        login.button.addEventListener('click', go);
+        login.keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+        login.teamSel.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       }
-      document.body.appendChild(loginEl);
-      loginEl.querySelector('.rvd-login-input').focus();
+      login.setError(''); login.keyInput.value = ''; login.teamSel.value = '';
+      document.body.appendChild(login.el);
+      login.teamSel.focus();
     }
-    function hideLogin() { loginEl && loginEl.remove(); }
+    function hideLogin() { login && login.el.remove(); }
 
-    async function tryLogin(input) {
-      const id = input.value.trim(); if (!id) { input.focus(); return; }
-      const err = loginEl.querySelector('.rvd-login-err');
-      const btn = loginEl.querySelector('.rvd-login-btn');
-      sessionStorage.setItem(PASS_KEY, id);
-      btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
+    async function tryLogin() {
+      const team = login.teamSel.value;
+      const key = login.keyInput.value.trim();
+      if (!team) { login.teamSel.focus(); login.setError('Please choose your team.'); return; }
+      if (!key) { login.keyInput.focus(); return; }
+      // Non-admin team at the admin URL → send them to their team dashboard.
+      if (team !== ADMIN_TEAM) {
+        sessionStorage.setItem('teamDashTeam', team);
+        sessionStorage.setItem('teamDashPass', key);
+        login.setBusy(true, 'Signing in…');
+        location.replace('/teamdash');
+        return;
+      }
+      // Design = admin: validate the key by loading the admin dashboard.
+      sessionStorage.setItem(PASS_KEY, key);
+      login.setBusy(true, 'Authenticating…'); login.setError('');
       try { await loadData(); hideLogin(); startAutoRefresh(); }
       catch (e) {
         sessionStorage.removeItem(PASS_KEY);
-        btn.disabled = false; btn.textContent = 'Authenticate';
-        err.textContent = e.message === 'unauthorized' ? 'Incorrect key. Please try again.' : ('Could not connect — ' + e.message);
-        err.hidden = false; input.focus(); input.select();
+        login.setBusy(false, 'Authenticate');
+        login.setError(e.message === 'unauthorized' ? 'Incorrect key. Please try again.' : ('Could not connect — ' + e.message));
+        login.keyInput.focus(); login.keyInput.select();
       }
     }
 

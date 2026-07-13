@@ -6,6 +6,19 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.10.0 — 2026-07-13 — unified "Panel Login" for all users
+
+- **One shared login for both dashboards.** New `.pk-login` component (`design/components.css`) +
+  `buildPanelLogin()` (`config.js`) carry the modern card look — a soft brand-red glow up top, standout
+  squared **Team** + **Key** fields, an **Authenticate** button, and the **ProofKit** logo at the bottom —
+  now used by BOTH `/reviewdash` and `/teamdash`. The old admin-only password "Panel Login" and the
+  separate `.rvd-login-*` / `.tmd-login-*` CSS are removed.
+- **`/reviewdash` now shows the common login.** Landing there unauthenticated shows the shared Team + Key
+  screen (not a password box). Picking **Design (Admin)** + the admin key opens the admin panel in place;
+  picking any other team hands off to that team's dashboard (`/teamdash`) — symmetric with `/teamdash`,
+  where Design hands off to `/reviewdash`.
+- Subtitle wording: "Enter your key to open the panel." → **"Enter your key to continue."**
+
 ## 2.9.1 — 2026-07-13 — move the theme toggle to the heading row
 
 - The light/dark toggle moved from under the wordmark to the **far right of the "Review and Bug Testing"

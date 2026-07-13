@@ -206,6 +206,60 @@ export function mountThemeToggle(selector) {
 }
 
 /* --------------------------------------------------------------------------
+ * The shared "Panel Login" card — the ONE modern auth surface both dashboards
+ * use (styles: design/components.css `.pk-login`). It builds the Team + Key
+ * fields, the Authenticate button, and the ProofKit logo; each dashboard wires
+ * its own submit (admin vs team routing). ADMIN_TEAM ('Design') is offered as a
+ * login-only identity — picking it + the admin key grants ADMIN access.
+ * ------------------------------------------------------------------------ */
+const PK_MARK =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+  '<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="var(--pk-red)"/>' +
+  '<circle cx="12" cy="9.5" r="1.6" fill="#fff"/></svg>';
+
+/** Build the shared login card. Returns { el, teamSel, keyInput, button, setError, setBusy }. */
+export function buildPanelLogin(opts) {
+  opts = opts || {};
+  const title = opts.title || 'Panel Login';
+  const sub = opts.sub || 'Enter your key to continue.';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const teamOpts = [...TEAMS].sort((a, b) => a.localeCompare(b))
+    .map((t) => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('') +
+    '<option value="' + esc(ADMIN_TEAM) + '">' + esc(ADMIN_TEAM) + ' (Admin)</option>';
+  const el = document.createElement('div');
+  el.className = 'pk-login';
+  el.innerHTML =
+    '<div class="pk-login-card" role="dialog" aria-modal="true">' +
+      '<span class="pk-login-eyebrow">Content Review</span>' +
+      '<h1 class="pk-login-title">' + esc(title) + '</h1>' +
+      '<p class="pk-login-sub">' + esc(sub) + '</p>' +
+      '<div class="pk-login-field">' +
+        '<label class="pk-login-label" for="pk-login-team">Team</label>' +
+        '<select id="pk-login-team" class="pk-login-input pk-login-select">' +
+          '<option value="" disabled selected>Select Team</option>' + teamOpts +
+        '</select>' +
+      '</div>' +
+      '<div class="pk-login-field">' +
+        '<label class="pk-login-label" for="pk-login-key">Key</label>' +
+        '<input id="pk-login-key" class="pk-login-input" type="password" placeholder="Enter your key" autocomplete="off" spellcheck="false" />' +
+      '</div>' +
+      '<div class="pk-login-err" hidden></div>' +
+      '<button type="button" class="pk-login-btn">Authenticate</button>' +
+      '<div class="pk-login-brand">' + PK_MARK + '<span>ProofKit</span></div>' +
+    '</div>';
+  const q = (s) => el.querySelector(s);
+  return {
+    el,
+    teamSel: q('#pk-login-team'),
+    keyInput: q('#pk-login-key'),
+    button: q('.pk-login-btn'),
+    setError: (msg) => { const e = q('.pk-login-err'); e.textContent = msg || ''; e.hidden = !msg; },
+    setBusy: (busy, label) => { const b = q('.pk-login-btn'); b.disabled = !!busy; if (label != null) b.textContent = label; },
+  };
+}
+
+/* --------------------------------------------------------------------------
  * Friendly page names (dashboard link text). Project-configurable.
  * ------------------------------------------------------------------------ */
 export const PAGE_NAMES = {
