@@ -6,6 +6,12 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.9.1 — 2026-07-13 — move the theme toggle to the heading row
+
+- The light/dark toggle moved from under the wordmark to the **far right of the "Review and Bug Testing"
+  headline** (admin dashboard) — vertically centred and spaced apart from the H1 via a new
+  `.rvd-headband-row` flex row (`[data-pk-toggle]` slot relocated; `.rvd-brand-toggle` removed).
+
 ## 2.9.0 — 2026-07-13 — live SSE theme push + design-system dropdowns + "Panel Login" redesign
 
 - **Live theme push (SSE).** New Worker endpoint **`GET /events`** streams `text/event-stream`: it polls

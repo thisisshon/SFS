@@ -52,8 +52,6 @@
   .rvd .rvd-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
     padding-bottom:22px;border-bottom:1px solid var(--pk-hair)}
   .rvd .rvd-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
-  /* light/dark toggle: drops to its own row directly under the wordmark */
-  .rvd .rvd-brand-toggle{flex-basis:100%;display:flex;align-items:center;margin-top:2px}
   .rvd .rvd-mark{display:block;flex:none}
   .rvd .rvd-word{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--pk-ink)}
   .rvd .rvd-tag{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
@@ -61,6 +59,9 @@
 
   /* ---- headline ---- */
   .rvd .rvd-headband{padding:44px 0 4px}
+  /* H1 left, light/dark toggle pushed to the far right, vertically centred */
+  .rvd .rvd-headband-row{display:flex;align-items:center;justify-content:space-between;gap:24px}
+  .rvd .rvd-headtoggle{flex:none;display:flex;align-items:center}
   .rvd .rvd-h1{margin:0;font-size:clamp(30px,4.4vw,44px);line-height:1.04;font-weight:500;
     letter-spacing:-.02em;color:var(--pk-ink)}
   .rvd .rvd-lead{margin:14px 0 0;max-width:640px;font-size:14px;line-height:1.6;color:var(--pk-body)}
