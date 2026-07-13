@@ -1220,14 +1220,17 @@
     width: clamp(240px, 27vw, 400px); min-height: 100%; flex-shrink: 0; align-self: stretch;
     display: flex; flex-direction: column; padding: clamp(40px, 6vw, 96px) clamp(28px, 4.5vw, 72px);
     border-radius: 0 40px 40px 0;
-    background: radial-gradient(ellipse at top left, var(--color-olive-600), var(--color-olive-800), var(--color-charcoal-850));
+    /* Olive glow rising from the bottom-centre on a near-black surface (Figma 1270:7667).
+       Core is olive-500 (#4d6710, exact token); the mid/base stops are decorative
+       Tier-2 literals (same treatment as the .hero-dark glow). */
+    background: radial-gradient(104% 50% at 50% 133%, var(--color-olive-500) 0%, #354217 50%, #29301a 75%, #1d1d1d 100%);
     transform: translate(-36px); transition: transform 0.48s var(--ease-standard); overflow: hidden;
   }
   #nav-panel[data-open] #nps-sidebar { transform: translate(0); }
   .nps-logo { display: inline-flex; align-items: center; justify-content: center; background: var(--color-white); border-radius: 4px; padding: 10px 12px; margin-bottom: clamp(36px, 5.5vw, 80px); align-self: flex-start; } /* 10px 12px = legacy off-grid, kept for parity */
   .nps-logo img { height: 48px; width: auto; display: block; object-fit: contain; }
   .nps-nav { display: flex; flex-direction: column; gap: clamp(24px, 3.5vw, 48px); }
-  .nps-item { font-size: 24px; font-weight: 300; color: var(--color-tan-500);transition: color 0.2s ease; background: none; border: none; cursor: pointer; text-align: left; padding: 0; }
+  .nps-item { font-size: 24px; font-weight: 400; color: var(--color-white);transition: color 0.2s ease; background: none; border: none; cursor: pointer; text-align: left; padding: 0; }
   @media (min-width: 1024px) and (hover: hover) {
     .nps-item:hover { color: var(--color-white); }
   }
@@ -1237,7 +1240,7 @@
   #nav-panel[data-panel='support'] .nps-item[data-for='support'] { color: var(--color-gold-400); font-weight: 600; }
   #nps-content { position: relative; flex: 1; display: flex; flex-direction: column; background: radial-gradient(ellipse at top right, var(--color-tan-200), var(--color-white) 58%); transform: translate(24px); opacity: 0; transition: transform 0.48s var(--ease-standard) 0.06s, opacity 0.48s ease 0.06s; }
   #nav-panel[data-open] #nps-content { transform: translate(0); opacity: 1; }
-  #nps-scroll-area { flex: 1; overflow-y: auto; padding: clamp(72px, 9vw, 144px) clamp(36px, 5vw, 80px) clamp(24px, 3vw, 40px); }
+  #nps-scroll-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: clamp(72px, 9vw, 144px) clamp(36px, 5vw, 80px) 120px; }
   .nps-section { display: none; flex-direction: column; flex: 1; }
   #nav-panel[data-panel='products'] .nps-section[data-section='products'],
   #nav-panel[data-panel='research-centre'] .nps-section[data-section='research-centre'],
@@ -1259,7 +1262,7 @@
     display: flex; align-items: center; gap: 8px; margin-bottom: clamp(20px, 3vw, 40px);
     background: none; border: none; cursor: pointer; padding: 4px 0;
     font-size: 14px; font-weight: 400; letter-spacing: 0.01em;
-    color: #ffffffb3; /* legacy alpha over the sidebar GRADIENT - cannot flatten exactly; kept verbatim (Tier-2) */
+    color: var(--color-white); /* solid white on the dark sidebar (Figma 1270:7667) */
     transition: color 0.2s ease;
   }
   @media (min-width: 1024px) and (hover: hover) {
@@ -1269,8 +1272,11 @@
   .nps-trade-block { flex: 2; display: flex; flex-direction: column; gap: clamp(18px, 2.5vw, 32px); padding-right: clamp(16px, 2.5vw, 40px); }
   .nps-trade-cols { display: flex; gap: clamp(20px, 3vw, 48px); }
   .nps-trade-cols .nps-col-items { flex: 1; padding: 0; }
-  .nps-view-all { margin-top: clamp(28px, 4vw, 56px); }
-  .nps-view-all a { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 28px; border: 1.5px solid var(--color-sage-900); border-radius: var(--radius-sm); /* matches the global .btn system */ font-size: 14px; font-weight: 500; color: var(--color-sage-900); text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
+  /* Pinned to the bottom of the pane (grid above takes flex:1), left-aligned with the
+     content, 120px clear of the bottom (from #nps-scroll-area's padding-bottom). */
+  .nps-view-all { margin-top: 0; }
+  /* Uniform width across every section = the longest label ("View All Calculators"). */
+  .nps-view-all a { display: inline-flex; align-items: center; justify-content: center; width: 232px; height: 44px; padding: 0 28px; border: 1.5px solid var(--color-sage-900); border-radius: var(--radius-sm); /* matches the global .btn system */ font-size: 14px; font-weight: 500; color: var(--color-sage-900); text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
   @media (min-width: 1024px) and (hover: hover) {
     .nps-view-all a:hover { background: var(--color-sage-900); color: var(--color-white); }
   }
@@ -1560,6 +1566,10 @@
   .mm-sub { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s var(--ease-standard); }
   .mm-group.open .mm-sub { grid-template-rows: 1fr; }
   .mm-sub-in { overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
+  /* Column subheading inside a mobile accordion (mirrors the desktop .nps-col-title;
+     e.g. "Trade And Invest", "All Researches", "Investment Calculators"). */
+  .mm-subhead { padding: 16px 0 4px 16px; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .mm-sub-in .mm-subhead:first-child { padding-top: 8px; }
   .mm-sublink { padding: 12px 0 12px 16px; font-weight: 400; font-size: 16px; color: var(--color-text-tertiary); }
   .mm-sub-in .mm-sublink:first-child { padding-top: 8px; }
   .mm-sub-in .mm-sublink:last-child { padding-bottom: 16px; }

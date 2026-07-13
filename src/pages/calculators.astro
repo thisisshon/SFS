@@ -15,33 +15,18 @@ const seo = {
   path: '/calculators',
 };
 
-// Hero trust chips.
-const CHIPS = ['100% Free', 'Instant Results', 'No Sign-up Required', 'Accurate Projections'];
-
 // Calculator cards come from the single source of truth (src/data/calculators.ts).
 const CALCS = calculators;
 ---
 
 <BaseLayout seo={seo}>
   <!-- ================= HERO ================= -->
-  <Hero calc id="sec-hero" dataSection="hero">
+  <Hero breadcrumb={[{ name: 'Calculators' }]} id="sec-hero" dataSection="hero">
     <Fragment slot="title">The Calculators You Need, <span class="g">All in One Place.</span></Fragment>
     <Fragment slot="lead">
       Plan investments, estimate returns, optimise taxes, and map your retirement - all the
       financial tools you need, free and instant.
     </Fragment>
-    <div class="ch-chips">
-      {
-        CHIPS.map((label) => (
-          <span class="chip">
-            <span class="tk" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5 8 14l7.5-7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>{' '}
-            {label}
-          </span>
-        ))
-      }
-    </div>
   </Hero>
 
   <!-- ================= CALCULATORS ================= -->
@@ -76,34 +61,9 @@ const CALCS = calculators;
 
 <style>
   /* ================= Calculators page ================= */
-  /* Calculators-HUB hero uses the shared <Hero calc> (Type 3, rule 7/18) - the
-     dark V4 surface, texture, fixed calc-hero height and centred left-aligned
-     stack all come from the component + global.css. Only the hub's unique chip
-     rail lives here (slotted into .hero-inner). The 24px flex gap between the
-     lead and the rail comes from `.hero-dark .hero-inner`; the extra 16px
-     margin-top + 36px padding-top lift the divider to the legacy ~40px offset.
-     Off-grid/single-use values are flagged Tier-2 in-line. */
-  .ch-chips {
-    margin-top: 16px;
-    padding-top: 36px;
-    border-top: 1px solid #52544b; /* page-local - Tier-2 candidate (single-use hairline on gradient) */
-    max-width: 840px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px 32px;
-  }
-  .chip {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* page-local - Tier-2 candidate (off-grid) */
-    font-weight: 500;
-    font-size: 16px;
-    color: #e9e9e9; /* page-local - Tier-2 candidate (sage) */
-  }
-  .chip .tk {
-    color: var(--color-gold-400);
-    font-size: 16px;
-  }
+  /* Calculators-HUB hero is the standard global <Hero> template (Type 1, rule 7/18):
+     dark V4 surface, texture, tall band, breadcrumb and the 8px bottom stroke - identical
+     to the product pages (only the trust chips are omitted). */
 
   /* calculator cards grid */
   .calc-grid {

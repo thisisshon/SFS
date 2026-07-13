@@ -11,14 +11,6 @@
 import { primaryNav, headerActions, megaNavSections } from '../../data/navigation';
 
 const sectionById = new Map(megaNavSections.map((s) => [s.id, s]));
-
-/** Flatten a section's links in overlay order, then its View-All link. */
-function sectionLinks(id: string) {
-  const s = sectionById.get(id as any);
-  if (!s) return [];
-  const links = s.columns.flatMap((col) => col.linkGroups.flat());
-  return s.viewAll ? [...links, { ...s.viewAll, cta: true }] : links;
-}
 ---
 
 <div class="mobile-menu">
@@ -46,14 +38,24 @@ function sectionLinks(id: string) {
             </button>
             <div class="mm-sub" id={`mm-sub-${item.panel}`}>
               <div class="mm-sub-in">
-                {sectionLinks(item.panel).map((link) => (
-                  <a
-                    href={link.href}
-                    class={'cta' in link && link.cta ? 'mm-sublink mm-sub-cta' : 'mm-sublink'}
-                  >
-                    {link.label}
-                  </a>
+                {sectionById.get(item.panel as any)?.columns.map((col) => (
+                  <>
+                    {col.title && <p class="mm-subhead">{col.title}</p>}
+                    {col.linkGroups.flat().map((link) => (
+                      <a href={link.href} class="mm-sublink">
+                        {link.label}
+                      </a>
+                    ))}
+                  </>
                 ))}
+                {sectionById.get(item.panel as any)?.viewAll && (
+                  <a
+                    href={sectionById.get(item.panel as any)!.viewAll!.href}
+                    class="mm-sublink mm-sub-cta"
+                  >
+                    {sectionById.get(item.panel as any)!.viewAll!.label}
+                  </a>
+                )}
               </div>
             </div>
           </div>

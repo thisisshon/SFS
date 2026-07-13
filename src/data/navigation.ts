@@ -88,7 +88,7 @@ export const megaNavSections: MegaNavSection[] = [
     heading: 'Research Centre',
     columns: [
       {
-        title: '',
+        title: 'All Researches',
         linkGroups: [
           [
             { label: 'Technical Research', href: '/technical-analysis' },
@@ -118,6 +118,7 @@ export const megaNavSections: MegaNavSection[] = [
         ],
       },
     ],
+    viewAll: { label: 'View All Calculators', href: '/calculators' },
   },
   {
     id: 'support',
