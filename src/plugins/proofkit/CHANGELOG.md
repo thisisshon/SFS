@@ -6,6 +6,60 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.7.0 — 2026-07-13 — global admin-controlled theme + overlay "Go to Dashboard" + light-mode fixes
+
+- **Theme is now a GLOBAL, admin-controlled setting.** The light/dark toggle lives ONLY in the admin
+  dashboard (`/reviewdash`); flipping it writes the theme to the Worker (KV `settings.theme`), so it
+  changes the mode for EVERYONE. Team users (`/teamdash`) no longer have a toggle — they read and
+  apply whatever the admin set. `localStorage` is now just a same-browser cache for a no-flash first
+  paint (and the no-Worker demo fallback).
+  - New Worker endpoints: **`GET /settings`** (public — returns `{theme}`; dashboards need it before
+    sign-in) and **`POST /settings`** (admin-only — sets the global theme). KV key `settings`.
+    ⚠️ Worker change — auto-deploys via `.github/workflows/deploy-worker.yml` on push to main.
+  - `core/config.js`: `setGlobalTheme()` (admin write), `syncTheme()` (everyone reads on load + on
+    tab focus), `toggleTheme()` now flips the *global* theme; `initTheme()` paints the cached theme
+    instantly then reconciles with the Worker.
+- **Overlay "Go to Dashboard" button.** Every authenticated reviewer now gets a Dashboard button in
+  the on-page dock, next to the Save/Comment button. It routes by role: `ADMIN_TEAM` → `/reviewdash`,
+  any team → `/teamdash`. The overlay login now also offers the admin identity so admins can sign in
+  on-page and jump straight to their dashboard.
+- **Fix — light toggle icon.** The sun glyph rendered broken/overflowing; the toggle now uses one
+  glyph kept inside the thumb and reads state via the thumb's slide + colour.
+- **Fix — invisible text in light mode.** The active sidebar nav (`background:#202020` + dark ink)
+  and the monospace AI-prompt text (`#e8e8e8` on white) were unreadable on light; both repainted.
+- **Light-mode UI polish (the "chips" pass).** Team chips now use the on-page pastel palette in light
+  (JS-derived, and re-skin live when the admin toggles); status chips, the "change to" callout, the
+  Master Log table header, native `<option>` menus, the deploy banner and the page floor all get
+  light values via scoped `[data-pk-theme="light"]` overrides. Dark mode is byte-for-byte untouched.
+
+## 2.6.0 — 2026-07-13 — framework-neutral core extraction + light-theme toggle
+
+- **Portable core extraction.** All logic + styles moved out of the four `.astro` components
+  into a framework-neutral `core/` folder: `core/config.js` (tool data + theming + helpers),
+  `core/overlay.js`, `core/dashboard.{js,css}`, `core/teamdash.{js,css}`, `core/login.{js,css}`.
+  The `.astro` files (`Overlay`/`Dashboard`/`TeamDashboard`/`Login`) are now **thin adapters** —
+  they mount the shell, bridge the Worker URL, and load the core. Proofkit no longer *depends*
+  on Astro; it ships an Astro adapter. New standalone `core/dashboard.html`, `core/teamdash.html`,
+  `core/login.html` entries drop the tool into any stack (`<script type="module">` + a
+  `window.PROOFKIT_WORKER_URL` global).
+- **`config.ts` is now the Astro-adapter config only.** It re-exports `core/config.js` and keeps
+  the three host/build-specific concerns: `PROOFKIT_ENABLED` (Astro render gate), the env-driven
+  `WORKER_URL`, and the per-route SEO objects. **Edit tool data + theming in `core/config.js`**
+  (the new single source of truth). All existing `./config` imports keep working (re-exported).
+- **Worker URL seam.** Adapters inline `window.PROOFKIT_WORKER_URL` (from env `WORKER_URL`) before
+  the core module evaluates; `core/config.js` reads that global; standalone HTML sets the same
+  global. **No Worker / endpoint / auth change** — the backend + all APIs are byte-for-byte
+  unchanged, no `wrangler deploy` needed.
+- **Light theme.** New `light` skin in `THEMES` (warm off-white surfaces, brand red kept, status
+  colours darkened for legibility on light). Joins `red-moon` (default) + `dark-cream`.
+- **Runtime light/dark toggle.** Theme injection changed from build-time selector-less `:root{…}`
+  to `themeCss()`, which emits every skin keyed by `[data-pk-theme="…"]`; the choice is applied
+  live by swapping the `<html>` attribute and **persisted in `localStorage` (`pkTheme`)**. A subtle
+  sun⇄moon control (`buildThemeToggle()`) mounts under the wordmark in both dashboards via a
+  `[data-pk-toggle]` slot (48px tap target). The on-page overlay stays on its dark skin.
+- ⚠️ Accent polish pending — the light skin adapts surfaces + text cleanly, but a few accents tuned
+  for the dark canvas (active-nav fill, team chips) read heavier on light. Cosmetic follow-up.
+
 ## 2.5.1 — 2026-07-13 — admin log-in via /teamdash + audit trail + Master Log detail
 
 - **Admin password is now `website`** (was `shriramreview`). `config.ts`

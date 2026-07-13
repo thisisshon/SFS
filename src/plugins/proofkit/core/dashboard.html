@@ -1,28 +1,19 @@
----
-/**
- * Proofkit Dashboard - the /reviewdash admin view.
- *
- * Client-rendered admin view of every comment across the site: where each sits
- * on its page, who wrote it, when, open/resolved status, threaded replies, the
- * per-session Master Log, and the AI change-prompt per entry. Reads the
- * Cloudflare Worker (WORKER_URL) when set, else the localStorage demo store.
- * Resolving/deleting happen here (admin side); the on-page overlay is add-only.
- *
- * Rendered by the src/pages/reviewdash.astro route shim, gated on PROOFKIT_ENABLED
- * (./config.ts). Keeps its own admin-password gate so hitting /reviewdash
- * directly still requires the password.
- *
- * THIN ADAPTER: all logic + styles live in the framework-neutral core
- * (./core/dashboard.js + ./core/dashboard.css, standalone entry ./core/dashboard.html).
- * This file only mounts the shell, bridges the build-time Worker URL, and loads the core.
- */
-import { WORKER_URL } from './config';
-import './core/dashboard.css';
----
-
-{/* Bridge the build-time Worker URL to the framework-neutral core (window global). */}
-<script is:inline set:html={`window.PROOFKIT_WORKER_URL=${JSON.stringify(WORKER_URL)}`}></script>
-
+<!doctype html>
+<!-- Proofkit dashboard — STANDALONE entry for non-Astro hosts. Framework-neutral:
+     just open this file (or serve it). It loads ./dashboard.css + ./dashboard.js from core/.
+     The Astro build uses ../Dashboard.astro instead; both share this core. -->
+<html lang="en" data-pk-theme="red-moon">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Content Review Dashboard</title>
+<style>html,body{margin:0;background:#141414}body{font-family:Outfit,system-ui,-apple-system,sans-serif}</style>
+<link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+<!-- Non-Astro host: set your Cloudflare Worker URL below (empty string = localStorage demo). -->
+<script>window.PROOFKIT_WORKER_URL='';</script>
 <section class="rvd">
   <div class="rvd-app" data-enter>
     <!-- Brand top bar -->
@@ -122,6 +113,6 @@ import './core/dashboard.css';
     </div>
   </div>
 </section>
-
-{/* All behaviour lives in the framework-neutral core (bundled + deferred). */}
-<script>import './core/dashboard.js';</script>
+<script type="module" src="./dashboard.js"></script>
+</body>
+</html>

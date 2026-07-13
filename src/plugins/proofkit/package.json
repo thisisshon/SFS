@@ -1,12 +1,20 @@
 {
   "name": "proofkit",
-  "version": "2.5.1",
+  "version": "2.7.0",
   "private": true,
-  "description": "Proofkit — a self-contained, toggleable, portable content-review tool: an on-page click-to-comment overlay + admin dashboard + Cloudflare Worker, injectable into any Astro / Claude Code website project.",
-  "keywords": ["content-review", "annotation", "overlay", "review-tool", "astro", "claude-code", "plugin"],
+  "description": "Proofkit — a self-contained, toggleable, portable content-review tool: an on-page click-to-comment overlay + admin dashboard + Cloudflare Worker. A framework-neutral core/ (plain JS/CSS + standalone HTML) with a thin Astro adapter, injectable into any Astro / Claude Code website project — or any stack via the standalone entries.",
+  "keywords": ["content-review", "annotation", "overlay", "review-tool", "astro", "framework-neutral", "claude-code", "plugin"],
   "type": "module",
   "proofkit": {
-    "kind": "astro-package",
+    "kind": "framework-neutral-core + astro-adapter",
+    "core": {
+      "config": "core/config.js",
+      "overlay": "core/overlay.js",
+      "dashboard": ["core/dashboard.js", "core/dashboard.css", "core/dashboard.html"],
+      "teamDashboard": ["core/teamdash.js", "core/teamdash.css", "core/teamdash.html"],
+      "login": ["core/login.js", "core/login.css", "core/login.html"],
+      "note": "Framework-neutral. Standalone *.html entries load these directly (window.PROOFKIT_WORKER_URL global)."
+    },
     "entrypoints": {
       "overlay": "Overlay.astro",
       "login": "Login.astro",
@@ -23,8 +31,8 @@
       "PUBLIC_REVIEW_WORKER_URL build env (CI) — optional, enables shared store"
     ],
     "hostRequirements": [
-      "Astro (static or hybrid) with a shared layout that accepts an `seo` prop + default <slot/>",
-      "an SEO type at src/lib/seo (adjust the import in config.ts if elsewhere)",
+      "For the Astro adapter: Astro (static or hybrid) with a shared layout that accepts an `seo` prop + default <slot/>, and an SEO type at src/lib/seo (adjust the import in config.ts if elsewhere)",
+      "For non-Astro hosts: none — serve core/*.html (or wire core/*.js yourself) and set window.PROOFKIT_WORKER_URL",
       "Cloudflare account for the Worker (optional; runs in localStorage demo mode without it)"
     ],
     "install": "See ./INSTALL.md",

@@ -38,6 +38,8 @@
  *   POST /delete               delete a whole thread (admin)   -> {ok, removed}
  *   GET  /notifications        all (admin) / ?team=X (team)    -> notification[]
  *   POST /notifications/read   mark notifications read         -> {ok, updated}
+ *   GET  /settings             global settings (public)        -> {theme}
+ *   POST /settings             set global theme (admin)        -> {ok, theme}
  */
 export default {
   async fetch(request, env, ctx) {
@@ -65,8 +67,29 @@ export default {
     const kv = env.COMMENTS;
     const keyFor = (path) => 'page:' + encodeURIComponent(path || '/');
     const NOTIF_KEY = 'notifications';
+    const SETTINGS_KEY = 'settings';
 
     try {
+      // ---- global settings (theme) ----
+      // GET is public: the dashboards need the theme before anyone signs in, and the
+      // theme name is not sensitive. POST is admin-only — the admin's toggle sets the
+      // GLOBAL theme for everyone (the client caches it locally for a no-flash paint).
+      if (url.pathname === '/settings') {
+        if (request.method === 'GET') {
+          const s = JSON.parse((await kv.get(SETTINGS_KEY)) || '{}');
+          return json({ theme: s.theme || '' }, 200, cors);
+        }
+        if (request.method === 'POST') {
+          if (!isAdmin) return deny();
+          const b = await request.json();
+          const theme = String(b.theme || '').slice(0, 40);
+          const s = JSON.parse((await kv.get(SETTINGS_KEY)) || '{}');
+          s.theme = theme;
+          await kv.put(SETTINGS_KEY, JSON.stringify(s));
+          return json({ ok: true, theme }, 200, cors);
+        }
+      }
+
       // ---- add a comment (reviewer) ----
       if (request.method === 'POST' && url.pathname === '/comments') {
         if (!isReviewer) return deny();

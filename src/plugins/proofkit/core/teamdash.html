@@ -1,32 +1,19 @@
----
-/**
- * Proofkit Team Dashboard — the /teamdash per-team view.
- *
- * A client-rendered, READ-ONLY window a single team gets onto its OWN review
- * items. The team signs in with its team key; the Cloudflare Worker returns
- * ONLY that team's comments (server-side isolation, masked to the team-visible
- * status) plus that team's notifications. No admin actions, no delete, no AI
- * prompt, no other team's data — a lighter sibling of the admin Dashboard.
- *
- * Statuses are framed for the team (the deploy BUCKET is never exposed):
- *   masked 'open' → "Pending"   ·  'completed' → "Done"   ·  'closed' → "Closed".
- *
- * Rendered by the src/pages/teamdash.astro route shim, gated on PROOFKIT_ENABLED
- * (./config.ts). Reads the Worker (WORKER_URL) when set, else the localStorage
- * demo store (masking client-side). Scoped under .tmd so it never clashes with
- * the admin .rvd styles.
- *
- * THIN ADAPTER: all logic + styles live in the framework-neutral core
- * (./core/teamdash.js + ./core/teamdash.css, standalone entry ./core/teamdash.html).
- * This file only mounts the shell, bridges the build-time Worker URL, and loads the core.
- */
-import { WORKER_URL } from './config';
-import './core/teamdash.css';
----
-
-{/* Bridge the build-time Worker URL to the framework-neutral core (window global). */}
-<script is:inline set:html={`window.PROOFKIT_WORKER_URL=${JSON.stringify(WORKER_URL)}`}></script>
-
+<!doctype html>
+<!-- Proofkit teamdash — STANDALONE entry for non-Astro hosts. Framework-neutral:
+     just open this file (or serve it). It loads ./teamdash.css + ./teamdash.js from core/.
+     The Astro build uses ../TeamDashboard.astro instead; both share this core. -->
+<html lang="en" data-pk-theme="red-moon">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Team Review Dashboard</title>
+<style>html,body{margin:0;background:#141414}body{font-family:Outfit,system-ui,-apple-system,sans-serif}</style>
+<link rel="stylesheet" href="./teamdash.css">
+</head>
+<body>
+<!-- Non-Astro host: set your Cloudflare Worker URL below (empty string = localStorage demo). -->
+<script>window.PROOFKIT_WORKER_URL='';</script>
 <section class="tmd">
   <div class="tmd-app" data-enter>
     <!-- Brand top bar -->
@@ -103,6 +90,6 @@ import './core/teamdash.css';
     </div>
   </div>
 </section>
-
-{/* All behaviour lives in the framework-neutral core (bundled + deferred). */}
-<script>import './core/teamdash.js';</script>
+<script type="module" src="./teamdash.js"></script>
+</body>
+</html>

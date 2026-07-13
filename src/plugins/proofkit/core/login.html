@@ -1,0 +1,20 @@
+<!doctype html>
+<!-- Proofkit login — STANDALONE entry for non-Astro hosts. Framework-neutral:
+     just open this file (or serve it). It loads ./login.css + ./login.js from core/.
+     The Astro build uses ../Login.astro instead; both share this core. -->
+<html lang="en" data-pk-theme="red-moon">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Content Review</title>
+<style>html,body{margin:0;background:#141414}body{font-family:Outfit,system-ui,-apple-system,sans-serif}</style>
+<link rel="stylesheet" href="./login.css">
+</head>
+<body>
+<!-- Non-Astro host: set your Cloudflare Worker URL below (empty string = localStorage demo). -->
+<script>window.PROOFKIT_WORKER_URL='';</script>
+<section class="section rvd-gate"><p class="rvd-gate-note">Content review is restricted. Sign in to continue.</p></section>
+<script type="module" src="./login.js"></script>
+</body>
+</html>
