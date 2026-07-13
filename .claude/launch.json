@@ -31,7 +31,7 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["astro", "preview", "--port", "4344"],
       "port": 4344,
-      "autoPort": false
+      "autoPort": true
     }
   ]
 }

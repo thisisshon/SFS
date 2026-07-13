@@ -128,6 +128,7 @@ export const megaNavSections: MegaNavSection[] = [
         title: 'Get Help',
         linkGroups: [
           [
+            { label: 'FAQs', href: '/faqs' },
             { label: 'Contact & Help', href: '/contact-us' },
             { label: 'Grievance Redressal', href: '/grievance-redressal' },
             { label: 'Regulatory & Compliance', href: '/regulatorydocuments' },
@@ -241,6 +242,7 @@ export const footerColumns: FooterColumn[] = [
     title: 'Company',
     links: [
       { label: 'About Us', href: '/about-us' },
+      { label: 'FAQs', href: '/faqs' },
       { label: 'Contact Us', href: '/contact-us' },
       { label: 'Become a Partner', href: '/become-a-partner' },
       { label: 'Open Demat Account', href: '/open-demat-account' },
