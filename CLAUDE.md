@@ -1,51 +1,42 @@
 # Shriram Financial Services - Project Guide
 
-A static, multi-page marketing/product site **built to organisation scale - a target
-of 4,000+ pages** - using **[Astro](https://astro.build)** (static output) + **[Tailwind
-CSS v4](https://tailwindcss.com)**. Astro compiles everything to plain static HTML with one
-shared, cached stylesheet; there is no client framework and no per-page CSS fork.
+Static, multi-page marketing/product site **built to organisation scale - 4,000+ pages** - using
+**[Astro](https://astro.build)** (static output) + **[Tailwind CSS v4](https://tailwindcss.com)**.
+Astro compiles to plain static HTML with one shared, cached stylesheet; no client framework, no
+per-page CSS fork.
 
-> **History.** This is the Astro + Tailwind rewrite of a legacy hand-authored static site
-> (one `.html` per page + a shared `styles.css` + a homepage `home.css` fork). The legacy
-> site lives at `../Project 1` as the **frozen pixel-parity reference**. The rewrite changed
-> the *code*, never the *design*: every page renders pixel-for-pixel identical. The only
-> intentional change was invisible - rationalising ~150 sprawling colours into a structured
-> token system (see `docs/legacy-style-audit.md`).
+> **History.** Astro + Tailwind rewrite of a legacy hand-authored static site (frozen pixel-parity
+> reference at `../Project 1`). The rewrite changed the *code*, never the *design* - every page
+> renders pixel-for-pixel identical; the only intentional change was rationalising ~150 sprawling
+> colours into a structured token system (`docs/legacy-style-audit.md`).
+
+> **This file is a lean index.** Full rule text + rationale, running/preview, project structure and
+> the Figma round-trip live in **[`docs/conventions.md`](docs/conventions.md)** (each rule is
+> deep-linked, e.g. `docs/conventions.md#rule-9`). The full 44-page inventory lives in
+> **[`docs/pages.md`](docs/pages.md)**. Keep those in sync (see rule 11).
 
 ---
 
 ## 🌐 Scale is the North Star - 4,000+ pages
 
-Every decision - components, stack, tokens, content - is judged first by *"does this hold up
-across thousands of pages?"* Four pillars must hold **together** on every page, never traded
-off against each other:
+Judge every decision by *"does this hold up across thousands of pages?"* Four pillars hold
+**together** on every page, never traded off:
 
-- **🔎 SEO** - semantic HTML + a valid heading outline; a unique `<title>` / `<meta
-  description>`, `<link rel="canonical">`, Open Graph + Twitter tags, and relevant JSON-LD on
-  **every** page; every page in the sitemap. Metadata is **templated/generated per page**, not
-  hand-typed - see `BaseLayout.astro` + `src/lib/seo.ts`. `@astrojs/sitemap` generates the
-  sitemap from the page tree at build.
-- **🛡️ Reliability** - shared components over bespoke markup, progressive enhancement, graceful
-  degradation. Astro renders static HTML at build; there is no runtime framework to fail. Fewer
-  moving parts = fewer of 4,000 pages that can break.
+- **🔎 SEO** - semantic HTML + valid heading outline; unique templated `<title>`/`<meta
+  description>`, canonical, OG/Twitter, JSON-LD on every page; every page in the sitemap. Metadata
+  is **generated per page** (`BaseLayout.astro` + `src/lib/seo.ts`), never hand-typed.
+- **🛡️ Reliability** - shared components over bespoke markup; static HTML at build, no runtime
+  framework to fail. Fewer moving parts = fewer of 4,000 pages that break.
 - **🎨 Visual consistency** - one token set, one type scale, one spacing grid, one component
-  library, enforced globally in `src/styles/global.css`. Pages stay uniform *by construction*.
-- **⚡ Speed** - one shared, cached `global.css` for the whole site (Tailwind v4, tree-shaken);
-  static HTML; lazy-loaded media; component `<script>`s bundled and deferred. Hold a
-  performance budget.
+  library, enforced in `src/styles/global.css`. Uniform *by construction*.
+- **⚡ Speed** - one shared cached `global.css` (Tailwind v4, tree-shaken); static HTML; lazy media;
+  bundled/deferred `<script>`s. Hold a performance budget.
 
-**Practical consequences - apply to ALL work:**
-1. **Templates, not pages.** New page *types* are parametric `.astro` components/layouts reused
-   across hundreds/thousands of instances. Assume pages are **generated from templates + data**
-   (`src/data/`), not authored one by one.
-2. **Single source of truth.** No per-page CSS/JS forks. Anything reused lives in `global.css`
-   / `src/components/` / `src/data/`; page files carry only content + a tiny scoped block.
-3. **Vet every new capability against all four pillars** before adopting it. Astro + Tailwind
-   was chosen *because* it preserves the vanilla-static virtues (one cached stylesheet, static
-   HTML, great SEO) while adding real components, typed data, and generated metadata - the
-   things hand-authored HTML could not give us at 4,000-page scale.
-4. **The design system is documented for scale** - `/designsystem` (two live pages) + the
-   docs below plan components, tokens and conventions explicitly.
+**Practical consequences:** (1) **Templates, not pages** - page *types* are parametric components
+generated from templates + data (`src/data/`). (2) **Single source of truth** - no per-page CSS/JS
+forks; reused things live in `global.css`/`src/components/`/`src/data/`. (3) **Vet every new
+capability against all four pillars** before adopting. (4) The design system is documented for
+scale at `/designsystem` (two live pages).
 
 ---
 
@@ -53,349 +44,103 @@ off against each other:
 
 | File | Role | What it holds |
 |---|---|---|
-| **`src/styles/global.css`** | **The design system - implementation** | The token architecture (`@theme` primitives → `@theme inline` semantic roles), base element rules (the global `line-height:1.5`, the one-font rule), and every shared component class. Editing it updates **every page at once**. |
-| **`src/components/` + `src/layouts/`** | **Components - implementation** | `BaseLayout` (templated `<head>`/SEO + chrome), site chrome (`Header`, `MobileMenu`, `MegaNav`, `Footer`), UI + section components (`FaqAccordion`, …). |
-| **`src/data/`** | **Content data** | Single-source structured content that feeds templates - `navigation.ts` (renders header, mega-nav, mobile menu **and** footer from one dataset). |
-| **`/designsystem` pages** | **The design system - documentation** | Two live pages: `/designsystem/current` ("what is used" - the legacy inventory) and `/designsystem/proposed` ("what is suggested" - the clean system, rendered live from the tokens). The **Figma round-trip artifact**. |
-| **`CLAUDE.md`** (this file) | **Rulebook / onboarding** | The conventions below - the first thing any builder (human or AI) reads. |
+| **`src/styles/global.css`** | Design system - implementation | Token architecture (`@theme` primitives → `@theme inline` semantic roles), base rules (`line-height:1.5`, one-font), every shared component class. Editing it updates **every page at once**. |
+| **`src/components/` + `src/layouts/`** | Components - implementation | `BaseLayout` (templated `<head>`/SEO + chrome), site chrome (`Header`, `MobileMenu`, `MegaNav`, `Footer`), UI + section components. |
+| **`src/data/`** | Content data | Structured content feeding templates - `navigation.ts` (renders header, mega-nav, mobile menu **and** footer from one dataset). |
+| **`/designsystem` pages** | Design system - documentation | `/designsystem/current` (what is used) + `/designsystem/proposed` (what is suggested, live from tokens). The **Figma round-trip artifact** + canonical design-rule prose. |
+| **`CLAUDE.md`** (this file) | Rulebook / onboarding index | The one-line directives below; deep-links to `docs/` for full text. |
 
 ---
 
 ## 🔒 Standing rules
 
-1. **Every page uses `BaseLayout`.** Pages pass a `seo` object (title/description/path, optional
-   `jsonLd`/`ogType`/`noindex`) and content; the layout renders the entire `<head>` (fonts,
-   favicon, canonical, OG/Twitter, JSON-LD) and the shared Header/MegaNav/Footer. **Never
-   hand-copy head or chrome markup into a page.**
+One-line directives. **Full text + rationale + dates: [`docs/conventions.md`](docs/conventions.md),
+anchored `#rule-N`.** 🟢 marks a design-system rule.
 
-2. **Every page follows the design system.** Reuse the documented tokens and shared component
-   classes from `global.css`; don't restyle from scratch. A page's own `<style>` block holds
-   only what is genuinely unique to that page - and its values reference **tokens**, not raw
-   hexes (see the token contract below).
+1. **Every page uses `BaseLayout`** - pass a `seo` object; never hand-copy `<head>`/chrome into a page. → [#rule-1](docs/conventions.md#rule-1)
+2. **Every page follows the design system** - reuse `global.css` tokens + component classes; a page `<style>` holds only what's genuinely unique, referencing **tokens not raw hexes**. → [#rule-2](docs/conventions.md#rule-2)
+3. **One font (Outfit) + `line-height:1.5`, sitewide** - never load a second font. Sole exception: homepage store badges (`.store-btn`) use the platform system-font stack. → [#rule-3](docs/conventions.md#rule-3)
+4. **Icons are real inline `<svg>`s, never glyphs/emoji, sized `16/20/24/32px` only.** → [#rule-4](docs/conventions.md#rule-4)
+5. **🟢 No fractional opacity / alpha colours** - every colour is a solid hex token. Translucency only for `box-shadow`, frosted `backdrop-filter`, and the `opacity` property for motion/state. (Legacy un-flattenable alphas flagged `Tier-2` in-file.) → [#rule-5](docs/conventions.md#rule-5)
+6. **🟢 Spacing on the 8px grid** (4px worst case) - no off-grid values (legacy exceptions flagged `Tier-2`). → [#rule-6](docs/conventions.md#rule-6)
+7. **The hero is standardised** - shared gradient/`min-height`/`.hero-inner` padding/type, defined once in `global.css`. Two sanctioned variants: `.calc-hero` (hub) and `.hero.hero-compact` (calculator detail hug). → [#rule-7](docs/conventions.md#rule-7)
+8. **Every form field uses the shared `.hf-field` component** - pages never re-declare it, only add decoration. → [#rule-8](docs/conventions.md#rule-8)
+9. **🟢 The token contract** - primitives → semantic roles → components bind to the role. Never hardcode a hex when a token exists; Figma changes only token *values*, never component code. → [#rule-9](docs/conventions.md#rule-9)
+10. **🟢 Merge policy** - Tier-1 merges applied; Tier-2 documented-not-applied. Leave `/* Tier-2 */` values as-is. → [#rule-10](docs/conventions.md#rule-10)
+11. **🟢 Design-guideline changes: implement it, document it once, add a CLAUDE.md line only if sitewide** - (1) implement in `global.css`/components; (2) document canonically in `/designsystem/proposed`; (3) add a one-line directive **here only** for a project-wide invariant an AI would violate by default. *(Rewritten 2026-07-13; supersedes "land in ALL THREE places".)* → [#rule-11](docs/conventions.md#rule-11)
+12. **Headings are LEFT-aligned** (`equity.astro` is the reference) - never centre a content heading block; only self-contained promo bands (`.cta-box`, dark CTA/access) are centred by their own design. → [#rule-12](docs/conventions.md#rule-12)
+13. **The FAQ section header is always "Got Questions?"** - fix any divergent header you encounter. → [#rule-13](docs/conventions.md#rule-13)
+14. **🟢 Interactive controls meet a 48px mobile tap target** - pad the hit area out to 48px; keep the icon glyph on its `16/20/24/32` scale. Governs tap area, not font size. → [#rule-14](docs/conventions.md#rule-14)
+15. **🟢 Hover states are desktop-only** - inside the one canonical gate `@media (min-width:1024px) and (hover:hover)`, never outside it. Design is proportionally identical 1024→1920 (fluid gutter, `1fr` grids, `clamp()`). → [#rule-15](docs/conventions.md#rule-15)
+16. **🟢 The FAQ section has two band-keyed variants** (`sec-light`/`sec-tint`) - colour is automatic. Set only the band class; never re-declare fills/borders/watermark on a page. (Homepage is the documented exception.) → [#rule-16](docs/conventions.md#rule-16)
+17. **🟢 ONE global button system** - `.btn` + family + size (radius 8px, 220px min-width). Families: primary (gold, one per view) · secondary (black stroke) · secondary-inverse (white stroke, dark surfaces) · tertiary/tertiary-inverse (solid, sparingly) · link. Never hardcode a button colour; pages add only layout. → [#rule-17](docs/conventions.md#rule-17)
+18. **🟢 The hero is a shared component `<Hero>`** - never re-author `<section class="hero">` markup on a page. A sitewide hero change is one edit to `Hero.astro` + `global.css`. (Bespoke heroes listed in conventions.) → [#rule-18](docs/conventions.md#rule-18)
+19. **🟢 Every process stepper is `<StepsRow>` / `<StepsRows>`** - icon-chip timeline; `icon` is a key into `src/components/sections/stepIcons.ts`. Never hand-write `.steps` or inline stepper SVGs. → [#rule-19](docs/conventions.md#rule-19)
 
-3. **One font + `line-height:1.5`, site-wide - one ruled exception.** The only font is **Outfit**;
-   never set another `font-family` or load a second web font. Form controls are force-inherited
-   in `global.css` base layer, so any new interactive element is covered. Every text element
-   renders at `line-height:1.5` (enforced globally). Both live in `global.css` `@layer base`.
-   **Sanctioned exception (2026-07-12):** the homepage Antara **App Store / Google Play badges**
-   (`.store-btn`) set the platform **system-font stack** (`-apple-system, …, Roboto, …`) - no web
-   font loaded - so they read as the official Apple/Google artwork. This is the *only* non-Outfit
-   text on the site; do not add others. (Ideal end state: drop in Apple's/Google's official badge
-   SVG/PNG assets, which bake the type into the image and need no font at all.)
+---
 
-4. **Icons are real `<svg>`s, never text glyphs, sized `16 / 20 / 24 / 32px` only.** Every icon
-   is an inline `<svg>` - never a character (`✓ → ★ f in 𝕏`) or emoji. Width/height is one of
-   those four sizes, chosen from context. (Icon *containers* follow the 8px grid, not this scale.)
+## 📄 Pages
 
-5. **No fractional opacity, no alpha colours - everything is a solid hex token.** Every
-   fill/stroke/border/text/divider colour is a **solid hex** exposed as a token. Never `rgba()`/
-   `hsla()`, never `opacity:.1` to fake a lighter colour. Flatten alpha over its background into
-   a hex with the same look. **Only** translucency allowed: `box-shadow`, frosted
-   `backdrop-filter` layers, and the `opacity` *property* for motion/state (reveal fades,
-   disabled/loading dim). *(A small number of legacy alpha values that sit over gradients/video -
-   un-flattenable - are carried verbatim on the homepage and flagged `Tier-2` in-file; they are
-   the documented exception, not licence for new ones.)*
+**44 pages total** - flat/top-level, extensionless, no-trailing-slash URLs. Leaf slugs use hyphens
+between words; folder segments do not (only `regulatorydocuments/` and `designsystem/` are folders).
+Product & calculator hubs are flat files; detail pages are template-driven (`equity.astro` is the
+product-page reference). Every `<title>` is normalised by `fullTitle()` - page `seo.title` carries
+**no** brand suffix. **Full URL / source / description inventory: [`docs/pages.md`](docs/pages.md).**
 
-6. **Spacing sits on the 8px grid.** Every `gap`/`padding`/`margin`/box size is a multiple of
-   **8px** (4px worst case). No off-grid values (6, 10, 14, 18…). *(A few legacy off-grid values
-   are carried for pixel parity and flagged `Tier-2` in-file - do not add new ones.)*
+**Proofkit** (`/review` + `/reviewdash` admin + `/teamdash` per-team) is an isolated, versioned,
+portable package in `src/plugins/proofkit/` toggled by `PROOFKIT_ENABLED` in its `config.ts`.
+**Per change → bump `VERSION` + add a precise `CHANGELOG.md` entry** (note any endpoints/auth/config/
+seams touched - that entry is the running record). `README.md`/`INSTALL.md` are the source of truth
+that travels in the zip but are **reconciled at export time** (when a zip is cut), not on every push.
+The latest complete package zip is kept in git at `releases/proofkit-v<VERSION>.zip` and is replaced
+on each new export.
 
-7. **The hero is standardised across pages.** Same gradient, `min-height`, `.hero-inner` padding
-   (`56px 0`), H1/lead font sizes and the two-column `gap:56px`. Only the text content changes.
-   H1 and lead cap at `--hero-text-w` (600px); the two-column aside is always `--hero-aside-w`.
-   Defined once in `global.css`. **Two sanctioned variants:** the `/calculators` hub `.calc-hero`,
-   and `.hero.hero-compact` on the **calculator detail pages** - it drops the tall band
-   (`min-height:0`) and the auto-margin centring so the hero *hugs* its breadcrumb + H1 + lead
-   (no CTA) on a small explicit padding (desktop `40 / 24 / 40`, mobile `32 / 16 / 32` -
-   above-breadcrumb / breadcrumb→H1 / below-lead), deliberately shorter than the product hero.
-   Documented in `/designsystem/proposed`.
-
-8. **Every form field uses the shared input-field component.** There is **one** form field for
-   the whole site - `.hf-field` (with `.hf-row`/`.hf-unit`/`.hf-field-in`/`.hf-err`), canonical
-   in `global.css`. Pages **never** re-declare it; they only add field *decoration* (e.g. the
-   Demat phone-flag prefix). 48px box, floating label, states Default/Active/Filled/Disabled/
-   Error, plus optional select-chevron, counter and Verify/Verified affordances.
-
-9. **🟢 The token contract - components bind to tokens, tokens bind to primitives.**
-   `global.css` has three tiers: **primitives** (`--color-gold-400`, raw palette values) →
-   **semantic roles** (`--color-action-primary`, `--color-text-primary`, …) → components use
-   the semantic role (or a primitive where no role fits). When the cleaned design system returns
-   from Figma, **only token values change** - component code never does. Token *names* are the
-   stable API; never hardcode a raw hex in a component or page when a token exists.
-
-10. **🟢 Merge policy - Tier-1 applied, Tier-2 documented.** Near-duplicate legacy values ≤2 RGB
-    points apart are already merged (Tier-1, imperceptible). Larger *visible* unifications (the
-    4 button specs, the divergent homepage footer, collapsing 15 creams → 5, ink merges) are
-    **documented in `/designsystem/proposed` but NOT applied** - they await sign-off after the
-    Figma round-trip. When you see a `/* Tier-2 */` comment, that's a proposed-but-unapplied
-    consolidation held for parity; leave the value, keep the note.
-
-11. **🟢 Design-guideline changes land in ALL THREE places.** When adding/changing a design
-    guideline, update **all three** or it is not done:
-    - **`/designsystem` pages** - document the rule/direction.
-    - **`global.css`** (and/or components) - implement it.
-    - **`CLAUDE.md`** (this file) - reflect it in the rules if project-wide.
-
-12. **Headings are LEFT-aligned - `products/equity.astro` is the reference.** The hero H1, every
-    section `.sec-title` and every `.sub-title` (with their `.sec-lead`/`.sub-lead`) sit
-    flush-left. Never centre a heading block: a section header is a `<div class="stack"
-    style="gap:16px">` holding the title + lead, with **no** `align-items:center` / `text-align:
-    center` and **no** `max-width` cap on the lead (the section reads left-to-right, full-measure).
-    Vertical centring (`justify-content:center` on the `.section stack`) is fine - that's the
-    main axis. The **only** centred text is the self-contained promotional bands - the shared
-    `.cta-box` and dark CTA/"access" bands - which are centred by their own component design, as
-    on equity. Do not centre ordinary content headings anywhere.
-
-13. **The FAQ section header is always "Got Questions?".** Every page's FAQ block
-    (`<h2 class="faq-title">…</h2>` above `FaqAccordion`) reads exactly **Got Questions?** -
-    never "FAQs - <Topic>", "Frequently Asked Questions", "General Questions" or any other variant.
-    Apply on every new page build and fix any divergent header you encounter, unless a specific
-    page is told otherwise. *(Superseded 2026-07-08: the header was previously "General Questions";
-    the whole site was switched to "Got Questions?" to match the compliance content.)*
-
-14. **🟢 Interactive controls meet a 48px mobile tap target.** Every tappable control (icon
-    button, icon-only link, hamburger, social link) must present a **≥44px** touch area on
-    mobile; the site standard is **48px** - on the 8px grid and matching `.hf-field` (48px box)
-    and the `.to-top` FAB. Reach it by **padding out the hit area**, not by enlarging the icon:
-    the icon glyph stays on its `16/20/24/32` scale (rule 4) while the container/`min-width`/
-    `min-height`/padding grows to 48px. Canonical examples in `global.css`: footer `.socials a`
-    (48px box) and `.nav-toggle` (48×48 via `min-width`/`min-height`, 24px bars unchanged). Text
-    links/buttons that are already ≥44px tall via their padding are fine as-is. **Exception:** this
-    governs *tap area*, not font size - there is **no** universal minimum font-size rule; designed
-    micro-labels (the `.hf-field` floating label at ~10px, compact eyebrow/badge text) are
-    sanctioned and must not be "fixed."
-
-15. **🟢 Hover states are desktop-only, gated at 1024px.** Every hover affordance lives inside the
-    one canonical gate `@media (min-width: 1024px) and (hover: hover)` - never author a hover rule
-    outside it. The **1024px** threshold matches the nav's desktop→hamburger switch
-    (`max-width: 1023.98px`), so hover and the full desktop layout begin/end together: **≥1024px hover
-    is active, below 1024px it never fires** (the layout is the mobile hamburger). The
-    `(hover: hover)` half also excludes touch pointers at any width. *(Updated 2026-07-11: the gate +
-    nav hamburger switch were lowered from `1200px` to `1024px` sitewide so the full desktop layout
-    holds - as a proportional scaled-down miniature, never rearranging - all the way down to the 1024
-    desktop-band floor. The nav's 1024-1300 clamp block scales the bar down to ~0.72x at 1024.)* The
-    design is otherwise **proportionally identical 1024→1920** by construction - no fixed content
-    max-width; the page gutter is fluid (`--pad: clamp(20px, 8vw, 144px)`), grids reflow on `1fr`, and
-    in-band spacing/type uses `clamp()` so elements scale with the viewport with no breakpoint jumps.
-
-16. **🟢 The FAQ section has two sanctioned variants, one per section band - colour is
-    automatic, never per-page.** *(Supersedes every earlier FAQ-styling instruction, 2026-07-10.)*
-    Every FAQ block is `<section class="faq-wrap sec-light|sec-tint">` → `.faq-cols` holding
-    `.faq-left` (`<h2 class="faq-title">Got Questions?</h2>` + `<FaqAccordion>`) and the `.faq-side`
-    "Need A Clearer Direction?" card. The accordion is the shared **segmented** style: each
-    `.faq-item` is its own bar with a **4px gap**, only the outer ends rounded (24px), a 16px
-    question that animates `font-weight` 500→600 on open (needs the **variable** Outfit face), and a
-    16px plus glyph whose vertical bar fades on open. The two variants differ only in colour, all set
-    once in `global.css` and keyed on the band:
-    - **Card fill** - `--faq-item-bg`, consumed by **both** the accordion segments **and** the side
-      card so they always match, is set to the **other** band's colour: `sec-light → cream-400`,
-      `sec-tint → cream-250`. The card thus sits one shade off the band it's on.
-    - **Watermark** - `.faq-side .usr` is the band's **own** colour (`--faq-section-bg`), painted via
-      a CSS `mask` of `/assets/user.svg` at full opacity (the external `<img>` can't inherit page
-      colour), so it reads as a subtle tone-on-tone against the off-colour card. Hidden below 1024px.
-    - **No strokes** on either segment - the fill delta + the 4px gaps carry all separation.
-    Set only the band class on the page; **never** re-declare fills, borders, or the watermark in a
-    page `<style>`. The homepage is the documented exception (single cream-100 band → `cream-350`
-    items, its own olive side card, no watermark). Documented live in `/designsystem/proposed`.
-
-17. **🟢 There is ONE global button system - `.btn` + family + size (radius 8px).** *(Added
-    2026-07-11 from the Figma "V4 / Buttons" sheet, node 1190:7111; role naming v2 same day.)*
-    Compose a button as `.btn` + a **family** + a **size**: `<a class="btn btn-primary btn-xl">`.
-    **Families (use in MODERATION - mostly primary + the black-stroke secondary):**
-    - `btn-primary` - **gold solid**, the ONE main CTA per view.
-    - `btn-secondary` - **black stroke** (outline), the standard secondary. **This is the secondary
-      button** - reach for it for any "second" action on a light surface.
-    - `btn-secondary-inverse` - **white stroke**, the secondary on **dark** surfaces (a black stroke
-      is invisible there).
-    - `btn-tertiary` - **solid black** (charcoal), low-emphasis solid (e.g. the nav pill); use
-      sparingly.
-    - `btn-tertiary-inverse` - **solid white/light**, the tertiary on dark; use sparingly.
-    - `btn-link` (blue hyperlink) / `btn-link-inverse` (light link on dark) - text buttons.
-    **Sizes:** `btn-xxl` 52 · `btn-xl` 48 · `btn-lg` 40 (= base default) · `btn-md` 36 · `btn-sm` 32.
-    `btn-icon` makes a square icon-only button; in-button icons carry `btn-ico` (auto-sized on the
-    16/20/24/32 scale, rule 4). Radius is **8px** across the whole scale. **Uniform footprint
-    (2026-07-12):** every button carries a **220px min-width** (`--cta-w`, the hero CTA width) so
-    action buttons share one width sitewide rather than shrink-wrapping - written `min-width:
-    min(var(--cta-w), 100%)` so the cap auto-collapses in narrow/full-width containers and never
-    overflows (add `style="width:100%"` for full-bleed). **Exempt** (they keep their own sizing):
-    the compact `btn-md`/`btn-sm` (they hug), icon-only `btn-icon`, the nav pill `.nav-cta`, and the
-    FAQ side-card CTA (`.faq-side .btn`); the homepage hero buttons set explicit inline widths.
-    Hover is auto per family (gated at 1024px,
-    rule 15); `:disabled`/`[aria-disabled]` grey it out. Colours bind to `--color-btn-*` semantic
-    tokens (rule 9) - never hardcode a button colour on a page. Pages add only *layout* (width,
-    responsive, alignment), never re-declare fill/height/radius/font. **Companion:** the infotext
-    overlay `.infotip` (dark bubble + directional pointer; `.infotip-bottom/-top/-right/-left`).
-    Documented live in `/designsystem/proposed`. **Every button on the site uses this system** - the
-    legacy `.btn-gold`/`.btn-dark`/`.btn-ghost`/`.btn-outline` classes are retired (migrated sitewide
-    2026-07-11): `btn-gold`→`btn-primary`, `btn-dark`→`btn-tertiary`, `btn-ghost`/`btn-outline`→
-    `btn-secondary-inverse`.
-
-18. **🟢 The hero is a shared component - `<Hero>`, not hand-written markup.** *(Extracted
-    2026-07-11.)* `src/components/sections/Hero.astro` renders the entire standardised hero band
-    (rule 7): the gradient `<section class="hero">` (+ `compact` for the calculator hug variant),
-    an optional `<Breadcrumb>`, and the `.hero-inner` stack. **Props:** `breadcrumb` (trail array),
-    `cta` (`{ label, href }` - the single gold `btn-primary`, auto-sized to the **220px** `--cta-w`
-    min-width set once in `global.css`), `compact`, `reveal` (the `data-enter` scroll hook, default
-    true), `id`/`dataSection`. **Slots:** `title` (H1 inner, rich markup ok), `lead`, `eyebrow`,
-    `cta` (multi-button heroes), `aside` (two-column form/card → hero-grid), and the default slot
-    for extra in-hero content (tables, contact pills). **A sitewide hero change - button style,
-    width, spacing, a new element - is now a single edit to `Hero.astro` + `global.css`, never a
-    per-page sweep.** 33 pages use it; the few genuinely bespoke heroes with page-scoped `<style>`
-    (homepage video hero, `about-us` stats, `antara`, `become-a-partner`, the form two-column heroes
-    `open-demat-account`/`karnataka-bank-customers`/`contact-us`, `calculators` `.calc-hero`,
-    `designsystem`) stay hand-written. New pages build their hero with `<Hero>` - never re-author the
-    `<section class="hero">` markup.
-
-19. **🟢 Every How-To / process stepper is one of two shared components - `<StepsRow>` /
-    `<StepsRows>`, never hand-written `.steps`.** *(Unified 2026-07-12; retired the old `StepFlow`
-    component and the numbered `.steps`/`.step-div` markup.)* Both render an **icon-chip timeline**
-    (a gold chip + title + desc per step, joined by a dashed connector in `--color-tan-500`).
-    Each step is `{ icon, title, desc }`; **`icon` is a KEY into the shared set
-    `src/components/sections/stepIcons.ts`** (24px inline `<svg>`s, rule 4) - never inline an SVG on a
-    page, and add new concepts to `stepIcons.ts` only. Pick the component by step count:
-    - **`<StepsRow steps={[…]}>`** - a single row (≤5 steps). Connector runs first-chip-centre →
-      last-chip-centre (no bleed).
-    - **`<StepsRows steps={[…]} perRow={N}>`** - multi-row (≥6 steps; choose `perRow` to balance rows,
-      ≤5/row). Row 1 fills the row; **rows 2+ centre their chips**. Only the **stroke** bleeds - it runs
-      out through the page gutter to the **viewport edge** to signal the wrap (first row → right edge;
-      middle rows → full-bleed; last row: left edge → last chip). Chips never leave the content column.
-    Both collapse to a vertical dashed spine below 1024px. **A sitewide stepper change is a single edit
-    to these two files + `stepIcons.ts`.** *(Sole survivors on the legacy `.steps` markup, deliberately
-    left as non-process lists: commodities "Essential Rules for Risk Management" and mutual-funds "How
-    Mutual Funds Work".)*
+**Adding a new page:** create `src/pages/<path>.astro`, import `BaseLayout`, pass a `seo` object,
+build from the shared component classes + tokens in `global.css`, and build the hero with `<Hero>`
+(rule 18) - never re-author `<section class="hero">`. Copy an existing page of similar shape
+(`privacy-policy.astro` for content, `equity.astro` for a product page). Use `src/data/` for anything
+repeated. Never fork `global.css`.
 
 ---
 
 ## ▶️ Running / preview
 
-- Install: `npm install`. Dev: `npm run dev` → `localhost:4321`. Build: `npm run build` →
-  `./dist/`. Preview build: `npm run preview`.
-- Clean, **extensionless, no-trailing-slash** URLs everywhere (`build.format: 'file'` +
-  `trailingSlash: 'never'`): a page at `src/pages/equity.astro` serves at `/equity`.
-  **Slug convention:** leaf pages use **hyphens between words** (`Mutual Funds` →
-  `/mutual-funds`, `Open a Demat Account` → `/open-demat-account`), but **folder
-  segments carry no hyphens** (`/regulatorydocuments/investor-charter`,
-  `/designsystem/current`). Hub pages are flat files (`products.astro`, not
-  `products/index.astro`) so GitHub Pages does not 301 them to a trailing slash;
-  the only folders are `regulatorydocuments/` and `designsystem/`. The legacy reference site
-  (`../Project 1`) can run alongside for pixel comparison (`python3 ../Project\ 1/serve.py`,
-  port 4178, or the `static` launch config).
-
----
+- Install `npm install` · Dev `npm run dev` → `localhost:4321` · Build `npm run build` → `./dist/`
+  · Preview `npm run preview`.
+- Clean **extensionless, no-trailing-slash** URLs (`build.format:'file'` + `trailingSlash:'never'`):
+  `src/pages/equity.astro` → `/equity`. (Full slug/URL convention + legacy-site comparison:
+  [`docs/conventions.md`](docs/conventions.md).)
 
 ## 📁 Project structure
 
 ```
 src/
-  styles/global.css     Tailwind entry + the token system + base + every shared component.
+  styles/global.css     Tailwind entry + token system + base + every shared component.
   layouts/BaseLayout.astro   Templated <head>/SEO + Header/MegaNav/Footer + scroll-reveal.
-  components/
-    site/               Header, MobileMenu, MegaNav, Footer (chrome; render from navigation.ts).
-    sections/           Composed sections: Hero (rule 18), StepsRow/StepsRows (+ stepIcons.ts, rule 19), FaqAccordion, …
-    ui/                 Atomic primitives (as they are extracted).
-  data/                 navigation.ts (nav tree → header/overlay/mobile/footer) + future data.
-  lib/                  seo.ts (SEO type + fullTitle + faqPage/breadcrumb/organization schema).
+  components/site/      Header, MobileMenu, MegaNav, Footer (render from navigation.ts).
+  components/sections/  Hero (rule 18), StepsRow/StepsRows (+ stepIcons.ts, rule 19), FaqAccordion, …
+  components/ui/        Atomic primitives.
+  data/                 navigation.ts (+ future data).
+  lib/                  seo.ts (SEO type + fullTitle + schema helpers).
   pages/                One .astro per URL. Content + composition only.
-public/                 assets/ images/ videos/ favicon.png - served verbatim, root-absolute.
-docs/                   legacy-style-audit.md, porting-guide.md, and the build specs.
+public/                 assets/ images/ videos/ favicon.png - served verbatim.
+docs/                   conventions.md, pages.md, legacy-style-audit.md, porting-guide.md, specs.
 ```
-
-## 📄 Pages
-
-**44 pages total.** URLs are **flat/top-level, extensionless, no-trailing-slash** - product and calculator detail pages live directly at `src/pages/<slug>.astro` (root), NOT nested under `products/`/`calculators/`. **Leaf slugs use hyphens between words; folder segments do not** (only `regulatorydocuments/` and `designsystem/` are folders). The product and calculator **hubs are flat files** (`products.astro`, `calculators.astro`). Detail pages are **template-driven** (`equity.astro` is the reference for product pages). Every FAQ block reads exactly **Got Questions?** (rule 13). Every `<title>` is normalised by `fullTitle()` to `<Page Title> | Shriram Financial Services` - page `seo.title` values carry **no** brand suffix. All heroes use the shared `.hero` except the `/calculators` hub (documented `.calc-hero` variant) and the calculator **detail** pages (the `.hero.hero-compact` hug variant - see rule 7). *(URL scheme updated 2026-07-09: trailing slashes dropped + `build.format: 'file'`; leaf slugs keep word hyphens, folder segments (`regulatorydocuments`, `designsystem`) are hyphen-free.)*
-
-**Core & company**
-| URL | Source | Page |
-|---|---|---|
-| `/` | `pages/index.astro` | Homepage (video hero + glass Demat card, pinned "Why Shriram", advisory cards, dark product grid, steps, shared `FaqAccordion` + olive "Still Have Questions?" side card). Unified shared `Footer`. |
-| `/about-us` | `pages/about-us.astro` | About Us (stat hero, MVV, timeline). |
-| `/open-demat-account` | `pages/open-demat-account.astro` | Open a Demat Account (two-column hero + lead-capture form, phone-flag decoration). |
-| `/become-a-partner` | `pages/become-a-partner.astro` | Become a Partner (Apply form, eligibility checker, portfolio tabs). |
-| `/karnataka-bank-customers` | `pages/karnataka-bank-customers.astro` | Karnataka Bank 3-in-1 (co-brand hero lockup + lead-capture form). |
-| `/antara` | `pages/antara.astro` | Explore Antara (Shriram X platform - standardised hero, feature/cat grids, `.gate` locked card, FAQ). |
-| `/sitemap` | `pages/sitemap.astro` | HTML sitemap (link index, built from `navigation.ts`). |
-
-**Products** - flat at `pages/<slug>.astro` (template-driven; `equity` is the reference). Hub at `pages/products.astro`.
-| URL | Page |
-|---|---|
-| `/products` | Product Suite hub (breadcrumb hero, `.pgroup`/`.pcard` grids, orbit band). |
-| `/equity` | Equity - **reference** product-page template. |
-| `/derivatives` | Equity Derivatives (F&O). |
-| `/mtf` | Margin Trading Facility (MTF). |
-| `/commodities` | Commodity Trading (MCX/NCDEX). |
-| `/currency` | Currency Trading. |
-| `/mutual-funds` | Mutual Funds. |
-| `/etf` | ETFs. |
-| `/ipo` | IPO. |
-| `/nfo` | New Fund Offers (NFO). |
-| `/nps` | National Pension System (NPS). |
-| `/bonds` | Bonds. |
-| `/fixed-deposit` | Fixed Deposit (FD). |
-| `/loan-against-mutual-fund` | Loan Against Mutual Funds (LAMF). |
-| `/loan-against-shares` | Loan Against Securities (LAS). |
-| `/global-investing` | Global Investing (US stocks & ETFs). |
-
-**Research** - flat at `pages/<slug>.astro`
-| URL | Source | Page |
-|---|---|---|
-| `/research-hub` | `pages/research-hub.astro` | Research Centre (hub hero, `.appr` cards, feature grid, dark access band, FAQ). |
-| `/technical-analysis` | `pages/technical-analysis.astro` | Technical Research (gated daily note, research-report grid). |
-| `/fundamental-analysis` | `pages/fundamental-analysis.astro` | Fundamental Research (process, coverage, FAQ). |
-| `/mutual-fund-analysis` | `pages/mutual-fund-analysis.astro` | Mutual Fund Research (ratings, model portfolios, FAQ). |
-
-**Calculators** - detail pages flat at `pages/<slug>calculator.astro` (`calcHref` in `data/calculators.ts` → `/<slug>calculator`). Hub at `pages/calculators.astro` (kept **isolated** for future calculators; `.calc-hero`).
-| URL | Page |
-|---|---|
-| `/calculators` | Calculators hub (**sanctioned** `.calc-hero`; isolated, not in primary nav flow). |
-| `/sip-calculator` | SIP Calculator. |
-| `/lumpsum-calculator` | Lumpsum Calculator. |
-| `/swp-calculator` | SWP Calculator. |
-| `/nps-calculator` | NPS Calculator. |
-| `/fd-calculator` | Fixed Deposit Calculator. |
-
-**Support**
-| URL | Source | Page |
-|---|---|---|
-| `/contact-us` | `pages/contact-us.astro` | Contact/Support hub (tabbed: Customer Care / Branch Locator / Downloads). |
-| `/grievance-redressal` | `pages/grievance-redressal.astro` | Grievance Redressal. |
-
-**Legal & compliance** - regulatory docs nested under the `regulatorydocuments/` hub.
-| URL | Source | Page |
-|---|---|---|
-| `/privacy-policy` | `pages/privacy-policy.astro` | Privacy Policy. |
-| `/terms-and-conditions` | `pages/terms-and-conditions.astro` | Terms & Conditions (legal long-form). |
-| `/terms-of-use-purse` | `pages/terms-of-use-purse.astro` | Terms of Use - Purse mobile app. |
-| `/regulatorydocuments` | `pages/regulatorydocuments.astro` | Regulatory Documents hub (`.doc-card` grid → the two docs below + SEBI/exchange disclosures). |
-| `/regulatorydocuments/investor-charter` | `pages/regulatorydocuments/investor-charter.astro` | Investor Charter (shared `.doc-card` view/download grid). |
-| `/regulatorydocuments/mandatory-member-details` | `pages/regulatorydocuments/mandatory-member-details.astro` | Mandatory Member Details (SEBI disclosures). |
-
-**Design system** (noindex - the Figma artifact)
-| URL | Source | Page |
-|---|---|---|
-| `/designsystem` (+ `current/`, `proposed/`) | `pages/designsystem/` | Design-system docs (noindex). |
-
-> **Note:** `/antara` (Shriram X platform) is now built (2026-07-08). The homepage "Explore Antara" hero link and the footer "Explore Antara" entry in `navigation.ts` point at it; the homepage login links remain inert `#` placeholders.
-
-> **Proofkit — content-review tool (`/review` + `/reviewdash`).** The click-to-comment overlay, the
-> two dashboard routes, the two-tier auth and the Cloudflare Worker are **Proofkit**, an isolated,
-> versioned, portable **package** in `src/plugins/proofkit/` — deliberately decoupled from the design
-> system, built to zip up and drop into any Astro / Claude Code project. One switch, `PROOFKIT_ENABLED`
-> in its `config.ts`, toggles the whole tool on/off site-wide. Its `README.md` (what it does) +
-> `INSTALL.md` (how to integrate) are the **source of truth**; **keep them in sync and bump `VERSION` +
-> `CHANGELOG.md` whenever you change the tool.** The only host-project seams are the gated
-> `{PROOFKIT_ENABLED && <ProofkitOverlay />}` line in `BaseLayout.astro` and the two thin route shims
-> `src/pages/review.astro` + `reviewdash.astro`.
-
-**Adding a new page:** create `src/pages/<path>.astro`, import `BaseLayout`, pass a `seo` object,
-and build from the shared component classes + tokens in `global.css`. Build the hero with the
-shared `<Hero>` component (rule 18), not hand-written `<section class="hero">` markup. Copy an
-existing page of a similar shape (`privacy.astro` for content pages, `products/equity.astro` for
-nested). Use the data layer (`src/data/`) for anything repeated. Never fork `global.css`.
 
 ## 🔗 The Figma round-trip
 
-The plan: `/designsystem/proposed` is authored to map 1:1 onto Figma variables (primitive →
-semantic → component). It gets exported into Figma → cleaned up and filled in with final values →
-returned here. **Implementing the returned system should mean updating token *values* in
-`global.css` (and resolving the documented Tier-2 items), never re-architecting components** -
-that is exactly what the token contract (rule 9) buys us.
+`/designsystem/proposed` maps 1:1 onto Figma variables (primitive → semantic → component); it exports
+to Figma, gets cleaned/filled, and returns. Implementing the returned system means updating token
+*values* in `global.css`, never re-architecting components (rule 9). Full detail:
+[`docs/conventions.md`](docs/conventions.md).
+
+---
+
+## 🧭 Working efficiently (this repo)
+
+- **`/clear` between unrelated pages/features; `/compact` at page boundaries** (steer it, e.g.
+  `/compact keep the token decisions + which files changed`). Stale context taxes every later turn.
+- **Multi-page change? Check if it's a shared-component edit first** - `<Hero>`, `<StepsRow>`,
+  `global.css`, `navigation.ts` usually make it one file, not N.
+- **Name the target files (or use Plan Mode) before any multi-page edit loop** - cheap to correct at
+  the plan stage, expensive mid-edit.

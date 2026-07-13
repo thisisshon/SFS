@@ -77,13 +77,20 @@ const INVEST_STEPS = [
   { icon: 'verify', h: 'Review Allotment Confirmation', p: 'Upon successful transaction validation, your capital remains securely parked until the official closing date. The AMC will process unit generation within 5 business days of the subscription window ending, sending an official Statement of Account (SoA) directly to your registered digital destination.' },
 ];
 
-// Benefits and Risks of an NFO.
-const BENEFIT_RISK_ROWS = [
-  { cat: 'Benefit', aspect: 'Attractive Entry Price at ₹10', details: "NFOs are launched at a standard entry price of ₹10 per unit, making them accessible to investors. However, investment decisions should go beyond entry price and focus on the scheme's objective, portfolio strategy, and long-term potential." },
-  { cat: '', aspect: 'Diversification Opportunities', details: "NFOs, especially thematic and sectoral ones, often introduce fund categories or asset allocation strategies not yet present in an AMC's portfolio. This adds meaningful diversification by spreading capital across fresh growth drivers that complement existing core holdings." },
-  { cat: 'Risk', aspect: 'No Historical Performance', details: 'NFOs carry no performance track record. Unlike existing mutual funds where 3-year, 5-year, and 10-year returns, rolling returns, and Sharpe ratios can be analysed, an NFO has zero history — making evaluation largely dependent on AMC reputation and fund manager credentials.' },
-  { cat: '', aspect: 'Lock-in and Liquidity Risks', details: 'Close-ended NFOs lock in capital until maturity, restricting withdrawals even during emergencies. Open-ended NFOs, while more flexible, may carry exit loads on redemptions made within the first year, adding a short-term liquidity consideration for investors.' },
+// Benefits and Risks of an NFO - a two-column comparison (no table). Two clean
+// arrays drive the Benefits (positive) and Risks (cautionary) columns.
+const NFO_BENEFITS = [
+  { h: 'Attractive Entry Price at ₹10', p: "NFOs are launched at a standard entry price of ₹10 per unit, making them accessible to investors. However, investment decisions should go beyond entry price and focus on the scheme's objective, portfolio strategy, and long-term potential." },
+  { h: 'Diversification Opportunities', p: "NFOs, especially thematic and sectoral ones, often introduce fund categories or asset allocation strategies not yet present in an AMC's portfolio. This adds meaningful diversification by spreading capital across fresh growth drivers that complement existing core holdings." },
 ];
+const NFO_RISKS = [
+  { h: 'No Historical Performance', p: 'NFOs carry no performance track record. Unlike existing mutual funds where 3-year, 5-year, and 10-year returns, rolling returns, and Sharpe ratios can be analysed, an NFO has zero history — making evaluation largely dependent on AMC reputation and fund manager credentials.' },
+  { h: 'Lock-in and Liquidity Risks', p: 'Close-ended NFOs lock in capital until maturity, restricting withdrawals even during emergencies. Open-ended NFOs, while more flexible, may carry exit loads on redemptions made within the first year, adding a short-term liquidity consideration for investors.' },
+];
+// Per-card marker icons (rule 4, 24px, currentColor - colour set by CSS per
+// column): a sparkle for benefits, a shield (risk to guard against) for risks.
+const BR_STAR = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2.5c.5 4.6 2.4 6.5 7 7-4.6.5-6.5 2.4-7 7-.5-4.6-2.4-6.5-7-7 4.6-.5 6.5-2.4 7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 3.4c.2 1.6.8 2.2 2.4 2.4-1.6.2-2.2.8-2.4 2.4-.2-1.6-.8-2.2-2.4-2.4C18.2 5.6 18.8 5 19 3.4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+const BR_SHIELD = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3 5 5.6v5.1c0 4.6 3 7.8 7 9.2 4-1.4 7-4.6 7-9.2V5.6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8.4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15.4" r="0.9" fill="currentColor"/></svg>';
 
 // How to Evaluate an NFO Before Investing.
 const EVALUATE = [
@@ -254,16 +261,28 @@ const seo = {
       <h2 class="sec-title">What are the Benefits and Risks of an NFO?</h2>
       <p class="sec-lead">Every investment opportunity carries both potential rewards and inherent risks. NFOs are no exception. A balanced understanding of NFO benefits and risks helps investors approach these opportunities with clarity and appropriate expectations.</p>
     </div>
-    <div class="t-scroll"><div class="product-page_table t3 bordered" style="min-width:720px">
-      <div class="cell th"><p>Category</p></div><div class="cell th"><p>Aspect</p></div><div class="cell th"><p>Details</p></div>
-      {BENEFIT_RISK_ROWS.map((r) => (
-        <>
-          <div class="cell tb"><p class="k">{r.cat}</p></div>
-          <div class="cell tb"><p class="v">{r.aspect}</p></div>
-          <div class="cell tb"><p class="v">{r.details}</p></div>
-        </>
-      ))}
-    </div></div>
+    <div class="br-split" data-reveal-row>
+      <div class="br-col br-benefits">
+        <div class="br-head"><h3>Benefits</h3></div>
+        {NFO_BENEFITS.map((b) => (
+          <div class="br-item">
+            <span class="br-ico" aria-hidden="true"><Fragment set:html={BR_STAR} /></span>
+            <h4>{b.h}</h4>
+            <p>{b.p}</p>
+          </div>
+        ))}
+      </div>
+      <div class="br-col br-risks">
+        <div class="br-head"><h3>Risks</h3></div>
+        {NFO_RISKS.map((r) => (
+          <div class="br-item">
+            <span class="br-ico" aria-hidden="true"><Fragment set:html={BR_SHIELD} /></span>
+            <h4>{r.h}</h4>
+            <p>{r.p}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   </section>
 
   <!-- ===== How to Evaluate an NFO Before Investing? ===== -->
@@ -331,3 +350,25 @@ const seo = {
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* Benefits vs Risks - two-column comparison (replaces the old 3-col table).
+     Cards reuse the shared card tokens; the only colour is the sanctioned
+     success/danger semantic tokens on the markers (rule 5, solid hex). */
+  .br-split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; align-items: start; }
+  .br-col { display: flex; flex-direction: column; gap: 16px; }
+
+  .br-head h3 { font-weight: 500; font-size: 24px; color: var(--color-text-primary); }
+
+  .br-item { background: var(--color-surface-card); border: 1px solid var(--color-border-card); border-radius: 24px; padding: var(--container-pad); display: flex; flex-direction: column; gap: 12px; }
+  .br-item .br-ico { display: inline-flex; }
+  .br-item .br-ico :global(svg) { width: 24px; height: 24px; display: block; }
+  .br-benefits .br-ico { color: var(--color-success); }
+  .br-risks .br-ico { color: var(--color-gold-600); }
+  .br-item h4 { font-weight: 500; font-size: 20px; color: var(--color-text-primary); }
+  .br-item p { font-weight: 400; font-size: 16px; color: var(--color-text-tertiary); }
+
+  @media (max-width: 1023.98px) {
+    .br-split { grid-template-columns: 1fr; gap: 32px; }
+  }
+</style>

@@ -391,7 +391,7 @@ const seo = {
     </section>
 
     <!-- ================= PRODUCTS (dark reveal grid) ================= -->
-    <section class="el-sec-3">
+    <section class="el-sec-3 pk-pinsec">
       <div
         class="product-box"
         style="background:radial-gradient(ellipse 132% 312% at 117% -4%,#4F583B 0%,#3F4733 14%,#363A2C 25%,#2a2d23 38%,#1d1d1d 55%,#1d1d1d 100%);"
@@ -915,7 +915,7 @@ const seo = {
     </HowSoon>
 
     <!-- ================= ANTARA ================= -->
-    <section class="el-sec-3">
+    <section class="el-sec-3 pk-pinsec">
       <div
         class="product-box"
         style="background:radial-gradient(ellipse 132% 312% at 117% -4%,#4F583B 0%,#3B422C 12.5%,#282C1E 25%,#14160F 37.5%,#0A0B07 44%,#000 52%,#000 100%);"
@@ -1338,6 +1338,16 @@ const seo = {
     padding-inline: 16px; /* phones: 16px gutter (32px restored ≥640) */
     padding-block: 32px;
   }
+
+  /* Scroll-pin for the two dark sections (products "Trade, Invest or Borrow" +
+     "Meet Antara"): the box holds on screen (sticky) for a short hold while its
+     content drifts (JS parallax) - like the Why Shriram pin. The JS only turns this
+     ON (adds .pk-on + sets --pk-secH/--pk-top) on desktop, when motion is OK, AND
+     when the box comfortably fits the viewport; the drift is capped to the box's own
+     internal slack, so content is never clipped. Mobile / short viewports = static. */
+  .pk-pinsec.pk-on { min-height: var(--pk-secH); }
+  .pk-pinsec.pk-on .product-box { position: sticky; top: var(--pk-top); min-height: var(--pk-boxH); }
+  .pk-pinsec.pk-on .product-box-2 { will-change: transform; }
 
   /* ---- WHY SHRIRAM (pinned scroll section) ---- */
   .why-box {
@@ -2747,6 +2757,77 @@ const seo = {
     window.addEventListener('scroll', e, { passive: true });
     window.addEventListener('resize', e, { passive: true });
     e();
+  }
+
+  /* Content-drift scroll-pin for the two dark sections (products + Antara). Same
+     idea as the Why Shriram pin, but instead of a card rail it drifts the section's
+     content vertically (parallax over the fixed gradient). Desktop + motion-OK only;
+     the ~120vh hold comes from the .pk-pinsec { min-height:220vh } CSS. */
+  const pkPins = Array.from(document.querySelectorAll('.pk-pinsec')) as HTMLElement[];
+  if (pkPins.length) {
+    const html = document.documentElement;
+    const navEl = document.querySelector('.nav') as HTMLElement | null;
+    const motionOK = window.matchMedia('(prefers-reduced-motion: no-preference)');
+    const HOLD = 0.6;       // pin hold ≈ 0.6× viewport (half the original ~1.2×)
+    const GAP = 8;          // px gap below the (kept-visible) header
+    const BOT = 24;         // px bottom breathing room
+    const DRIFT_HALF = 40;  // px max half-travel of the content drift
+
+    /* Per-frame: drift the content within its slack (never past the box edges), and
+       while the box is stuck ("held") lock the header visible via html.nav-hold. */
+    const pkDrift = () => {
+      const vh = window.innerHeight;
+      let held = false;
+      pkPins.forEach((sec) => {
+        const content = sec.querySelector('.product-box-2') as HTMLElement | null;
+        const box = sec.querySelector('.product-box') as HTMLElement | null;
+        if (!content || !box) return;
+        const o = sec.offsetHeight - vh;
+        if (sec.dataset.pkOn !== '1' || o <= 0) { content.style.transform = ''; return; }
+        const n = Math.min(1, Math.max(0, -sec.getBoundingClientRect().top / o));
+        const travel = +(sec.dataset.pkAmp || 0);
+        content.style.transform = travel > 0 ? `translateY(${((0.5 - n) * travel).toFixed(1)}px)` : '';
+        const pkTop = parseFloat(sec.style.getPropertyValue('--pk-top')) || 0;
+        if (Math.abs(box.getBoundingClientRect().top - pkTop) < 2) held = true; // box is stuck
+      });
+      html.classList.toggle('nav-hold', held);      // keep the header shown for the whole hold
+      if (held && navEl) navEl.classList.remove('nav--hidden');
+    };
+
+    /* On load/resize: pin only when the section's content fits BELOW the kept-visible
+       header. The box fills that space; drift travel comes from the leftover slack so
+       content never spills. Header stays put for the hold, releases into the next section. */
+    const pkLayout = () => {
+      const vh = window.innerHeight;
+      const on = window.innerWidth >= 1024 && motionOK.matches;
+      const navH = (navEl && navEl.offsetHeight) || 80;
+      pkPins.forEach((sec) => {
+        const box = sec.querySelector('.product-box') as HTMLElement | null;
+        const content = sec.querySelector('.product-box-2') as HTMLElement | null;
+        if (!box || !content) return;
+        sec.classList.remove('pk-on'); sec.dataset.pkOn = ''; content.style.transform = '';
+        const ch = content.offsetHeight;
+        const availForBox = vh - navH - GAP - BOT;   // room below the kept-visible header
+        if (!on || ch > availForBox) {               // content can't fit below the header
+          sec.style.removeProperty('--pk-secH'); sec.style.removeProperty('--pk-top'); sec.style.removeProperty('--pk-boxH');
+          return;
+        }
+        const boxH = availForBox;                    // box fills the space under the header
+        const travel = Math.min(2 * DRIFT_HALF, Math.max(0, boxH - ch - 8)); // ≤ box slack
+        sec.style.setProperty('--pk-boxH', boxH + 'px');
+        sec.style.setProperty('--pk-top', navH + GAP + 'px');
+        sec.style.setProperty('--pk-secH', boxH + Math.round(vh * HOLD) + 'px');
+        sec.dataset.pkAmp = String(travel);
+        sec.dataset.pkOn = '1';
+        sec.classList.add('pk-on');
+      });
+      pkDrift();
+    };
+
+    window.addEventListener('scroll', pkDrift, { passive: true });
+    window.addEventListener('resize', pkLayout, { passive: true });
+    if (motionOK.addEventListener) motionOK.addEventListener('change', pkLayout);
+    pkLayout();
   }
 
   /* Product-card reveal-on-scroll - add .revealed as each card enters, then

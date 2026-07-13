@@ -118,7 +118,11 @@ import MobileMenu from './MobileMenu.astro';
         if (nav.classList.contains('open')) return; // keep header put while the menu is open
         const y = window.pageYOffset;
         if (Math.abs(y - last) < DELTA) return; // ignore tiny jitters
-        if (y > last && y > THRESHOLD) {
+        // A feature can lock the header visible via html.nav-hold (e.g. the homepage
+        // pinned sections keep it shown for the whole hold).
+        if (document.documentElement.classList.contains('nav-hold')) {
+          nav.classList.remove('nav--hidden');
+        } else if (y > last && y > THRESHOLD) {
           nav.classList.add('nav--hidden'); // scrolling down
           closeMenu();
         } else {
