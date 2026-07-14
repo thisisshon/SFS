@@ -6,6 +6,16 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.16.0 — 2026-07-13 — cross-team tasks visible to BOTH the raiser and the receiver
+
+- A comment directed from one team to another (e.g. **SEO → Content**) now shows in **both** teams'
+  dashboards. The receiver already got it as an inbox item + an arrival notification; now the **raiser
+  sees it too**. The team-scoped read returns comments the team **raised** (`team`) **OR** that are
+  **directed to** it (`toTeam`), thread-aware (a matching root carries all its replies). Applied to the
+  Worker `GET /comments?team=` and the local demo store. ⚠️ Worker change — auto-deploys via CI.
+- Team-dash card shows the direction: received → **"Raised By &lt;team&gt;"**; raised by you → **"To &lt;team&gt;"**.
+- Team-dash lead updated to "Comments your team raised or was asked to action…".
+
 ## 2.15.0 — 2026-07-13 — ProoofKit rename · Open Pin everywhere · Overview/bucket cleanup
 
 - **Product renamed to ProoofKit** (three o's, capital K) across every user-facing wordmark — both

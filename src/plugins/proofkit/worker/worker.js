@@ -188,11 +188,18 @@ export default {
           return json(arr, 200, cors);
         }
         if (team) {
-          // Team-scoped INBOX: comments DIRECTED to this team (toTeam), for it to action.
-          // Admin may read any team; a team key may read only its own.
+          // Team-scoped view: every task this team is part of — ones it RAISED (team)
+          // AND ones DIRECTED to it (toTeam) — so the raiser and the receiver both see
+          // it. Thread-aware: matching roots carry all their replies. Admin may read
+          // any team; a team key may read only its own.
           if (!isAdmin && passTeam !== team) return deny();
           const all = await readAll(kv);
-          const masked = all.filter((r) => (r.toTeam || '') === team).map(maskForTeam);
+          const mine = new Set(
+            all.filter((r) => !r.parentId && ((r.team || '') === team || (r.toTeam || '') === team)).map((r) => r.id)
+          );
+          const masked = all
+            .filter((r) => (!r.parentId && mine.has(r.id)) || (r.parentId && mine.has(r.parentId)))
+            .map(maskForTeam);
           masked.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
           return json(masked, 200, cors);
         }

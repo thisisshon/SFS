@@ -42,14 +42,18 @@
       status: c.published ? (c.publishedStatus || 'open') : 'open', // masked
       publishedStatus: c.published ? (c.publishedStatus || '') : '', publishedAt: c.publishedAt || '',
     });
-    // Directed inbox: comments routed TO this team (toTeam) for it to action.
+    // Every task this team is part of — ones it RAISED (team) AND ones DIRECTED to it
+    // (toTeam) — so the raiser and the receiver both see it. Thread-aware.
     function localComments(t) {
       const out = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (k && k.startsWith('rvc:')) { try { out.push(...JSON.parse(localStorage.getItem(k) || '[]')); } catch {} }
       }
-      return out.filter((c) => (c.toTeam || '') === t).map(maskLocal).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      const mine = new Set(out.filter((c) => !c.parentId && ((c.team || '') === t || (c.toTeam || '') === t)).map((c) => c.id));
+      return out
+        .filter((c) => (!c.parentId && mine.has(c.id)) || (c.parentId && mine.has(c.parentId)))
+        .map(maskLocal).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     }
     function localNotifs(t) {
       let arr = [];
@@ -217,7 +221,12 @@
         `<article class="tmd-item" data-id="${esc(root.id)}" tabindex="0" role="button" aria-label="View comment details">` +
           `<div class="tmd-line">` +
             statusChip(root) +
-            (root.team ? `<span class="tmd-from">Raised By ${teamChip(root.team)}</span>` : '') +
+            // Direction: received → "Raised By <them>"; raised by us to another team → "To <them>".
+            ((root.team && root.team !== team())
+              ? `<span class="tmd-from">Raised By ${teamChip(root.team)}</span>`
+              : (root.toTeam && root.toTeam !== team() && root.toTeam !== ADMIN_TEAM)
+                ? `<span class="tmd-from">To ${teamChip(root.toTeam)}</span>`
+                : '') +
             `<div class="tmd-headline">` +
               `<div class="tmd-comment">${esc(root.comment)}` +
                 (replies.length ? `<span class="tmd-n">${replies.length + 1} comments</span>` : '') + `</div>` +
