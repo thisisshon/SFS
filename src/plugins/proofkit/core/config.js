@@ -102,6 +102,29 @@ export function ensureDemoReset() {
 }
 
 /* --------------------------------------------------------------------------
+ * Ticket numbers. Every raised comment gets a human-facing ticket = YYMMDD (the
+ * comment's own date) + a 4-digit per-day serial (0001–9999). e.g. a comment on
+ * 2026-07-14 → 2607140001. The Worker owns the real counter (KV `ticketseq:<YYMMDD>`);
+ * these helpers are for the no-Worker LOCAL demo and for FORMATTING on display.
+ * ------------------------------------------------------------------------ */
+
+/** Format a ticket string from an ISO timestamp + an integer serial. */
+export function formatTicket(iso, serial) {
+  const ymd = String(iso || '').slice(2, 10).replace(/-/g, '');      // "2026-07-14" -> "260714"
+  const n = ((Math.max(1, serial | 0) - 1) % 9999) + 1;              // keep it in 1..9999
+  return ymd + String(n).padStart(4, '0');
+}
+
+/** LOCAL-demo per-day serial: a localStorage counter mirroring the Worker's KV one. */
+export function nextLocalTicket(iso) {
+  const ymd = String(iso || '').slice(2, 10).replace(/-/g, '');
+  const k = 'rvc-ticketseq:' + ymd;
+  let seq = 1;
+  try { seq = (parseInt(localStorage.getItem(k) || '0', 10) || 0) + 1; localStorage.setItem(k, String(seq)); } catch {}
+  return formatTicket(iso, seq);
+}
+
+/* --------------------------------------------------------------------------
  * Teams + chip colours.
  * ------------------------------------------------------------------------ */
 export const TEAMS = ['Product', 'SEO', 'Marketing', 'Content', 'Design', 'Business'];
@@ -204,6 +227,22 @@ export function toggleTheme() {
   setGlobalTheme(getTheme() === LIGHT_THEME ? DEFAULT_THEME : LIGHT_THEME);
 }
 
+/** Individual (per-browser) toggle: flip the LOCAL theme only — never posted to the
+ *  Worker, so it changes nobody else's mode. Team dashboards use this; the choice is
+ *  cached by applyTheme (localStorage THEME_KEY), so it is remembered for the next
+ *  login on this browser. Contrast toggleTheme(), which is the admin's GLOBAL flip. */
+export function toggleLocalTheme() {
+  applyTheme(getTheme() === LIGHT_THEME ? DEFAULT_THEME : LIGHT_THEME);
+}
+
+/** Individual theme init (team dashboards): apply the remembered local choice instantly
+ *  and STOP — no global reconcile, no live push. Each browser keeps its own last-used
+ *  mode across logins. Contrast initTheme(), which follows the admin's GLOBAL theme. */
+export function initLocalTheme() {
+  document.documentElement.setAttribute('data-pk-theme', getTheme());
+  return getTheme();
+}
+
 /* Live push (SSE): subscribe to the Worker's /events stream so an admin's theme flip
  * lands on every open dashboard within ~a second — no reload, no tab-focus needed.
  * The Worker polls KV server-side and pushes `theme` events; EventSource auto-
@@ -237,8 +276,10 @@ export function initTheme() {
  * dashboard's wordmark via a [data-pk-toggle] slot (admin-only surface).
  * ------------------------------------------------------------------------ */
 
-/** Build one toggle control (a wired DOM node). aria-checked === light mode. */
-export function buildThemeToggle() {
+/** Build one toggle control (a wired DOM node). aria-checked === light mode.
+ *  Pass { local:true } for the per-browser (team) flip; default is the admin GLOBAL flip. */
+export function buildThemeToggle(opts) {
+  const flip = (opts && opts.local) ? toggleLocalTheme : toggleTheme;
   const btn = document.createElement('button');
   btn.className = 'pk-tt';
   btn.type = 'button';
@@ -253,16 +294,17 @@ export function buildThemeToggle() {
     btn.setAttribute('aria-checked', String(light));
     btn.title = light ? 'Light mode — switch to dark' : 'Dark mode — switch to light';
   };
-  btn.addEventListener('click', toggleTheme);
+  btn.addEventListener('click', flip);
   document.addEventListener('pk:themechange', sync);
   sync();
   return btn;
 }
 
-/** Fill every `[data-pk-toggle]` slot on the page with a toggle control. */
-export function mountThemeToggle(selector) {
+/** Fill every `[data-pk-toggle]` slot on the page with a toggle control. Pass
+ *  { local:true } to mount the per-browser (team) toggle instead of the global one. */
+export function mountThemeToggle(selector, opts) {
   const slots = document.querySelectorAll(selector || '[data-pk-toggle]');
-  slots.forEach((slot) => { if (!slot.firstChild) slot.appendChild(buildThemeToggle()); });
+  slots.forEach((slot) => { if (!slot.firstChild) slot.appendChild(buildThemeToggle(opts)); });
 }
 
 /* --------------------------------------------------------------------------
@@ -426,7 +468,7 @@ export function buildPanelLogin(opts) {
  * Friendly page names (dashboard link text). Project-configurable.
  * ------------------------------------------------------------------------ */
 export const PAGE_NAMES = {
-  '/': 'Homepage',
+  '/': 'Home Page',
   '/about-us': 'About Us',
   '/open-demat-account': 'Open a Demat Account',
   '/become-a-partner': 'Become a Partner',

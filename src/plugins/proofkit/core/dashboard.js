@@ -52,9 +52,9 @@
       const done = r.publishedStatus === 'closed' ? 'closed' : 'marked Done';
       const where = (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
       return {
-        id: uid(), createdAt: now, team: r.team || '', commentId: r.id,
+        id: uid(), createdAt: now, team: r.team || '', commentId: r.id, ticket: r.ticket || '',
         path: (r.page && r.page.path) || '/', pageName: where, publishedStatus: r.publishedStatus,
-        summary: 'Your comment on ' + where + ' was ' + done + '.', readTeam: false, readAdmin: false,
+        summary: 'Your comment ' + (r.ticket ? '#' + r.ticket + ' ' : '') + 'on ' + where + ' was ' + done + '.', readTeam: false, readAdmin: false,
       };
     }
     // Publish the whole local bucket: every completed/closed record not already live.
@@ -231,12 +231,17 @@
       return '#' + ch(ar, br) + ch(ag, bg) + ch(ab, bb);
     };
     const isLight = () => document.documentElement.getAttribute('data-pk-theme') === 'light';
+    // Blend anchors read from the live tokens (canvas / white) so the derived team-chip
+    // colours track the theme — no isolated literals (the fallbacks are defensive only).
+    const tokenHex = (name, fb) => { try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb; } catch { return fb; } };
     const teamStyle = (team) => {
-      const tc = TEAM_COLORS[team] || ['#e8e8e8', '#888'];
+      const tc = TEAM_COLORS[team] || ['#e8e8e8', '#888']; // fallback: every real team is in TEAM_COLORS
+      const white = tokenHex('--pk-on-accent', '#ffffff');
       // Light: the on-page pastel chip (light bg + dark ink). Dark: hue muted toward the canvas.
-      if (isLight()) return { bg: tc[0], fg: tc[1], bd: mix(tc[1], '#ffffff', 0.62) };
+      if (isLight()) return { bg: tc[0], fg: tc[1], bd: mix(tc[1], white, 0.62) };
+      const canvas = tokenHex('--pk-canvas', '#181818');
       const accent = tc[1];
-      return { bg: mix(accent, '#181818', 0.82), fg: mix(accent, '#ffffff', 0.55), bd: mix(accent, '#181818', 0.5) };
+      return { bg: mix(accent, canvas, 0.82), fg: mix(accent, white, 0.55), bd: mix(accent, canvas, 0.5) };
     };
     const teamChip = (team) => {
       if (!team) return '';
@@ -369,11 +374,10 @@
         // Active = a vibrant SOLID fill (was just a stroke). A team chip fills with its
         // OWN identity colour; only "All Teams" fills red.
         let style;
-        if (active && team) { const accent = (TEAM_COLORS[team] || [])[1] || '#da291c'; style = `background:${accent};color:#fff;border-color:${accent}`; }
-        else if (active) style = 'background:#da291c;color:#fff;border-color:#da291c'; // All = red
+        if (active && team) { const accent = (TEAM_COLORS[team] || [])[1] || 'var(--pk-red)'; style = `background:${accent};color:var(--pk-on-accent);border-color:${accent}`; }
+        else if (active) style = 'background:var(--pk-red);color:var(--pk-on-accent);border-color:var(--pk-red)'; // All = red
         else if (team) { const s = teamStyle(team); style = `background:${s.bg};color:${s.fg};border-color:${s.bd}`; }
-        else style = isLight() ? 'background:#f0efe9;color:#565650;border-color:#e4e1d9'
-                               : 'background:#242424;color:#c9c9c9;border-color:#333';
+        else style = 'background:var(--pk-elev);color:var(--pk-body);border-color:var(--pk-hair)';
         return `<button class="rvd-tchip${active ? ' is-active' : ''}" data-team="${esc(team)}" style="${style}">${esc(label)}</button>`;
       };
       $('#rvd-teamchips').innerHTML = '<span class="rvd-chips-from">From</span>' + one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
@@ -608,7 +612,7 @@
       $('#rvd-entries').innerHTML =
         `<div class="rvd-entrieshead"><h2>Master Log <span style="font-weight:500;color:var(--pk-muted)">(${rs.length})</span></h2></div>` +
         `<div class="rvd-logwrap"><table class="rvd-log"><thead><tr>` +
-        `<th>When</th><th>Page</th><th>Element</th><th>Requirement</th><th>From</th><th>Directed to</th><th>Status</th><th>More</th>` +
+        `<th>Ticket</th><th>When</th><th>Page</th><th>Element</th><th>Requirement</th><th>From</th><th>Directed to</th><th>Status</th><th>More</th>` +
         `</tr></thead><tbody>` +
         rs.map((c) => {
           const a = c.anchor || {};
@@ -616,6 +620,7 @@
           const req = (c.comment || '').trim();
           const reqShort = req ? esc(req.slice(0, 120)) + (req.length > 120 ? '…' : '') : '—';
           return `<tr class="rvd-logrow" data-id="${esc(c.id)}">` +
+            `<td><span class="rvd-ticket">${c.ticket ? esc(c.ticket) : '—'}</span></td>` +
             `<td>${esc(fmt(c.createdAt))}</td>` +
             `<td><a class="rvd-slug" href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a></td>` +
             `<td>${el}</td>` +
@@ -691,6 +696,7 @@
           `<div class="rvd-detail-chips">${statusChip(c)}${routeChips(c)}` +
             `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">Open pin</a></div>` +
           `<div class="rvd-fields">` +
+            field('Ticket', c.ticket ? `<span class="rvd-ticket">${esc(c.ticket)}</span>` : '—') +
             field('Page', `<a href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a> <span style="color:var(--pk-muted)">${esc(c.page.path)}</span>`) +
             field('Element / anchor', where) +
             field('From (raised by)', esc(c.name || 'anonymous') + (c.team ? ' · ' + esc(c.team) : '')) +
@@ -749,7 +755,7 @@
         : `<p class="rvd-empty">Nothing waiting to deploy. Mark comments complete to fill the bucket.</p>`;
       $('#rvd-view-deploy').innerHTML =
         `<div class="rvd-deployhead">` +
-          `<div><h2>Deploy Bucket</h2>` +
+          `<div><h2>Delivery Queue</h2>` +
           `<p class="rvd-deploy-explain">Publishing releases these status changes to teams and sends notifications.</p></div>` +
           `<button class="rvd-deploy-btn" id="rvd-deploy-go"${bucket.length ? '' : ' disabled'}>Deploy${bucket.length ? ' ' + bucket.length : ''}</button>` +
         `</div>` + banner + body;
@@ -812,7 +818,7 @@
         `<div class="rvd-notif-body">` +
           `<div class="rvd-notif-summary">${esc(n.summary || '')}</div>` +
           `<div class="rvd-notif-meta">${teamChip(n.team)}` +
-            `<a class="rvd-slug" href="${esc(n.path)}" target="_blank" rel="noopener">${esc(n.pageName || pageName(n.path))}</a>` +
+            `<a class="rvd-slug" href="${esc(n.path)}" target="_blank" rel="noopener">${esc(pageName(n.path))}</a>` +
             `<span class="rvd-time">${esc(fmt(n.createdAt))}</span>` +
             kindChip + openPin +
           `</div>` +

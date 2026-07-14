@@ -1,5 +1,5 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, HIDE_SELECTORS, PROOFKIT_ENABLED, ADMIN_TEAM,
-    getSession, setSession, clearSession, buildPanelLogin, buildDropdown } from './config.js';
+    getSession, setSession, clearSession, buildPanelLogin, buildDropdown, nextLocalTicket, pageName } from './config.js';
   // The design system, inlined — injected only when review mode arms (real visitors
   // download nothing), so the on-page login matches the dashboards (.pk-login).
   import pkTokensCss from './design/tokens.css?inline';
@@ -58,6 +58,7 @@
           async add(rec) {
             rec.id = 'L' + Date.now().toString(36) + Math.floor(Math.random() * 1e4);
             rec.createdAt = new Date().toISOString();
+            rec.ticket = nextLocalTicket(rec.createdAt); // YYMMDD + per-day serial (demo parity with the Worker)
             rec.status = 'open';
             const arr = localGet(rec.page.path); arr.push(rec);
             localStorage.setItem(localKey(rec.page.path), JSON.stringify(arr));
@@ -70,8 +71,8 @@
                 notifs.push({
                   id: 'N' + Date.now().toString(36) + Math.floor(Math.random() * 1e4),
                   createdAt: rec.createdAt, team: rec.toTeam, kind: 'directed', fromTeam: rec.team || '',
-                  commentId: rec.id, path: rec.page.path, pageName: where,
-                  summary: 'New comment on ' + where + (rec.team ? ' from ' + rec.team : ''),
+                  commentId: rec.id, ticket: rec.ticket || '', path: rec.page.path, pageName: where,
+                  summary: 'New comment ' + (rec.ticket ? '#' + rec.ticket + ' ' : '') + 'on ' + where + (rec.team ? ' from ' + rec.team : ''),
                   readTeam: false, readAdmin: false,
                 });
                 localStorage.setItem('rvc-notifications', JSON.stringify(notifs));
@@ -135,51 +136,53 @@
          even when a comment popover would otherwise overlap the bottom-right. */
       .rv-dock{position:fixed;right:24px;bottom:24px;z-index:2147483040;
         display:flex;align-items:center;gap:20px}
-      .rv-fab{display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border:none;
-        border-radius:24px;background:#1d1d1d;color:#fff;cursor:pointer;
+      .rv-fab{display:flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:none;
+        border-radius:24px;background:var(--pk-card);color:var(--pk-ink);cursor:pointer;
         font:600 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.28)}
       .rv-fab[data-on="1"]{background:var(--pk-red)}
       .rv-fab svg{width:20px;height:20px;flex:none}
       /* "Go To Dashboard" — pinned to the bottom-LEFT, clear of the right-hand dock */
       .rv-dash{position:fixed;left:24px;bottom:24px;z-index:2147483040;
-        display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border:none;border-radius:24px;
-        background:#1d1d1d;color:#fff;cursor:pointer;text-decoration:none;
+        display:flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:none;border-radius:24px;
+        background:var(--pk-card);color:var(--pk-ink);cursor:pointer;text-decoration:none;
         font:600 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.28)}
       .rv-dash svg{width:20px;height:20px;flex:none}
-      @media (min-width:1024px) and (hover:hover){.rv-dash:hover{background:#2a2a2a}}
+      @media (min-width:1024px) and (hover:hover){.rv-dash:hover{background:var(--pk-elev)}}
       .rv-backdrop{position:fixed;inset:0;z-index:2147480000;pointer-events:none;
         backdrop-filter:grayscale(1);-webkit-backdrop-filter:grayscale(1);
         box-shadow:inset 0 0 0 3px var(--pk-red)}
-      .rv-nav{display:flex;align-items:center;gap:14px;height:48px;padding:0 2px;border-radius:24px;
-        background:#1d1d1d;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.28)}
+      .rv-nav{display:flex;align-items:center;gap:16px;height:48px;padding:0 2px;border-radius:24px;
+        background:var(--pk-card);color:var(--pk-ink);box-shadow:0 6px 20px rgba(0,0,0,.28)}
       .rv-nav button{width:44px;height:44px;padding:0;border:none;border-radius:22px;
-        background:#3a3a3a;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        background:var(--pk-hair);color:var(--pk-ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
       .rv-nav button svg{width:22px;height:22px;display:block}
       .rv-nav button:disabled{opacity:.4;cursor:default}
-      .rv-nav-label{min-width:44px;text-align:center;font:600 14px/1 Outfit;color:#fff}
+      .rv-nav-label{min-width:44px;text-align:center;font:600 14px/1 Outfit;color:var(--pk-ink)}
       @media (max-width:768px){
-        .rv-dock{right:16px;bottom:16px;gap:14px}
-        .rv-nav{gap:10px}
+        .rv-dock{right:16px;bottom:16px;gap:16px}
+        .rv-nav{gap:8px}
         .rv-nav button{width:40px;height:40px}
-        .rv-dash{left:16px;bottom:16px;padding:0 14px}
+        .rv-dash{left:16px;bottom:16px;padding:0 16px}
         .rv-dash span{display:none}
       }
-      .rv-pin{position:fixed;z-index:2147483000;min-width:26px;height:26px;padding:0 7px;
+      .rv-pin{position:fixed;z-index:2147483000;min-width:26px;height:26px;padding:0 8px;
         transform:translate(-50%,-100%);display:flex;align-items:center;justify-content:center;
-        border-radius:14px;border:2px solid #fff;background:var(--pk-red);color:#fff;cursor:pointer;
+        border-radius:14px;border:2px solid var(--pk-ink);background:var(--pk-red);color:var(--pk-ink);cursor:pointer;
         font:700 12px/1 Outfit,system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.35)}
       .rv-pin.resolved{background:var(--pk-muted)}
-      .rv-pin.active{background:#1d1d1d;transform:translate(-50%,-100%) scale(1.12)}
+      .rv-pin.active{background:var(--pk-card);transform:translate(-50%,-100%) scale(1.12)}
       .rv-pop{position:fixed;z-index:2147483003;width:344px;max-width:calc(100vw - 32px);
         background:var(--pk-card);color:var(--pk-ink);border:1px solid var(--pk-hair);border-radius:0;
         box-shadow:0 24px 64px rgba(0,0,0,.6);font:400 14px/1.5 Outfit,system-ui,sans-serif}
-      .rv-pop header{padding:20px 22px 16px;background:var(--pk-elev);border-bottom:1px solid var(--pk-hair);
-        display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+      .rv-pop header{padding:20px 24px 16px;background:var(--pk-elev);border-bottom:1px solid var(--pk-hair);
+        display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
       .rv-pop header .t{font-weight:600;font-size:15px;letter-spacing:-.01em}
-      .rv-snip{font-weight:400;font-size:12px;color:var(--pk-muted);margin-top:5px;max-width:250px;
+      .rv-ticket{margin-top:4px;font-size:11px;font-weight:600;letter-spacing:.02em;
+        font-variant-numeric:tabular-nums;color:var(--pk-red)}
+      .rv-snip{font-weight:400;font-size:12px;color:var(--pk-muted);margin-top:4px;max-width:250px;
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .rv-body{padding:22px;display:flex;flex-direction:column;gap:14px}
-      .rv-pop input,.rv-pop textarea,.rv-pop select{width:100%;padding:11px 14px;border:1px solid var(--pk-hair);
+      .rv-body{padding:24px;display:flex;flex-direction:column;gap:16px}
+      .rv-pop input,.rv-pop textarea,.rv-pop select{width:100%;padding:12px 16px;border:1px solid var(--pk-hair);
         border-radius:4px;font:inherit;color:var(--pk-ink);background:var(--pk-input);box-sizing:border-box}
       .rv-pop input::placeholder,.rv-pop textarea::placeholder{color:var(--pk-muted)}
       .rv-pop select{height:44px;cursor:pointer}
@@ -192,21 +195,21 @@
       .rv-team-chip{padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;
         text-transform:uppercase;letter-spacing:.02em;
         display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
-      .rv-change-view{margin-top:2px;padding:8px 10px;border-radius:8px;background:#241a10;border:1px solid #4a3417}
+      .rv-change-view{margin-top:2px;padding:8px 8px;border-radius:8px;background:var(--pk-callout-bg);border:1px solid var(--pk-callout-line)}
       .rv-change-view>span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;
         color:var(--pk-amber);letter-spacing:.04em;margin-bottom:2px}
       .rv-ctxt{white-space:pre-wrap;font-size:14px;color:var(--pk-ink)}
-      .rv-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
-      .rv-btn{height:44px;padding:0 22px;border-radius:0;border:none;cursor:pointer;
+      .rv-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+      .rv-btn{height:44px;padding:0 24px;border-radius:0;border:none;cursor:pointer;
         font:700 12px/1 Outfit,system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase}
-      .rv-btn.primary{background:var(--pk-red);color:#fff}
+      .rv-btn.primary{background:var(--pk-red);color:var(--pk-ink)}
       .rv-btn.ghost{background:transparent;color:var(--pk-muted)}
       .rv-x{border:none;background:none;cursor:pointer;font-size:20px;line-height:1;color:var(--pk-muted)}
-      .rv-read{padding:16px 22px 0}
+      .rv-read{padding:16px 24px 0}
       /* thread = single-open accordion of past comments (collapsed to Team + Name) */
-      .rv-thread{max-height:300px;overflow:auto;padding:12px 22px;display:flex;flex-direction:column;gap:10px}
+      .rv-thread{max-height:300px;overflow:auto;padding:12px 24px;display:flex;flex-direction:column;gap:8px}
       .rv-titem{border:1px solid var(--pk-hair);border-radius:10px;overflow:hidden}
-      .rv-thead{width:100%;display:flex;align-items:center;gap:8px;padding:10px 12px;border:none;
+      .rv-thead{width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;border:none;
         background:var(--pk-elev);cursor:pointer;font:inherit;color:inherit;text-align:left}
       .rv-tname{flex:1;min-width:0;font-weight:600;font-size:14px;
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -215,63 +218,22 @@
       .rv-tbody{padding:12px;display:flex;flex-direction:column;gap:8px}
       .rv-titem:not(.open) .rv-tbody{display:none}
       .rv-tmeta{font-size:12px;color:var(--pk-muted)}
-      .rv-reply{padding:18px 22px 22px;border-top:1px solid var(--pk-hair);display:flex;flex-direction:column;gap:12px}
-      .rv-reply input,.rv-reply textarea{width:100%;padding:11px 14px;border:1px solid var(--pk-hair);border-radius:4px;
+      .rv-reply{padding:16px 24px 24px;border-top:1px solid var(--pk-hair);display:flex;flex-direction:column;gap:12px}
+      .rv-reply input,.rv-reply textarea{width:100%;padding:12px 16px;border:1px solid var(--pk-hair);border-radius:4px;
         font:inherit;color:var(--pk-ink);background:var(--pk-input);box-sizing:border-box}
       .rv-reply textarea{min-height:64px;resize:vertical}
       .rv-reply input:focus,.rv-reply textarea:focus{outline:2px solid var(--pk-red);border-color:var(--pk-red)}
       .rv-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--pk-muted)}
       .rv-chip{padding:2px 8px;border-radius:10px;font-weight:600;font-size:11px;
         display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
-      .rv-chip.open{background:#3a2a12;color:var(--pk-amber)}
-      .rv-chip.resolved{background:#16281c;color:var(--pk-green)}
-      .rv-chip.closed{background:#2a2a2a;color:var(--pk-muted)}
+      .rv-chip.open{background:var(--pk-open-bg);color:var(--pk-open-ink)}
+      .rv-chip.resolved{background:var(--pk-done-bg);color:var(--pk-done-ink)}
+      .rv-chip.closed{background:var(--pk-closed-bg);color:var(--pk-closed-ink)}
       .rv-txt{white-space:pre-wrap;color:var(--pk-ink)}
       .rv-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483004;
-        max-width:calc(100vw - 32px);padding:12px 16px;border-radius:12px;background:#1d1d1d;color:#fff;
+        max-width:calc(100vw - 32px);padding:12px 16px;border-radius:12px;background:var(--pk-card);color:var(--pk-ink);
         font:500 14px/1.5 Outfit,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-      /* ProofKit login module — Red Moon kit (near-black canvas, scarce Rosso Corsa,
-         Inter, sharp 0px corners, uppercase tracked CTA), over the blurred page. */
-      .rv-login{position:fixed;inset:0;z-index:2147483090;display:flex;align-items:center;justify-content:center;
-        padding:16px;background:rgba(12,12,12,.72);
-        -webkit-backdrop-filter:blur(8px) saturate(.6);backdrop-filter:blur(8px) saturate(.6)}
-      .rv-login-card{width:480px;max-width:100%;background:#1b1b1b;color:#fff;border:1px solid #303030;border-radius:0;
-        padding:56px;box-shadow:0 30px 90px rgba(0,0,0,.6);box-sizing:border-box;
-        font:400 15px/1.6 Inter,Outfit,system-ui,sans-serif}
-      .rv-login-brand{display:flex;align-items:center;gap:10px;margin-bottom:40px;
-        font:600 12px/1 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1.4px;color:#fff}
-      .rv-login-mark{width:10px;height:10px;background:#da291c;display:inline-block;flex:none}
-      .rv-login-title{font:500 32px/1.15 Inter,system-ui,sans-serif;letter-spacing:-.6px;color:#fff}
-      .rv-login-sub{font-size:15px;line-height:1.6;color:#969696;margin:16px 0 40px}
-      .rv-login-label{display:block;margin-bottom:12px;font:600 11px/1 Inter,system-ui,sans-serif;
-        text-transform:uppercase;letter-spacing:1.2px;color:#8f8f8f}
-      .rv-login-input{width:100%;height:56px;padding:0 20px;border:1px solid #303030;border-radius:0;background:#111;
-        color:#fff;font:400 15px/1.5 Inter,system-ui,sans-serif;box-sizing:border-box}
-      .rv-login-input::placeholder{color:#5a5a5a}
-      .rv-login-input:focus{outline:none;border-color:#da291c}
-      .rv-login-label2{margin-top:28px}
-      .rv-login-select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:48px;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f8f8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat:no-repeat;background-position:right 20px center}
-      .rv-login-select option{color:#fff;background:#111}
-      .rv-login-select:invalid,.rv-login-select option[value=""]{color:#5a5a5a}
-      .rv-login-err{margin-top:14px;font-size:13px;font-weight:600;color:#f13a2c}
-      .rv-login-actions{display:flex;gap:18px;align-items:center;justify-content:flex-end;margin-top:40px}
-      .rv-login-cancel{background:none;border:none;padding:8px 4px;color:#969696;cursor:pointer;
-        font:700 13px/1 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px}
-      .rv-login-btn{height:56px;padding:0 40px;border:none;border-radius:0;background:#da291c;color:#fff;cursor:pointer;
-        font:700 14px/1 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1.4px}
-      .rv-login-btn:active{background:#b01e0a}
-      .rv-login-btn:disabled{opacity:.55;cursor:default}
-      .rv-login-foot{margin-top:40px;padding-top:20px;border-top:1px solid #303030;
-        font:400 11px/1.4 Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px;color:#666}
     `;
-    // Inter — the documented Red Moon / FerrariSans substitute — for the ProofKit UI.
-    if (!document.getElementById('pk-font')) {
-      const fl = document.createElement('link'); fl.id = 'pk-font'; fl.rel = 'stylesheet';
-      fl.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
-      document.head.appendChild(fl);
-    }
     const styleEl = document.createElement('style');
     styleEl.textContent = css;
 
@@ -569,7 +531,10 @@
         const rec = await store.add({
           team, toTeam, comment, anchor,
           sessionId: sessionId(),
-          page: { path: pagePath(), url: location.href, title: document.title, slug: slugFromPath() },
+          // `title` carries the FRIENDLY page name (our naming convention — "Equity",
+          // "Home Page"), not the raw SEO <title>, so every downstream label (notifications,
+          // etc.) reads it consistently. The full document.title is kept separately.
+          page: { path: pagePath(), url: location.href, title: pageName(pagePath()), docTitle: document.title, slug: slugFromPath() },
         });
         comments.push(rec); renderPins(); closePop();
         toast(LOCAL ? '✅ Saved locally (demo mode)' : '✅ Comment sent');
@@ -590,7 +555,9 @@
       const pop = document.createElement('div'); pop.className = 'rv-pop';
       pop.innerHTML =
         '<header><div><div class="t">Comment #' + idx + ' · ' + thread.length +
-        (thread.length > 1 ? ' comments' : ' comment') + '</div><div class="rv-snip"></div></div>' +
+        (thread.length > 1 ? ' comments' : ' comment') + '</div>' +
+        (root.ticket ? '<div class="rv-ticket">Ticket #' + escapeHtml(root.ticket) + '</div>' : '') +
+        '<div class="rv-snip"></div></div>' +
         '<button class="rv-x" aria-label="Close">×</button></header>' +
         '<div class="rv-read"><span class="rv-chip ' + (root.status || 'open') + '">' +
         (root.status === 'resolved' ? 'Resolved' : root.status === 'closed' ? 'Closed' : 'Unresolved') + '</span></div>' +

@@ -35,8 +35,8 @@ import './core/teamdash.css';            // team-dashboard-specific styles
     <header class="tmd-top">
       <div class="tmd-brand">
         <svg class="tmd-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="#da291c"/>
-          <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
+          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z"/>
+          <circle cx="12" cy="9.5" r="1.6"/>
         </svg>
         <span class="tmd-word">ProoofKit</span>
         <span class="tmd-tag">Content Review | <span class="tmd-tag-brand">Shriram FS</span><span class="tmd-tag-team" id="tmd-tag-team"></span></span>
@@ -54,7 +54,10 @@ import './core/teamdash.css';            // team-dashboard-specific styles
 
     <!-- Headline -->
     <div class="tmd-headband">
-      <h1 class="tmd-h1">For Your Team</h1>
+      <div class="tmd-headband-row">
+        <h1 class="tmd-h1">Team</h1>
+        <span class="tmd-headtoggle" data-pk-toggle></span>
+      </div>
       <p class="tmd-lead">Comments your team raised or was asked to action, and where each
         one stands. Pending items are still being actioned; Done items are live.</p>
     </div>

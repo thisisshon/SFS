@@ -42,7 +42,96 @@
       page: c.page, anchor: c.anchor || {},
       status: c.published ? (c.publishedStatus || 'open') : 'open', // masked
       publishedStatus: c.published ? (c.publishedStatus || '') : '', publishedAt: c.publishedAt || '',
+      // Team-owned workflow (not masked — it is the team's own progress).
+      teamStatus: c.teamStatus || 'to_be_initiated', teamStatusAt: c.teamStatusAt || '',
+      teamDelivered: !!c.teamDelivered, teamDeliveredAt: c.teamDeliveredAt || '',
+      ack: c.ack || '',
     });
+    // ---- LOCAL writers for the team workflow (mirror the Worker endpoints) ----
+    // Find + mutate one root record in its rvc:<path> array, then return the masked copy.
+    function localMutate(rec, fn) {
+      const key = 'rvc:' + rec.page.path;
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const r = arr.find((x) => x.id === rec.id);
+      if (!r) return { ...rec };
+      fn(r);
+      localStorage.setItem(key, JSON.stringify(arr));
+      return maskLocal(r);
+    }
+    function localTeamStatus(rec, teamStatus) {
+      const now = new Date().toISOString();
+      return localMutate(rec, (r) => {
+        r.teamStatus = teamStatus; r.teamStatusAt = now;
+        if (!Array.isArray(r.history)) r.history = [];
+        r.history.push({ event: 'teamStatus', teamStatus, team: r.toTeam || '', at: now });
+      });
+    }
+    // Deliver every completed-not-yet-delivered item directed to <t>; notify each raiser.
+    function localTeamDeliver(t) {
+      const now = new Date().toISOString();
+      const created = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith('rvc:')) continue;
+        let arr; try { arr = JSON.parse(localStorage.getItem(k) || '[]'); } catch { continue; }
+        let dirty = false;
+        for (const r of arr) {
+          if (r.parentId || (r.toTeam || '') !== t) continue;
+          if (r.teamStatus !== 'complete' || r.teamDelivered) continue;
+          r.teamDelivered = true; r.teamDeliveredAt = now;
+          if (!Array.isArray(r.history)) r.history = [];
+          r.history.push({ event: 'teamDeliver', team: t, at: now });
+          dirty = true;
+          if (r.team) created.push(localMakeTeamNotif(r, now, 'delivered'));
+        }
+        if (dirty) localStorage.setItem(k, JSON.stringify(arr));
+      }
+      if (created.length) {
+        let ex = []; try { ex = JSON.parse(localStorage.getItem('rvc-notifications') || '[]'); } catch {}
+        ex.push(...created);
+        localStorage.setItem('rvc-notifications', JSON.stringify(ex));
+      }
+      return { delivered: created.length, notifications: created };
+    }
+    function localTeamAck(rec, action) {
+      const now = new Date().toISOString();
+      let notif = null;
+      const out = localMutate(rec, (r) => {
+        if (!Array.isArray(r.history)) r.history = [];
+        if (action === 'conclude') {
+          r.ack = 'concluded';
+          r.history.push({ event: 'ack', team: r.team || '', at: now });
+        } else {
+          r.teamStatus = 'in_progress'; r.teamStatusAt = now;
+          r.teamDelivered = false; r.teamDeliveredAt = '';
+          r.ack = '';
+          r.history.push({ event: 'redo', team: r.team || '', at: now });
+          if (r.toTeam) notif = localMakeTeamNotif(r, now, 'redo');
+        }
+      });
+      if (notif) {
+        let ex = []; try { ex = JSON.parse(localStorage.getItem('rvc-notifications') || '[]'); } catch {}
+        ex.push(notif);
+        localStorage.setItem('rvc-notifications', JSON.stringify(ex));
+      }
+      return out;
+    }
+    const luid = () => (crypto.randomUUID ? crypto.randomUUID() : 'n_' + Date.now() + '_' + Math.random().toString(16).slice(2));
+    // Local mirror of the Worker's makeTeamNotif (round-trip notification).
+    function localMakeTeamNotif(r, now, kind) {
+      const where = (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
+      const toTeam = kind === 'redo' ? (r.toTeam || '') : (r.team || '');
+      const tick = r.ticket ? '#' + r.ticket + ' ' : '';
+      const summary = kind === 'redo'
+        ? 'Redo requested on ' + tick + '(' + where + ') by ' + (r.team || 'the raising team') + '.'
+        : (r.toTeam || 'A team') + ' completed & delivered your comment ' + tick + 'on ' + where + ' — acknowledge it.';
+      return {
+        id: luid(), createdAt: now, team: toTeam, kind,
+        fromTeam: kind === 'redo' ? (r.team || '') : (r.toTeam || ''),
+        commentId: r.id, ticket: r.ticket || '', path: (r.page && r.page.path) || '/', pageName: where,
+        summary, readTeam: false, readAdmin: false,
+      };
+    }
     // Every task this team is part of — ones it RAISED (team) AND ones DIRECTED to it
     // (toTeam) — so the raiser and the receiver both see it. Thread-aware.
     function localComments(t) {
@@ -75,11 +164,17 @@
           comments: async () => localComments(team()),
           notifs: async () => localNotifs(team()),
           markRead: async (ids, read = true) => localMarkRead(ids, read),
+          teamStatus: async (rec, teamStatus) => localTeamStatus(rec, teamStatus),
+          teamDeliver: async () => localTeamDeliver(team()),
+          teamAck: async (rec, action) => localTeamAck(rec, action),
         }
       : {
           comments: () => apiFetch('/comments?team=' + encodeURIComponent(team())),
           notifs: () => apiFetch('/notifications?team=' + encodeURIComponent(team())),
           markRead: (ids, read = true) => apiFetch('/notifications/read', { method: 'POST', body: JSON.stringify({ ids, team: team(), read }) }),
+          teamStatus: (rec, teamStatus) => apiFetch('/team-status', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, teamStatus }) }),
+          teamDeliver: () => apiFetch('/team-deliver', { method: 'POST', body: JSON.stringify({ team: team() }) }),
+          teamAck: (rec, action) => apiFetch('/team-ack', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, action }) }),
         };
 
     // ---- helpers ----
@@ -95,8 +190,15 @@
         return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())} | ${d.getDate()} ${MONTHS[d.getMonth()]}, ${d.getFullYear()}`;
       } catch { return String(iso || ''); }
     };
-    // Card left-border state: pending (open) · done (completed) · closed.
-    const dataState = (c) => (c.status === 'completed' ? 'done' : c.status === 'closed' ? 'closed' : 'pending');
+    // ---- the team's OWN status (its progress on an item), independent of the admin lifecycle ----
+    const TEAM_STATUS = {
+      to_be_initiated: ['tbi', 'To Be Initiated'],
+      in_progress: ['inprog', 'In Progress'],
+      complete: ['complete', 'Complete'],
+    };
+    const teamStatusOf = (c) => (TEAM_STATUS[c.teamStatus] ? c.teamStatus : 'to_be_initiated');
+    // Card left-border state keyed to the team status (tbi · in-progress · complete).
+    const dataState = (c) => TEAM_STATUS[teamStatusOf(c)][0];
     // Team chip colour derived from the team's identity hue (mirrors Dashboard.astro).
     const mix = (a, b, t) => {
       const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -105,25 +207,38 @@
       return '#' + ch(ar, br) + ch(ag, bg) + ch(ab, bb);
     };
     const isLight = () => document.documentElement.getAttribute('data-pk-theme') === 'light';
+    // Blend anchors read from the live tokens (canvas / white) so the derived team-chip
+    // colours track the theme — no isolated literals (the fallbacks are defensive only).
+    const tokenHex = (name, fb) => { try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb; } catch { return fb; } };
     const teamStyle = (t) => {
-      const tc = TEAM_COLORS[t] || ['#e8e8e8', '#888'];
+      const tc = TEAM_COLORS[t] || ['#e8e8e8', '#888']; // fallback: every real team is in TEAM_COLORS
+      const white = tokenHex('--pk-on-accent', '#ffffff');
       // Light: the on-page pastel chip (light bg + dark ink). Dark: hue muted toward the canvas.
-      if (isLight()) return { bg: tc[0], fg: tc[1], bd: mix(tc[1], '#ffffff', 0.62) };
+      if (isLight()) return { bg: tc[0], fg: tc[1], bd: mix(tc[1], white, 0.62) };
+      const canvas = tokenHex('--pk-canvas', '#181818');
       const accent = tc[1];
-      return { bg: mix(accent, '#181818', 0.82), fg: mix(accent, '#ffffff', 0.55), bd: mix(accent, '#181818', 0.5) };
+      return { bg: mix(accent, canvas, 0.82), fg: mix(accent, white, 0.55), bd: mix(accent, canvas, 0.5) };
     };
     const teamChip = (t) => {
       if (!t) return '';
       const s = teamStyle(t);
       return `<span class="tmd-team-chip" style="background:${s.bg};color:${s.fg};border:1px solid ${s.bd}">${esc(t)}</span>`;
     };
-    // Statuses are framed for the team — the deploy bucket is never shown.
-    const statusChip = (c) => c.status === 'completed'
-      ? `<span class="tmd-chip done">Done</span>`
-      : c.status === 'closed'
-        ? `<span class="tmd-chip closed">Closed</span>`
-        : `<span class="tmd-chip pending">Pending</span>`;
-    const statusLabel = (c) => c.status === 'completed' ? 'Done' : c.status === 'closed' ? 'Closed' : 'Pending';
+    // The team-status chip. For the RECEIVER team (settable) it is a chevron button that
+    // opens the status menu; everywhere else it is a static chip.
+    const statusChip = (c, settable) => {
+      const [cls, label] = TEAM_STATUS[teamStatusOf(c)];
+      if (settable) {
+        return `<button type="button" class="tmd-chip ${cls} tmd-chip--set" data-setstatus="${esc(c.id)}">${label}` +
+          `<svg class="tmd-chip-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
+      }
+      return `<span class="tmd-chip ${cls}">${label}</span>`;
+    };
+    const statusLabel = (c) => TEAM_STATUS[teamStatusOf(c)][1];
+    // Is the signed-in team the RECEIVER (the team directed to action this item)?
+    const isReceiver = (c) => (c.toTeam || '') === team();
+    // Is it the RAISER, and has the receiver delivered it (awaiting acknowledge)?
+    const awaitingAck = (c) => (c.team || '') === team() && c.teamDelivered && c.ack !== 'concluded';
 
     // The AI change-prompt (falls back to a deterministic instruction if not ready yet).
     function localPrompt(c) {
@@ -177,11 +292,16 @@
     }
     function currentRoots() {
       let rs = roots();
-      if (filter === 'pending') rs = rs.filter((c) => c.status === 'open');
-      else if (filter === 'done') rs = rs.filter((c) => c.status === 'completed');
-      else if (filter === 'closed') rs = rs.filter((c) => c.status === 'closed');
+      if (filter === 'tbi') rs = rs.filter((c) => teamStatusOf(c) === 'to_be_initiated');
+      else if (filter === 'in_progress') rs = rs.filter((c) => teamStatusOf(c) === 'in_progress');
+      else if (filter === 'complete') rs = rs.filter((c) => teamStatusOf(c) === 'complete');
       if (fromFilter) rs = rs.filter((c) => (c.team || '') === fromFilter); // raised-by team
       return sortRoots(rs.filter(matchesSearch));
+    }
+    // The receiver's Delivery Queue: items directed to this team, marked complete, not yet
+    // delivered back to the raiser. This is the safety-net staging list.
+    function deliveryRoots() {
+      return sortRoots(roots().filter((c) => isReceiver(c) && teamStatusOf(c) === 'complete' && !c.teamDelivered));
     }
 
     // ---- data ----
@@ -285,10 +405,10 @@
       const one = (label, t) => {
         const active = fromFilter === t;
         let style;
-        if (active && t) { const acc = (TEAM_COLORS[t] || [])[1] || '#da291c'; style = `background:${acc};color:#fff;border-color:${acc}`; }
-        else if (active) style = 'background:#da291c;color:#fff;border-color:#da291c';
+        if (active && t) { const acc = (TEAM_COLORS[t] || [])[1] || 'var(--pk-red)'; style = `background:${acc};color:var(--pk-on-accent);border-color:${acc}`; }
+        else if (active) style = 'background:var(--pk-red);color:var(--pk-on-accent);border-color:var(--pk-red)';
         else if (t) { const s = teamStyle(t); style = `background:${s.bg};color:${s.fg};border-color:${s.bd}`; }
-        else style = isLight() ? 'background:#f0efe9;color:#565650;border-color:#e4e1d9' : 'background:#242424;color:#c9c9c9;border-color:#333';
+        else style = 'background:var(--pk-elev);color:var(--pk-body);border-color:var(--pk-hair)';
         return `<button class="tmd-tchip${active ? ' is-active' : ''}" data-team="${esc(t)}" style="${style}">${esc(label)}</button>`;
       };
       host.hidden = present.length < 2; // only worth showing when items come from ≥2 teams

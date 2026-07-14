@@ -8,6 +8,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Content Review Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&display=swap" rel="stylesheet">
+<!-- pre-paint floor mirrors --pk-floor (literal: paints before any stylesheet loads) -->
 <style>html,body{margin:0;background:#141414}body{font-family:Outfit,system-ui,-apple-system,sans-serif}</style>
 <link rel="stylesheet" href="./design/tokens.css">
 <link rel="stylesheet" href="./design/components.css">
@@ -22,8 +26,8 @@
     <header class="rvd-top">
       <div class="rvd-brand">
         <svg class="rvd-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z" fill="#da291c"/>
-          <circle cx="12" cy="9.5" r="1.6" fill="#fff"/>
+          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z"/>
+          <circle cx="12" cy="9.5" r="1.6"/>
         </svg>
         <span class="rvd-word">ProoofKit</span>
         <span class="rvd-tag">Content Review | <span class="rvd-tag-brand">Shriram FS</span></span>
@@ -43,7 +47,7 @@
     <!-- Headline -->
     <div class="rvd-headband">
       <div class="rvd-headband-row">
-        <h1 class="rvd-h1">Review and Bug Testing</h1>
+        <h1 class="rvd-h1">Admin Console</h1>
         <span class="rvd-headtoggle" data-pk-toggle></span>
       </div>
       <p class="rvd-lead">Every comment left across the site. Open a pin to see it in
@@ -58,7 +62,7 @@
     <div class="rvd-shell">
       <aside class="rvd-side">
         <button class="rvd-nav is-active" data-view="dash">Overview</button>
-        <button class="rvd-nav" data-view="deploy">Deploy<span class="rvd-navbadge" id="rvd-badge-deploy" hidden>0</span></button>
+        <button class="rvd-nav" data-view="deploy">Delivery<span class="rvd-navbadge" id="rvd-badge-deploy" hidden>0</span></button>
         <button class="rvd-nav" data-view="notifs">Notifications<span class="rvd-navbadge rvd-navbadge-alert" id="rvd-badge-notifs" hidden>0</span></button>
         <button class="rvd-nav" data-view="entries">Master Log</button>
         <div class="rvd-teamview">

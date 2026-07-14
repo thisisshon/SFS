@@ -19,6 +19,12 @@
  *        --Deploy (batch)--> published=true, publishedStatus=status, notifications fire.
  *   The team only ever sees `published ? publishedStatus : 'open'`.
  *
+ * The team-owned workflow (independent of the admin lifecycle above):
+ *   The RECEIVER team (toTeam) drives teamStatus: to_be_initiated -> in_progress -> complete.
+ *   Marking complete stages it in that team's Delivery Queue; /team-deliver publishes the
+ *   completed items back to the RAISER (team), who /team-ack's them (conclude | redo). Every
+ *   transition is appended to `history`, so the admin's Master Log shows the whole round-trip.
+ *
  * Bindings (wrangler.toml):
  *   COMMENTS      - KV namespace (the store).
  *   ADMIN_PASS    - secret, the admin passcode.
@@ -34,6 +40,9 @@
  *   GET  /comments?team=X      team-scoped, masked             -> record[]
  *   POST /status               set working status (+validate)  -> the updated record
  *   POST /resolve              back-compat alias of /status    -> the updated record
+ *   POST /team-status          receiver sets its team status   -> the masked record
+ *   POST /team-deliver         receiver delivers completed     -> {delivered, notifications}
+ *   POST /team-ack             raiser concludes / requests redo-> the masked record
  *   POST /deploy               publish the bucket + notify     -> {deployed, notifications}
  *   POST /delete               delete a whole thread (admin)   -> {ok, removed}
  *   GET  /notifications        all (admin) / ?team=X (team)    -> notification[]
@@ -139,13 +148,25 @@ export default {
         if (!comment) return json({ error: 'empty comment' }, 400, cors);
         const path = (b.page && b.page.path) || '/';
         const nowIso = new Date().toISOString();
+        // Ticket number: YYMMDD + a 4-digit per-day serial (0001–9999). The serial is a
+        // per-day counter kept in KV (`ticketseq:<YYMMDD>`), incremented once per comment
+        // (root OR reply — every raised comment is tagged). e.g. 2026-07-14 → 2607140001.
+        const ticket = await nextTicket(kv, nowIso);
         const rec = {
           id: crypto.randomUUID(),
+          ticket,                       // human-facing ticket number (YYMMDD + 4-digit serial)
           createdAt: nowIso,
           status: 'open',              // working status: open | completed | closed
           published: false,            // released to the team via Deploy?
           publishedStatus: '',         // snapshot of status at last Deploy (team-visible)
           completedAt: '', closedAt: '', publishedAt: '',
+          // Team-owned workflow (independent of the admin lifecycle above). Set by the
+          // RECEIVER team (toTeam): to_be_initiated -> in_progress -> complete. Marking
+          // complete stages it in the receiver's Delivery Queue; team-deliver publishes it
+          // back to the RAISER (team) to acknowledge (conclude) or bounce back (redo).
+          teamStatus: 'to_be_initiated', teamStatusAt: '',
+          teamDelivered: false, teamDeliveredAt: '',
+          ack: '',                     // '' | 'concluded' (set by the raising team)
           validation: null,            // set on Mark Complete
           history: [{ status: 'open', at: nowIso, event: 'created', published: false }], // audit trail: current + past status
           parentId: b.parentId || null, // set on replies -> threads a comment
@@ -268,6 +289,104 @@ export default {
         return json(rec, 200, cors);
       }
 
+      // ---- set the team's OWN working status (receiver team) ----
+      // Body: { id, path, teamStatus }. The RECEIVER (toTeam) drives its own progress —
+      // to_be_initiated | in_progress | complete — independent of the admin lifecycle.
+      // Only that team (or admin) may set it. Marking complete stages it for team-deliver.
+      if (request.method === 'POST' && url.pathname === '/team-status') {
+        if (!isReviewer) return deny();
+        const b = await request.json();
+        const path = b.path || '/';
+        const ts = b.teamStatus;
+        if (!['to_be_initiated', 'in_progress', 'complete'].includes(ts)) return json({ error: 'bad status' }, 400, cors);
+        const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
+        const rec = arr.find((r) => r.id === b.id);
+        if (!rec) return json({ error: 'not found' }, 404, cors);
+        if (!isAdmin && passTeam !== (rec.toTeam || '')) return deny(); // only the directed team
+        const nowIso = new Date().toISOString();
+        rec.teamStatus = ts; rec.teamStatusAt = nowIso;
+        if (!Array.isArray(rec.history)) rec.history = [];
+        rec.history.push({ event: 'teamStatus', teamStatus: ts, team: rec.toTeam || '', at: nowIso });
+        await kv.put(keyFor(path), JSON.stringify(arr));
+        return json(maskForTeam(rec), 200, cors);
+      }
+
+      // ---- team-deliver: publish the receiver's completed items to the raiser (team) ----
+      // Body: { team }. Walks every item DIRECTED to <team> that the team marked complete
+      // and hasn't delivered, flags it delivered, and notifies the RAISING team so they can
+      // acknowledge (conclude) or bounce it back (redo). Only that team (or admin) may run it.
+      if (request.method === 'POST' && url.pathname === '/team-deliver') {
+        if (!isReviewer) return deny();
+        const b = await request.json();
+        const team = String(b.team || '');
+        if (!team) return json({ error: 'no team' }, 400, cors);
+        if (!isAdmin && passTeam !== team) return deny();
+        const now = new Date().toISOString();
+        const created = [];
+        let cursor;
+        do {
+          const page = await kv.list({ prefix: 'page:', cursor });
+          for (const k of page.keys) {
+            const arr = JSON.parse((await kv.get(k.name)) || '[]');
+            let dirty = false;
+            for (const r of arr) {
+              if (r.parentId) continue;
+              if ((r.toTeam || '') !== team) continue;
+              if (r.teamStatus !== 'complete' || r.teamDelivered) continue;
+              r.teamDelivered = true; r.teamDeliveredAt = now;
+              if (!Array.isArray(r.history)) r.history = [];
+              r.history.push({ event: 'teamDeliver', team, at: now });
+              dirty = true;
+              if (r.team) created.push(makeTeamNotif(r, now, 'delivered')); // tell the raiser
+            }
+            if (dirty) await kv.put(k.name, JSON.stringify(arr));
+          }
+          cursor = page.list_complete ? null : page.cursor;
+        } while (cursor);
+        if (created.length) {
+          const existing = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
+          existing.push(...created);
+          await kv.put(NOTIF_KEY, JSON.stringify(existing));
+        }
+        return json({ delivered: created.length, notifications: created }, 200, cors);
+      }
+
+      // ---- team-ack: the RAISING team accepts or bounces a delivered item ----
+      // Body: { id, path, action:'conclude'|'redo' }. conclude closes the trail; redo
+      // sends it back to the receiver (teamStatus->in_progress, un-delivered) + notifies
+      // them. Only the raiser (team) or admin may act.
+      if (request.method === 'POST' && url.pathname === '/team-ack') {
+        if (!isReviewer) return deny();
+        const b = await request.json();
+        const path = b.path || '/';
+        const action = b.action;
+        if (!['conclude', 'redo'].includes(action)) return json({ error: 'bad action' }, 400, cors);
+        const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
+        const rec = arr.find((r) => r.id === b.id);
+        if (!rec) return json({ error: 'not found' }, 404, cors);
+        if (!isAdmin && passTeam !== (rec.team || '')) return deny(); // only the raising team
+        const nowIso = new Date().toISOString();
+        if (!Array.isArray(rec.history)) rec.history = [];
+        let notif = null;
+        if (action === 'conclude') {
+          rec.ack = 'concluded';
+          rec.history.push({ event: 'ack', team: rec.team || '', at: nowIso });
+        } else {
+          rec.teamStatus = 'in_progress'; rec.teamStatusAt = nowIso;
+          rec.teamDelivered = false; rec.teamDeliveredAt = '';
+          rec.ack = '';
+          rec.history.push({ event: 'redo', team: rec.team || '', at: nowIso });
+          if (rec.toTeam) notif = makeTeamNotif(rec, nowIso, 'redo'); // bounce back to the receiver
+        }
+        await kv.put(keyFor(path), JSON.stringify(arr));
+        if (notif) {
+          const existing = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
+          existing.push(notif);
+          await kv.put(NOTIF_KEY, JSON.stringify(existing));
+        }
+        return json(maskForTeam(rec), 200, cors);
+      }
+
       // ---- Deploy: publish the whole bucket + fire notifications (admin) ----
       if (request.method === 'POST' && url.pathname === '/deploy') {
         if (!isAdmin) return deny();
@@ -351,6 +470,21 @@ function json(obj, status, cors) {
 }
 const byNewest = (a, b) => (a.createdAt < b.createdAt ? 1 : -1);
 
+// Ticket number = YYMMDD (from the comment's own timestamp) + a 4-digit serial that
+// resets each day and runs 0001–9999. The serial lives in KV under `ticketseq:<YYMMDD>`
+// as a plain integer; each new comment reads-increments-writes it. Read-modify-write on
+// KV is not atomic, but at review-tool volume collisions are effectively nil (and worst
+// case two same-day comments share a number — cosmetic, ids stay unique). The counter
+// wraps 1→9999 so the serial is always 4 digits.
+async function nextTicket(kv, iso) {
+  const ymd = iso.slice(2, 10).replace(/-/g, ''); // "2026-07-14" -> "260714"
+  const seqKey = 'ticketseq:' + ymd;
+  const seq = (parseInt((await kv.get(seqKey)) || '0', 10) || 0) + 1;
+  await kv.put(seqKey, String(seq));
+  const serial = ((seq - 1) % 9999) + 1;          // keep it in 1..9999
+  return ymd + String(serial).padStart(4, '0');
+}
+
 // Read every comment across all page: keys.
 async function readAll(kv) {
   const out = [];
@@ -374,6 +508,7 @@ async function readAll(kv) {
 function maskForTeam(r) {
   return {
     id: r.id,
+    ticket: r.ticket || '',   // human-facing ticket number (safe to share with the team)
     parentId: r.parentId || null,
     createdAt: r.createdAt,
     team: r.team || '',       // FROM: which team raised it
@@ -388,6 +523,13 @@ function maskForTeam(r) {
     status: r.published ? (r.publishedStatus || 'open') : 'open', // masked
     publishedStatus: r.published ? (r.publishedStatus || '') : '', // for the Raised→Done timeline
     publishedAt: r.publishedAt || '',
+    // Team-owned workflow — the team's OWN progress, shared with both the receiver
+    // (who sets it) and the raiser (who acknowledges after delivery). Not masked.
+    teamStatus: r.teamStatus || 'to_be_initiated',
+    teamStatusAt: r.teamStatusAt || '',
+    teamDelivered: !!r.teamDelivered,
+    teamDeliveredAt: r.teamDeliveredAt || '',
+    ack: r.ack || '',
   };
 }
 
@@ -404,9 +546,10 @@ async function fireArrivalNotif(kv, NOTIF_KEY, rec) {
       kind: 'directed',
       fromTeam: rec.team || '',
       commentId: rec.id,
+      ticket: rec.ticket || '',
       path: (rec.page && rec.page.path) || '/',
       pageName: where,
-      summary: `New comment on ${where}` + (rec.team ? ` from ${rec.team}` : ''),
+      summary: `New comment ${rec.ticket ? '#' + rec.ticket + ' ' : ''}on ${where}` + (rec.team ? ` from ${rec.team}` : ''),
       readTeam: false,
       readAdmin: false,
     };
@@ -425,10 +568,37 @@ function makeNotif(r, now) {
     createdAt: now,
     team: r.team || '',
     commentId: r.id,
+    ticket: r.ticket || '',
     path: (r.page && r.page.path) || '/',
     pageName: where,
     publishedStatus: r.publishedStatus,
-    summary: `Your comment on ${where} was ${done}.`,
+    summary: `Your comment ${r.ticket ? '#' + r.ticket + ' ' : ''}on ${where} was ${done}.`,
+    readTeam: false,
+    readAdmin: false,
+  };
+}
+
+// Team round-trip notification. kind 'delivered' → the receiver finished + delivered,
+// so tell the RAISER (rec.team) to acknowledge. kind 'redo' → the raiser bounced it back,
+// so tell the RECEIVER (rec.toTeam) to have another go.
+function makeTeamNotif(r, now, kind) {
+  const where = (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
+  const toTeam = kind === 'redo' ? (r.toTeam || '') : (r.team || '');
+  const tick = r.ticket ? '#' + r.ticket + ' ' : '';
+  const summary = kind === 'redo'
+    ? `Redo requested on ${tick}(${where}) by ${r.team || 'the raising team'}.`
+    : `${r.toTeam || 'A team'} completed & delivered your comment ${tick}on ${where} — acknowledge it.`;
+  return {
+    id: crypto.randomUUID(),
+    createdAt: now,
+    team: toTeam,               // who should see it
+    kind,                       // 'delivered' | 'redo'
+    fromTeam: kind === 'redo' ? (r.team || '') : (r.toTeam || ''),
+    commentId: r.id,
+    ticket: r.ticket || '',
+    path: (r.page && r.page.path) || '/',
+    pageName: where,
+    summary,
     readTeam: false,
     readAdmin: false,
   };

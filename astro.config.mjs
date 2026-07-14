@@ -19,7 +19,18 @@ export default defineConfig({
     // directory index foo/index.html (which GitHub Pages 301s to /foo/).
     format: 'file',
   },
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // Keep internal tooling out of the PUBLIC sitemap so UAT/prod never
+      // advertises it to crawlers or stakeholders. Proofkit's admin routes
+      // (/review, /review-guide, /reviewdash[/*], /teamdash) stay reachable for
+      // reviewers who know the URL but are unlisted; the /designsystem pages are
+      // excluded defensively in case they're ever restored into src/pages (they
+      // now live in internal/ and don't build). Marketing/product pages only.
+      filter: (page) =>
+        !/\/(review|review-guide|reviewdash|teamdash|designsystem)(\/|$)/.test(page),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },

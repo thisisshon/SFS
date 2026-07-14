@@ -776,7 +776,7 @@ const durs = ['--dur-fast 0.2s', '--dur-base 0.25s', '--dur-slow 0.3s', '--dur-o
       </div>
       <div class="rule">
         <h3>Hero - standard &amp; calculator variant</h3>
-        <p>Every page uses the shared <code>.hero</code>: one radial-gradient band, <code>min-height: clamp(440px, 29vw, 552px)</code>, breadcrumb + content vertically centred by auto-margins. <b>Calculator detail pages</b> use the <code>.hero.hero-compact</code> variant - it drops the tall band (<code>min-height: 0</code>) and the auto-margin centring so the band <b>hugs</b> its breadcrumb + H1 + lead (no CTA) on a small explicit padding, deliberately shorter than the product hero. Padding (above breadcrumb · breadcrumb→H1 · below lead): desktop <b>40 / 24 / 40</b>, mobile <b>32 / 16 / 32</b>. One modifier class, applied to all five calculators.</p>
+        <p>Every hero is the V4 dark surface (<code>.hero.hero-dark</code>) in one of <b>three types</b> under the shared <code>&lt;Hero&gt;</code>: <b>Type 1 one-column</b> (default) - one radial band, <code>min-height: clamp(440px, 29vw, 552px)</code>, breadcrumb + content centred; <b>Type 2 two-column</b> (add an <code>aside</code> slot → <code>.hero-grid</code>) - the left column is Type 1 verbatim, the aside sits spaced apart on the right (56px gap), collapsing to a stack ≤980px; <b>Type 3 calculator</b> (<code>&lt;Hero calc&gt;</code> → <code>.hero-calc</code>) - the hub and all five detail pages share ONE fixed <code>min-height: 408px</code> (the tallest calc hero) so every calculator hero is identical in height. The legacy light variant, <code>.hero-compact</code> and <code>.calc-hero</code> are discarded.</p>
       </div>
       <div class="rule">
         <h3>Heading alignment</h3>

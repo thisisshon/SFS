@@ -6,6 +6,42 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.21.2 — 2026-07-14 — removal model: keep the folder, contain the data
+
+Corrects `REMOVAL.md` to match how removal should actually work. Docs only — no code/behaviour change.
+
+- **Removal no longer means "delete the folder."** The retained-folder model: unwire Proofkit from
+  the site (5 wiring points — BaseLayout overlay injection, the `src/pages/` route stubs, the 404
+  router block, the `astro.config.mjs` sitemap filter, the deploy env + worker workflow) while
+  `src/plugins/proofkit/` stays in the repo, dormant and re-addable.
+- **Contain the collected data.** Review comments live in the KV `COMMENTS` store, not the repo. Before
+  unwiring, snapshot the full set via the admin dashboard's existing `downloadJSON()` (Copy ▸ Download
+  JSON dumps the complete `all` dataset) into the new **`data/`** folder, so the data travels with the
+  retained package even after the Worker/KV is torn down. Added `data/README.md`.
+- Quick-disable (`PROOFKIT_ENABLED = false`) is still documented as the reversible one-liner.
+
+## 2.21.1 — 2026-07-14 — zero isolated colours (finish the token sweep)
+
+Follow-up to 2.19.0: every remaining hardcoded colour is now a token or matched to one. Verified
+in-browser on `/reviewdash` in light + dark (chips, brand mark, floor all track the theme).
+
+- **New tokens:** `--pk-floor` (per-theme page floor behind the app). Route floors (`body:has(.rvd/.tmd)`)
+  now use it, and their redundant light overrides were deleted.
+- **Selection tint** (`.rvd-item.is-selected` light override `#fce8e5`) deleted — the base already binds
+  `var(--pk-new-bg)`, which themes to the same pink in light.
+- **Overlay control grey** `#3a3a3a` → `var(--pk-hair)` (nearest token).
+- **Brand mark SVGs** no longer hardcode `fill="#da291c"`/`"#fff"`; the fills come from CSS
+  (`.rvd-mark/.tmd-mark path→var(--pk-red)`, `circle→var(--pk-on-accent)`), so the logo tracks the theme.
+- **`login.css`** fully re-bound to pk tokens (was host `--color-*` fallbacks + cream/olive literals);
+  `Login.astro` + `core/login.html` now load `tokens.css` so those vars resolve.
+- **Team-chip colours (JS):** the `mix()` blend anchors now read `--pk-canvas` / `--pk-on-accent` from the
+  live tokens instead of `#181818`/`#ffffff` literals; the active/"All Teams" filter-chip inline styles use
+  `var(--pk-red)`/`var(--pk-on-accent)` and drop the manual `isLight()` fork (tokens auto-theme). Only
+  defensive fallbacks (unknown-team colour, getComputedStyle failure) remain as literals.
+- **Sole remaining literal:** the 5 inline `<style>` bootstrap floors (`#141414`) that paint before any
+  stylesheet loads — annotated in-code as the `--pk-floor` mirror (a CSS var can't be used pre-stylesheet).
+- CSS/markup + token definitions only; no endpoints/auth/config/data changes.
+
 ## 2.21.0 — 2026-07-14 — team-dashboard card redesign (Figma) — two-column layout
 
 - Rebuilt the /teamdash "For Action" card to the Figma two-column layout (node 1287:7748): the LEFT

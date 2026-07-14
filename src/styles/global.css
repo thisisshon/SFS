@@ -1624,15 +1624,17 @@
   .foot-note { padding: 24px 0; }
 
   .hero-inner { padding: 48px 0; }
-  /* Breadcrumb - mobile centring. Must sit here, UNLAYERED, alongside the
-     `.hero-inner { padding: 48px 0 }` above: that rule is unlayered, so a copy
-     inside @layer components loses to it regardless of specificity. Give the
-     crumb-bearing hero enough min-height to create free space, and drop the
-     padding just re-added so that space is distributable; the shared auto-margins
-     then split it into three equal gaps, placing the breadcrumb at the exact
-     midpoint of the header→H1 band with balanced spacing above and below. */
-  .hero:has(.crumbs) { min-height: 560px; }
-  .hero:has(.crumbs) .hero-inner { padding-top: 0; padding-bottom: 0; }
+  /* mWeb: every hero vertically HUGS its content. Drop the tall desktop band
+     (min-height) so the surface wraps its crumb→H1→lead→CTA stack on the
+     .hero-inner 48px top/bottom padding alone - no dead band above or below.
+     Replaces the old crumb-hero `min-height:560px` + auto-margin breadcrumb
+     centring, which only produced free space to distribute BECAUSE the band was
+     forced tall; with no forced height the shared auto-margins collapse to 0 and
+     the stack sits flush on its padding. Kept UNLAYERED (like the padding rule
+     above) so it beats the layered desktop `.hero` clamp regardless of
+     specificity. Mirrors the calc hero's mobile hug (below). */
+  .hero { min-height: 0; }
+  .hero:has(.crumbs) { min-height: 0; }
   .hero h1 { font-size: clamp(28px, 7vw, 40px); }
   .hero .lead { font-size: 16px;}
 
@@ -1688,9 +1690,8 @@
    rules so it beats BOTH the layered desktop clamp and the unlayered mobile
    `min-height:560px`. Value on the 8px grid (rule 6). Single source of truth:
    change 408 here → all calc heroes. Mobile (≤768px): min-height:0 so the band
-   hugs naturally as content reflows; the detail pages restore 40px top/bottom
-   padding (the shared mobile crumb rule zeroes .hero-inner padding for the
-   auto-margin centring, which the hug doesn't use). */
+   hugs its content as it reflows (like every hero on mWeb now); the detail pages
+   just tighten the shared 48px hug padding to 40px top/bottom. */
 .hero-calc { min-height: 408px; }
 @media (max-width: 768px) {
   .hero-calc { min-height: 0; }
