@@ -259,8 +259,9 @@
     // done/Closed on deploy). Pre-deploy transitions (the bucket) are never surfaced.
     function teamHistory(c) {
       const out = [{ at: c.createdAt, label: 'Raised' }];
-      if (c.publishedAt) out.push({ at: c.publishedAt, label: c.publishedStatus === 'closed' ? 'Closed' : 'Marked done' });
-      return out;
+      if (c.teamStatusAt) out.push({ at: c.teamStatusAt, label: 'Status → ' + statusLabel(c) });
+      if (c.teamDeliveredAt) out.push({ at: c.teamDeliveredAt, label: 'Delivered to raising team' });
+      return out.slice().sort((a, b) => (a.at < b.at ? -1 : 1));
     }
     // Completion validation, framed for the team (only content-copy-match is meaningful).
     function validLine(c) {
@@ -283,6 +284,11 @@
       return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, a.snippet, a.tag]
         .filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase());
     }
+    function matchesNoteSearch(n) {
+      if (!search) return true;
+      return [n.summary, n.path, pageName(n.path || '/')]
+        .filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase());
+    }
     function sortRoots(rs) {
       const s = rs.slice();
       if (sort === 'old') s.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
@@ -299,9 +305,11 @@
       return sortRoots(rs.filter(matchesSearch));
     }
     // The receiver's Delivery Queue: items directed to this team, marked complete, not yet
-    // delivered back to the raiser. This is the safety-net staging list.
+    // delivered back to the raiser. This is the safety-net staging list — the CANONICAL set
+    // (unfiltered) that drives the badge, counts and the Deploy action. Search/sort/By Page
+    // only reshape what's *shown*, never what deploys.
     function deliveryRoots() {
-      return sortRoots(roots().filter((c) => isReceiver(c) && teamStatusOf(c) === 'complete' && !c.teamDelivered));
+      return roots().filter((c) => isReceiver(c) && teamStatusOf(c) === 'complete' && !c.teamDelivered);
     }
 
     // ---- data ----
@@ -334,13 +342,40 @@
 
     function counts() {
       const rs = roots();
-      const pending = rs.filter((c) => c.status === 'open').length;
-      const done = rs.filter((c) => c.status === 'completed').length;
+      const inProg = rs.filter((c) => teamStatusOf(c) === 'in_progress').length;
+      const complete = rs.filter((c) => teamStatusOf(c) === 'complete').length;
       const unread = unreadNotes().length;
       $('#tmd-counts').innerHTML =
-        `<span class="tmd-count tmd-count-pending"><b>${pending}</b> Pending</span>` +
-        `<span class="tmd-count tmd-count-done"><b>${done}</b> Done</span>` +
+        `<span class="tmd-count tmd-count-inprog"><b>${inProg}</b> In Progress</span>` +
+        `<span class="tmd-count tmd-count-done"><b>${complete}</b> Complete</span>` +
         `<span class="tmd-count"><b>${unread}</b> Notifications</span>`;
+      updateDeliveryBadge();
+    }
+    // Live count on the Delivery Queue nav item (items staged for delivery).
+    function updateDeliveryBadge() {
+      const n = deliveryRoots().length;
+      const b = $('#tmd-badge-delivery');
+      if (b) { b.textContent = n; b.hidden = n === 0; }
+    }
+
+    // The round-trip band shown to the RAISING team once the receiver delivers: accept the
+    // change (Conclude) or bounce it back for another go (Request redo). Once concluded it
+    // shows a quiet confirmation. Nothing for the receiver or undelivered items.
+    function ackRow(root) {
+      const id = esc(root.id);
+      const raiser = (root.team || '') === team();
+      if (raiser && root.ack === 'concluded') {
+        return `<div class="tmd-ack tmd-ack--done"><span class="tmd-ack-lbl">✓ Concluded</span></div>`;
+      }
+      if (!awaitingAck(root)) return '';
+      const by = root.toTeam ? esc(root.toTeam) : 'the team';
+      return `<div class="tmd-ack">` +
+        `<span class="tmd-ack-lbl">Delivered by <b>${by}</b> — acknowledge:</span>` +
+        `<span class="tmd-ack-btns">` +
+          `<button type="button" class="tmd-ack-btn tmd-ack-conclude" data-ack="conclude" data-id="${id}">Conclude</button>` +
+          `<button type="button" class="tmd-ack-btn tmd-ack-redo" data-ack="redo" data-id="${id}">Request redo</button>` +
+        `</span>` +
+      `</div>`;
     }
 
     function card(root) {
@@ -377,6 +412,7 @@
                 (dir ? `<p class="tmd-raised">${dir}</p>` : '') +
               `</div>` +
               (root.changeTo ? `<div class="tmd-change"><span>Change to</span><div>${esc(root.changeTo)}</div></div>` : '') +
+              ackRow(root) +
               `<div class="tmd-card-actions">` +
                 `<a class="tmd-openpin" href="${esc(root.page.path)}?review=1#c=${id}" target="_blank" rel="noopener">Open Pin</a>` +
                 `<span class="tmd-detailhint">View details →</span>` +
@@ -385,7 +421,7 @@
             // RIGHT rail — status chip + ticket, then the timestamp
             `<div class="tmd-card-rail">` +
               `<div class="tmd-rail-top">` +
-                statusChip(root) +
+                statusChip(root, isReceiver(root)) +
                 (root.ticket ? `<span class="tmd-ticket">#${esc(root.ticket)}</span>` : '') +
               `</div>` +
               `<span class="tmd-card-time">${esc(fmtTimeDate(root.createdAt))}</span>` +
@@ -438,7 +474,7 @@
         `<button class="tmd-back" id="tmd-back">← Back to list</button>` +
         `<article class="tmd-detail">` +
           `<h2 class="tmd-detail-title">${esc(c.comment)}</h2>` +
-          `<div class="tmd-detail-chips">${statusChip(c)}${c.team ? '<span class="tmd-from">from ' + teamChip(c.team) + '</span>' : ''}` +
+          `<div class="tmd-detail-chips">${statusChip(c, isReceiver(c))}${c.team ? '<span class="tmd-from">from ' + teamChip(c.team) + '</span>' : ''}` +
             `<a class="tmd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">Open pin</a></div>` +
           `<div class="tmd-fields">` +
             field('Ticket', c.ticket ? `<span class="tmd-ticket">#${esc(c.ticket)}</span>` : '—') +
@@ -462,6 +498,20 @@
       if (cp) cp.addEventListener('click', () => copyToClip(localPrompt(c), cp, 'Copied ✓'));
     }
 
+    // Shared "By Page" grouping: bucket items by page path (A–Z), each group a titled
+    // .tmd-grid. `pathOf` reads the path, `renderItem` renders one item, `meta` (optional)
+    // returns the muted sub-label shown beside the page name.
+    function groupByPage(items, pathOf, renderItem, meta) {
+      const paths = [...new Set(items.map(pathOf))].sort();
+      return paths.map((p) => {
+        const group = items.filter((it) => pathOf(it) === p);
+        return `<div class="tmd-group"><h2 class="tmd-gh">` +
+          `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(pageName(p))}</a>` +
+          (meta ? `<span>${esc(meta(group))}</span>` : '') +
+          `</h2><div class="tmd-grid">${group.map(renderItem).join('')}</div></div>`;
+      }).join('');
+    }
+
     function renderComments() {
       const host = $('#tmd-list');
       const controls = $('#tmd-controls');
@@ -471,16 +521,11 @@
       buildTeamChips();
       const rs = currentRoots();
       if (byPage) {
-        const paths = [...new Set(rs.map((c) => c.page.path))].sort();
-        host.innerHTML = paths.map((p) => {
-          const group = rs.filter((c) => c.page.path === p);
-          const pend = group.filter((c) => c.status === 'open').length;
-          const done = group.filter((c) => c.status === 'completed').length;
-          return `<div class="tmd-group"><h2 class="tmd-gh">` +
-            `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(pageName(p))}</a>` +
-            `<span>${pend} pending · ${done} done</span>` +
-            `</h2><div class="tmd-grid">${group.map(card).join('')}</div></div>`;
-        }).join('');
+        host.innerHTML = groupByPage(rs, (c) => c.page.path, card, (group) => {
+          const inProg = group.filter((c) => teamStatusOf(c) === 'in_progress').length;
+          const complete = group.filter((c) => teamStatusOf(c) === 'complete').length;
+          return `${inProg} in progress · ${complete} complete`;
+        });
       } else {
         host.innerHTML = `<div class="tmd-grid">${rs.map(card).join('')}</div>`;
       }
@@ -509,22 +554,186 @@
       `</article>`;
     }
 
+    function sortNotes(ns) {
+      const s = ns.slice();
+      if (sort === 'old') s.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      else if (sort === 'page') s.sort((a, b) => (a.path || '/').localeCompare(b.path || '/') || (a.createdAt < b.createdAt ? 1 : -1));
+      else s.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)); // newest
+      return s;
+    }
     function renderNotes() {
-      const list = notes.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-      $('#tmd-notes').innerHTML = list.map(noteItem).join('');
-      const u = unreadNotes().length;
-      $('#tmd-markall').disabled = u === 0;
+      const host = $('#tmd-notes');
+      const list = sortNotes(notes.filter(matchesNoteSearch));
+      if (byPage) {
+        host.innerHTML = list.length
+          ? [...new Set(list.map((n) => n.path || '/'))].sort().map((p) => {
+              const group = list.filter((n) => (n.path || '/') === p);
+              const unread = group.filter((n) => n.readTeam === false).length;
+              return `<div class="tmd-group"><h2 class="tmd-gh">` +
+                `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(pageName(p))}</a>` +
+                `<span>${group.length} notification${group.length === 1 ? '' : 's'}${unread ? ` · ${unread} unread` : ''}</span>` +
+                `</h2><div class="tmd-notes">${group.map(noteItem).join('')}</div></div>`;
+            }).join('')
+          : '';
+      } else {
+        host.innerHTML = list.length ? `<div class="tmd-notes">${list.map(noteItem).join('')}</div>` : '';
+      }
       const emp = $('#tmd-empty');
       emp.hidden = list.length > 0;
-      if (!list.length) emp.textContent = 'No notifications yet.';
+      if (!list.length) emp.textContent = search ? 'No notifications match your search.' : 'No notifications yet.';
+    }
+
+    // ---- status-setter popover (receiver sets its own team status) ----
+    // A fixed-position menu anchored to the chip, appended to <body> so a card's overflow
+    // never clips it (mirrors the admin dashboard's openRowMenu).
+    let statusMenuEl = null;
+    function closeStatusMenu() {
+      if (!statusMenuEl) return;
+      statusMenuEl.remove(); statusMenuEl = null;
+      document.removeEventListener('click', onStatusMenuDoc, true);
+      document.removeEventListener('keydown', onStatusMenuKey, true);
+      window.removeEventListener('scroll', closeStatusMenu, true);
+      window.removeEventListener('resize', closeStatusMenu);
+    }
+    function onStatusMenuDoc(e) { if (statusMenuEl && !statusMenuEl.contains(e.target)) closeStatusMenu(); }
+    function onStatusMenuKey(e) { if (e.key === 'Escape') closeStatusMenu(); }
+    function openStatusMenu(btn, id) {
+      closeStatusMenu();
+      const rec = roots().find((c) => c.id === id); if (!rec) return;
+      const cur = teamStatusOf(rec);
+      const menu = document.createElement('div'); menu.className = 'tmd-statusmenu';
+      menu.innerHTML = Object.keys(TEAM_STATUS).map((k) => {
+        const [cls, label] = TEAM_STATUS[k];
+        return `<button type="button" class="tmd-statusmenu-item ${cls}${k === cur ? ' is-current' : ''}" data-val="${k}">` +
+          `<span class="tmd-statusmenu-dot"></span>${label}</button>`;
+      }).join('');
+      document.body.appendChild(menu); statusMenuEl = menu;
+      const r = btn.getBoundingClientRect();
+      const mw = menu.offsetWidth, mh = menu.offsetHeight;
+      let left = r.left; if (left + mw > innerWidth - 8) left = innerWidth - mw - 8; if (left < 8) left = 8;
+      let top = r.bottom + 6; if (top + mh > innerHeight - 8) top = r.top - mh - 6; if (top < 8) top = 8;
+      menu.style.left = left + 'px'; menu.style.top = top + 'px';
+      menu.querySelectorAll('.tmd-statusmenu-item').forEach((b) =>
+        b.addEventListener('click', () => { const v = b.dataset.val; closeStatusMenu(); setTeamStatus(rec, v); }));
+      setTimeout(() => {
+        document.addEventListener('click', onStatusMenuDoc, true);
+        document.addEventListener('keydown', onStatusMenuKey, true);
+        window.addEventListener('scroll', closeStatusMenu, true);
+        window.addEventListener('resize', closeStatusMenu);
+      }, 0);
+    }
+    async function setTeamStatus(rec, teamStatus) {
+      if (teamStatusOf(rec) === teamStatus) return;
+      try { Object.assign(rec, await store.teamStatus(rec, teamStatus)); counts(); render(); }
+      catch (e) { alert('Could not update status — ' + e.message); }
+    }
+    // ---- acknowledgment (raiser concludes / requests a redo) ----
+    async function doAck(btn) {
+      const rec = roots().find((c) => c.id === btn.dataset.id); if (!rec) return;
+      const action = btn.dataset.ack;
+      if (action === 'redo' && !confirm('Send this back to ' + (rec.toTeam || 'the team') + ' for a redo?')) return;
+      btn.disabled = true;
+      try { Object.assign(rec, await store.teamAck(rec, action)); counts(); render(); }
+      catch (e) { btn.disabled = false; alert('Could not update — ' + e.message); }
+    }
+
+    // ---- Delivery Queue: the receiver's completed items, staged before pushing live ----
+    let deliverResult = '';
+    function renderDelivery() {
+      const host = $('#tmd-view-delivery');
+      const staged = deliveryRoots();                                  // canonical set (for the empty check)
+      const shown = sortRoots(staged.filter(matchesSearch));           // reshaped by Search + Sort
+      const banner = deliverResult ? `<div class="tmd-deploy-banner">${esc(deliverResult)}</div>` : '';
+      let body;
+      if (!staged.length) {
+        body = `<p class="tmd-empty">Nothing staged. Mark items <b>Complete</b> in Team Queue to fill your Delivery Queue.</p>`;
+      } else if (!shown.length) {
+        body = `<p class="tmd-empty">No staged items match your search.</p>`;
+      } else if (byPage) {
+        body = groupByPage(shown, (c) => c.page.path, card, (g) => `${g.length} to deliver`);
+      } else {
+        body = `<div class="tmd-grid">${shown.map(card).join('')}</div>`;
+      }
+      host.innerHTML = banner + body;
+    }
+    async function doTeamDeliver() {
+      const prim = $('#tmd-primary'); if (!prim || prim.disabled) return;
+      if (!confirm('Deploy all completed items now? This delivers them to the teams that raised them.')) return;
+      const label = prim.textContent;
+      prim.disabled = true; prim.textContent = 'Deploying…';
+      try {
+        const res = await store.teamDeliver();
+        const n = res.delivered || 0;
+        deliverResult = `Delivered ${n} item${n === 1 ? '' : 's'} to the raising team${n === 1 ? '' : 's'}.`;
+        await loadData(); // refreshes comments + notifs; render() redraws with the banner
+      } catch (e) { prim.disabled = false; prim.textContent = label; alert('Deploy failed — ' + e.message); }
+    }
+
+    // The shared toolbar (Search · Sort · By Page · primary) sits in the SAME slot for all
+    // three tabs; this reconciles the parts that differ per view — the status-filter tabs
+    // (Team Queue only), the caption, and the primary button's label / action / enabled-state.
+    function syncControls() {
+      const filters = $('#tmd-filters');
+      const note = $('#tmd-viewnote');
+      const prim = $('#tmd-primary');
+      const searchEl = $('#tmd-search');
+      const inDetail = view === 'comments' && entryDetail;
+      filters.hidden = view !== 'comments';                 // status tabs belong to the Team Queue
+      if (view !== 'comments') $('#tmd-teamchips').hidden = true;
+      if (view === 'comments') {
+        searchEl.placeholder = 'Search comments, pages, reviewers…';
+        note.hidden = true;
+        prim.textContent = 'Clear filters';
+        prim.disabled = !(search || filter !== 'all' || fromFilter || byPage || sort !== 'new');
+      } else if (view === 'delivery') {
+        searchEl.placeholder = 'Search delivery queue…';
+        note.hidden = false;
+        note.textContent = 'A safety net before pushing live. Deploying delivers these completed items back to the team that raised each one to acknowledge.';
+        const n = deliveryRoots().length;
+        prim.textContent = n ? 'Deploy ' + n : 'Deploy';
+        prim.disabled = n === 0;
+      } else { // notifs
+        searchEl.placeholder = 'Search notifications…';
+        note.hidden = true;
+        prim.textContent = 'Mark all read';
+        prim.disabled = unreadNotes().length === 0;
+      }
+      // Hidden alongside the rest of the controls while a single comment is drilled into.
+      note.hidden = note.hidden || inDetail;
     }
 
     function render() {
       $('#tmd-view-comments').hidden = view !== 'comments';
       $('#tmd-view-notifs').hidden = view !== 'notifs';
+      $('#tmd-view-delivery').hidden = view !== 'delivery';
       $('#tmd-empty').hidden = true;
-      if (view === 'notifs') renderNotes(); else renderComments();
+      if (view === 'notifs') renderNotes();
+      else if (view === 'delivery') renderDelivery();
+      else renderComments();
+      syncControls();
       renderHeader();
+    }
+
+    // Team Queue primary: reset Search, Sort, status filter, From-team and By Page to defaults.
+    function clearFilters() {
+      search = ''; sort = 'new'; filter = 'all'; fromFilter = ''; byPage = false;
+      $('#tmd-search').value = '';
+      sortDD.setValue('new');
+      $('#tmd-bypage').classList.remove('is-active');
+      $('#tmd-filters').querySelectorAll('.tmd-filter').forEach((f) => f.classList.toggle('is-active', f.dataset.filter === 'all'));
+      renderComments(); syncControls();
+    }
+
+    // Notifications primary: mark every unread item read.
+    async function markAllRead() {
+      const ids = unreadNotes().map((n) => n.id);
+      if (!ids.length) return;
+      const prim = $('#tmd-primary'); prim.disabled = true;
+      try {
+        await store.markRead(ids, true);
+        notes.forEach((n) => { if (ids.includes(n.id)) n.readTeam = true; });
+        counts(); render();
+      } catch (err) { prim.disabled = false; alert('Could not update — ' + err.message); }
     }
 
     // ---- login (the shared common login — Team + Key) ----
@@ -582,19 +791,34 @@
     $('.tmd-side').addEventListener('click', (e) => {
       const b = e.target.closest('.tmd-nav'); if (!b) return;
       view = b.dataset.view; entryDetail = null;
+      deliverResult = ''; // the delivery banner only shows right after a deploy
       document.querySelectorAll('.tmd-nav').forEach((n) => n.classList.toggle('is-active', n === b));
       render();
+    });
+    // Chip status-setter + acknowledgment buttons (delegated across both card containers).
+    $('.tmd-content').addEventListener('click', (e) => {
+      const setBtn = e.target.closest('[data-setstatus]');
+      if (setBtn) { e.stopPropagation(); openStatusMenu(setBtn, setBtn.dataset.setstatus); return; }
+      const ackBtn = e.target.closest('[data-ack]');
+      if (ackBtn) { e.stopPropagation(); doAck(ackBtn); return; }
     });
     $('#tmd-filters').addEventListener('click', (e) => {
       const b = e.target.closest('.tmd-filter'); if (!b) return;
       filter = b.dataset.filter; entryDetail = null;
       $('#tmd-filters').querySelectorAll('.tmd-filter').forEach((f) => f.classList.toggle('is-active', f === b));
-      renderComments();
+      renderComments(); syncControls();
     });
+    // By Page — shared across all three tabs (groups the active view by page).
     $('#tmd-bypage').addEventListener('click', (e) => {
-      byPage = !byPage;
+      byPage = !byPage; entryDetail = null;
       e.currentTarget.classList.toggle('is-active', byPage);
-      renderComments();
+      render();
+    });
+    // Primary button — one slot, one action per tab.
+    $('#tmd-primary').addEventListener('click', () => {
+      if (view === 'comments') clearFilters();
+      else if (view === 'delivery') doTeamDeliver();
+      else markAllRead();
     });
     // Open a comment's full detail (click/Enter a card; links inside pass through).
     $('#tmd-list').addEventListener('click', (e) => {
@@ -607,8 +831,8 @@
       const item = e.target.closest && e.target.closest('.tmd-item[data-id]'); if (!item) return;
       e.preventDefault(); entryDetail = item.dataset.id; renderComments();
     });
-    // Search across the inbox.
-    $('#tmd-search').addEventListener('input', (e) => { search = e.target.value.trim(); entryDetail = null; renderComments(); });
+    // Search across the active view (comments · delivery · notifications).
+    $('#tmd-search').addEventListener('input', (e) => { search = e.target.value.trim(); entryDetail = null; render(); });
     // From-team filter chips.
     $('#tmd-teamchips').addEventListener('click', (e) => {
       const b = e.target.closest('.tmd-tchip'); if (!b) return;
@@ -622,21 +846,11 @@
         { value: 'old', label: 'Oldest first' },
         { value: 'page', label: 'Page A–Z' },
       ],
-      onSelect: (v) => { sort = v; entryDetail = null; renderComments(); },
+      onSelect: (v) => { sort = v; entryDetail = null; render(); },
     });
     $('#tmd-sort-mount').appendChild(sortDD.el);
     // Admin can push a global theme (SSE); repaint so JS-inlined chip colours re-derive.
     document.addEventListener('pk:themechange', () => { try { render(); } catch (e) {} });
-    $('#tmd-markall').addEventListener('click', async (e) => {
-      const ids = unreadNotes().map((n) => n.id);
-      if (!ids.length) return;
-      const btn = e.currentTarget; btn.disabled = true;
-      try {
-        await store.markRead(ids, true);
-        notes.forEach((n) => { if (ids.includes(n.id)) n.readTeam = true; });
-        counts(); render();
-      } catch (err) { btn.disabled = false; alert('Could not update — ' + err.message); }
-    });
     // Per-item read/unread toggle. data-read="1" = currently unread ⇒ mark read; "0" ⇒ mark unread.
     $('#tmd-notes').addEventListener('click', async (e) => {
       const b = e.target.closest('.tmd-note-toggle'); if (!b) return;

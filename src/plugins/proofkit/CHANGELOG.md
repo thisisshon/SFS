@@ -6,6 +6,68 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.23.0 — 2026-07-14 — unified `/teamdash` control bar across all three tabs
+
+Search · Sort · **By Page** now live in ONE shared toolbar that sits in the SAME position on all three
+left-nav tabs (Team Queue · Delivery Queue · Notifications), each with its own primary button pinned
+right. All four toolbar controls are one height (42px); **By Page** and the primary button are one fixed
+size (140×42) so they line up across tabs. No Worker/endpoint/auth/config changes — pure client
+(`core/teamdash.js` + `.css`, `core/teamdash.html` + `TeamDashboard.astro`).
+
+- **Markup** (`teamdash.html` + `TeamDashboard.astro`): the `#tmd-controls` block moved OUT of the
+  Team-Queue view to be a shared sibling above all three view containers. Toolbar order is now
+  `Search · Sort · By Page · [spacer] · #tmd-primary`. The status-filter tabs lost their inline
+  `By Page` + `.tmd-filter-sp`; a `#tmd-viewnote` caption + `#tmd-primary` button were added. The
+  per-view `.tmd-deployhead` / `.tmd-noteshead` headers were removed (their actions became the shared
+  primary). View containers slimmed to `#tmd-view-comments > #tmd-list`, empty `#tmd-view-delivery`,
+  `#tmd-view-notifs > #tmd-notes`.
+- **Primary button** (`#tmd-primary`, one slot, per-view action via `syncControls()` + a single click
+  dispatcher): Team Queue → **Clear filters** (resets search/sort/status-filter/from-team/By Page;
+  disabled at defaults); Delivery Queue → **Deploy N** (unchanged behaviour, now toolbar-mounted);
+  Notifications → **Mark all read**.
+- **Controls are functional on every tab, not just decorative:**
+  - Search — comments use `matchesSearch`; notifications use a new `matchesNoteSearch` (summary + path +
+    page name).
+  - Sort — Newest / Oldest / Page A–Z; notifications get a new `sortNotes`.
+  - By Page — new shared `groupByPage()` helper backs comments, delivery and notifications grouping.
+  - Delivery: `deliveryRoots()` is now the CANONICAL unfiltered staged set (drives badge/counts/Deploy);
+    Search/Sort/By Page only reshape what's shown, never what deploys.
+- **CSS** (`teamdash.css`): new `.tmd-tbtn` (`140×42`) + `.tmd-tbtn--primary` (filled accent) size class
+  shared by By Page and the primary; `.tmd-toolbar-sp` spacer; `.tmd-viewnote` caption; search flex bumped
+  to `4 1 220px`. Retired `.tmd-bypage`, `.tmd-filter-sp`, `.tmd-deployhead`/`.tmd-deploy-explain`/
+  `.tmd-deploy-btn`, `.tmd-noteshead`/`.tmd-markall` (kept `.tmd-deploy-banner`). Hover rules updated.
+
+## 2.22.0 — 2026-07-14 — team-owned status + team Delivery Queue (round-trip)
+
+Gives each team its OWN progress workflow on `/teamdash`, independent of the admin lifecycle, plus a
+safety-net Delivery Queue and a raiser-side acknowledge/redo round-trip. Admin observes it all via the
+Master Log. Also two renames.
+
+- **New record fields** (defaulted for old records): `teamStatus` (`to_be_initiated` | `in_progress` |
+  `complete`, default `to_be_initiated`), `teamStatusAt`, `teamDelivered`, `teamDeliveredAt`, `ack`
+  (`'' | 'concluded'`). Each transition is appended to the existing `history[]` as
+  `event: 'teamStatus' | 'teamDeliver' | 'ack' | 'redo'`.
+- **New Worker endpoints** (`worker/worker.js`), all scoped:
+  - `POST /team-status` `{id, path, teamStatus}` — only the **receiver** (`toTeam`) or admin may set it.
+  - `POST /team-deliver` `{team}` — the receiver publishes its completed-not-delivered items; fires a
+    `kind:'delivered'` notification to each **raiser** (`team`). Returns `{delivered, notifications}`.
+  - `POST /team-ack` `{id, path, action:'conclude'|'redo'}` — only the **raiser** (`team`) or admin.
+    `redo` bounces it back (`teamStatus→in_progress`, un-delivered) + `kind:'redo'` notification to the
+    receiver. `conclude` sets `ack='concluded'`.
+  - `maskForTeam` now projects the five team-workflow fields (they are the team's own data, not masked).
+    New comments initialise the fields.
+- **Team dashboard** (`core/teamdash.js` + `.css`, `core/teamdash.html` + `TeamDashboard.astro`):
+  - Right-rail status chip is now a **chevron button** for the receiver → a body-anchored popover sets
+    To Be Initiated / In Progress / Complete (mirrors the admin `openRowMenu`).
+  - Nav **"For Action" → "Team Queue"**; tabs are now **All / To Be Initiated / In Progress / Complete**.
+  - New **"Delivery Queue"** nav view (+ live badge): the receiver's Complete-not-delivered items, with a
+    **Deploy** button that delivers them to the raising team. Local + Worker transports both implemented.
+  - Raiser-side **acknowledgment band** on delivered items: **Conclude** / **Request redo**.
+  - Stat tiles reworded to In Progress / Complete / Notifications; card border + chips keyed to team status
+    (amber / blue / green via existing `--pk-open-*` / `--pk-blue-*` / `--pk-done-*` tokens).
+- **Admin dashboard** (`core/dashboard.js`): top stat tile **"in bucket" → "Delivery Queue"**; the Master
+  Log entry-detail timeline now labels the four new team events (round-trip is visible to the admin).
+
 ## 2.21.2 — 2026-07-14 — removal model: keep the folder, contain the data
 
 Corrects `REMOVAL.md` to match how removal should actually work. Docs only — no code/behaviour change.

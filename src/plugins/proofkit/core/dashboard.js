@@ -402,7 +402,7 @@
       const newN = rs.filter(isNew).length;
       $('#rvd-counts').innerHTML =
         `<span class="rvd-count"><b>${open}</b> open</span>` +
-        `<span class="rvd-count"><b>${bucket}</b> in bucket</span>` +
+        `<span class="rvd-count"><b>${bucket}</b> Delivery Queue</span>` +
         `<span class="rvd-count"><b>${deployed}</b> deployed</span>` +
         (newN ? `<span class="rvd-count rvd-count-new"><b>${newN}</b> new</span>` : '');
       updateBadges();
@@ -653,10 +653,16 @@
     // synthesize it from the lifecycle timestamps (old records predate history).
     function entryHistory(c) {
       if (Array.isArray(c.history) && c.history.length) {
+        const TEAM_ST = { to_be_initiated: 'To Be Initiated', in_progress: 'In Progress', complete: 'Complete' };
         return c.history.slice().map((h) => ({
           at: h.at,
           label: h.event === 'created' ? 'Created (open)'
             : h.event === 'deployed' ? 'Deployed — ' + (h.status === 'closed' ? 'closed' : 'completed')
+            // team-owned workflow events (round-trip between receiver + raiser)
+            : h.event === 'teamStatus' ? (h.team ? h.team + ' → ' : 'Team → ') + (TEAM_ST[h.teamStatus] || h.teamStatus || '')
+            : h.event === 'teamDeliver' ? (h.team ? h.team + ' delivered to raiser' : 'Delivered to raiser')
+            : h.event === 'ack' ? (h.team ? h.team + ' concluded' : 'Concluded')
+            : h.event === 'redo' ? (h.team ? h.team + ' requested redo' : 'Redo requested')
             : 'Status → ' + (h.status || 'open'),
         })).sort((a, b) => (a.at < b.at ? -1 : 1));
       }
