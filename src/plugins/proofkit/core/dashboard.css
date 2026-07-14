@@ -123,6 +123,8 @@
     display:flex;flex-direction:column;gap:8px}
   .rvd .rvd-teamview-label{padding:0 2px;font:700 10px/1 var(--pk-font);letter-spacing:.1em;
     text-transform:uppercase;color:var(--pk-muted)}
+  /* Disabled teams in the Jump-To-Team picker are greyed + inert via the shared
+     .pk-dropdown-item[aria-disabled] styling in design/components.css. */
   .rvd .rvd-content{flex:1;min-width:0}
 
   /* ---- toolbar: search + sort + export/copy actions ---- */
@@ -194,10 +196,10 @@
     background:var(--pk-card);border:1px solid var(--pk-hair);border-left:3px solid var(--pk-hair);
     transition:border-color .15s,background .15s;overflow-wrap:anywhere}
   /* left edge colour-keyed to lifecycle state (fast visual scan; hover still wins → red) */
-  .rvd .rvd-item[data-state="open"]{border-left-color:var(--pk-amber)}
-  .rvd .rvd-item[data-state="bucket"]{border-left-color:var(--pk-blue-ink)}
-  .rvd .rvd-item[data-state="deployed"]{border-left-color:var(--pk-green)}
-  .rvd .rvd-item[data-state="closed"]{border-left-color:var(--pk-muted)}
+  .rvd .rvd-item[data-state="tbi"]{border-left-color:var(--pk-amber)}       /* To Be Initiated */
+  .rvd .rvd-item[data-state="inprog"]{border-left-color:var(--pk-blue-ink)} /* In Progress */
+  .rvd .rvd-item[data-state="deployed"]{border-left-color:var(--pk-green)}  /* Deployed live */
+  .rvd .rvd-item[data-state="reopened"]{border-left-color:var(--pk-red)}    /* Reopened */
   /* SELECTED (multi-select) — a vibrant red-filled state that stands right out */
   .rvd .rvd-item.is-selected{background:var(--pk-new-bg);border-color:var(--pk-red);border-left-color:var(--pk-red)}
   /* META band: select · status · New · (pushed right) page · time */
@@ -241,10 +243,17 @@
   .rvd .rvd-chip{padding:4px 12px;border-radius:9999px;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
     display:inline-flex;align-items:center;justify-content:center;min-width:var(--pk-chip-w);box-sizing:border-box}
   .rvd .rvd-chip.open{background:var(--pk-open-bg);color:var(--pk-open-ink)}
-  /* "in bucket" = completed/closed but not yet deployed → the ship-ready blue tone */
-  .rvd .rvd-chip.bucket{background:var(--pk-blue-bg);color:var(--pk-blue-ink)}
+  /* real-time status machine (TBI → In Progress → Deployed live; reopen → Reopened) */
+  .rvd .rvd-chip.tbi{background:var(--pk-open-bg);color:var(--pk-open-ink)}
+  .rvd .rvd-chip.inprog,.rvd .rvd-chip.bucket{background:var(--pk-blue-bg);color:var(--pk-blue-ink)}
   .rvd .rvd-chip.resolved,.rvd .rvd-chip.deployed{background:var(--pk-done-bg);color:var(--pk-done-ink)}
+  .rvd .rvd-chip.reopened{background:var(--pk-new-bg);color:var(--pk-new-ink)}
   .rvd .rvd-chip.closed{background:var(--pk-closed-bg);color:var(--pk-closed-ink)}
+  /* iteration marker on a card + in the timeline */
+  .rvd .rvd-iter{font:700 10px/1 var(--pk-font);letter-spacing:.08em;text-transform:uppercase;color:var(--pk-muted)}
+  .rvd .rvd-tl-iter{font-weight:700;font-size:11px;line-height:1;font-family:var(--pk-mono,ui-monospace,monospace);color:var(--pk-red);flex:none;min-width:24px}
+  /* status actions in the Master Log detail */
+  .rvd .rvd-detail-acts{display:flex;flex-wrap:wrap;gap:8px}
 
   /* content-copy-match validation flag on a card (only when method=content-copy-match) */
   .rvd .rvd-valid{display:inline-flex;align-items:center;gap:8px;font:600 12px/1.4 var(--pk-font);cursor:help}

@@ -20,6 +20,9 @@ import type { SEO } from '../../lib/seo';
 export {
   TEAMS,
   ADMIN_TEAM,
+  TEAM_ENABLED,
+  isTeamEnabled,
+  ENABLED_TEAMS,
   TEAM_COLORS,
   HIDE_SELECTORS,
   PAGE_NAMES,

@@ -6,6 +6,60 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.24.0 — 2026-07-14 — Content↔Builder rework: real-time status, reopen loop, team access gating
+
+Phase 1 of Proofkit's Content↔Builder evolution. Restricts active review to the **Content** team and the
+**Builder/Admin** role (all other teams config-gated **off**, not deleted), replaces the batch deploy-gate +
+Delivery-Queue lifecycle with a **real-time `teamStatus` state machine**, and adds a **reopen/resubmit
+iteration loop** with full history rendered to both sides. Debounced 5s status sync. Auth/endpoints/record
+shape all changed — see below.
+
+- **State machine** (replaces the old admin deploy lifecycle + team Delivery-Queue round-trip). `teamStatus`
+  vocabulary is now `to_be_initiated` → `in_progress` → `deployed_live` (terminal for the iteration) or
+  `reopened`. Content-facing labels: *With builder – TBI* · *With builder – in progress* · *Deployed live*.
+  **Complete IS deployed live** — immediate, no bucket, no batch step.
+- **Worker** (`worker/worker.js`):
+  - `POST /team-status` `{id, action, reason?}` repurposed — Builder/admin drives `start`
+    (`to_be_initiated→in_progress`), `complete` (`in_progress→deployed_live`), `reopen`
+    (`in_progress|deployed_live→reopened`, requires non-empty `reason`). Invalid transitions → 409.
+  - `POST /resubmit` `{id}` **new** — raiser (Content) or admin resubmits a `reopened` ticket: spawns a new
+    sub-ticket sharing the parent id with an incrementing suffix (`TICKET-102-1`, `-2`, …), `iteration++`,
+    back to `to_be_initiated`; prior iteration retained for history.
+  - **Removed** `POST /deploy`, `POST /team-deliver`, `POST /team-ack`, `POST /status`, `POST /resolve`, and
+    the `content-copy-match` completion validation. Complete is a manual, unvalidated Builder self-attestation.
+  - **Record shape**: added/repurposed `iteration` (int, from 1), reused `parentId` (resubmit chain → origin
+    root), every transition appended to `history[]` as `{status, at, event, reason?, iteration}`. Removed
+    `status`/`published`/`publishedStatus`/`completedAt`/`closedAt`/`publishedAt`/`teamDelivered`/
+    `teamDeliveredAt`/`ack`/`validation`. `maskForTeam` now exposes `teamStatus`, `teamStatusAt`,
+    `reopenReason`, `iteration`, and the full `history[]`.
+  - **Debounce (5s)**: `pushStatusNotif` coalesces per chain+team — a status change < 5s after the last is
+    overwritten in place (latest state wins), so a burst collapses to one card. Frontends poll on a 5s cadence.
+  - **Access gate**: optional `ENABLED_TEAMS` env (JSON array; unset = all enabled) — team-key auth and
+    team-scoped reads (`/comments?team=`, `/notifications?team=`) 403 for a disabled team. Admin never gated.
+    Commented example added to `worker/wrangler.toml`.
+- **Access control** (`core/config.js` + `config.ts`): new single source of truth `TEAM_ENABLED`
+  (`{ Content: true, Product/SEO/Marketing/Design/Business: false }`; Builder always enabled), plus
+  `isTeamEnabled(t)` and derived `ENABLED_TEAMS`. Flip one flag to re-enable a team everywhere — consistent
+  with the one-switch portability contract. `buildDropdown` now honours `it.disabled` (greyed, `aria-disabled`,
+  not focusable, click is a no-op); `buildPanelLogin` marks every non-enabled team disabled. `core/login.js`
+  rejects a disabled-team session inline before hitting the Worker.
+- **Dashboards** (`core/dashboard.js` + `.css`, `core/teamdash.js` + `.css`):
+  - **Content** (`/teamdash`): new **Completed** tab (default) — everything submitted with live status labels,
+    with search · sort · By-Page · status sub-filters; **Active** tab surfaces `reopened` tickets with the
+    Builder's reason + a **Resubmit** action. Removed the Delivery-Queue deploy/ack/redo UI.
+  - **Builder** (`/reviewdash`): **Team Queue** = one unified list of every ticket directed at Builder in a
+    non-terminal iteration (search · sort · filter-by-page · mark-all-read); ticket detail + card actions
+    **Start** · **Mark Complete** · **Reopen** (prompts for reason). Removed the Deploy/Delivery view.
+    Jump-To-Team items greyed for disabled teams via `isTeamEnabled`.
+  - Ticket detail on **both** sides renders the full iteration timeline (`-1`, `-2`, …) merged across the chain.
+  - Poll cadence set to 5s on both (single loop, replacing the 30s timer).
+- **Route stubs** (`Dashboard.astro` / `TeamDashboard.astro`): a disabled-team route renders a clean
+  "review access isn't currently available" state instead of a broken page. Static shell markup
+  (`.astro` + `core/*.html`) updated from the retired deploy/Delivery-Queue flow to the new
+  Team-Queue / Completed / Active flow.
+- **Open item (deferred)**: multi-recipient tagging — this phase assumes Content always tags the single
+  Builder. Routing one ticket to multiple queues is flagged for a later phase.
+
 ## 2.23.0 — 2026-07-14 — unified `/teamdash` control bar across all three tabs
 
 Search · Sort · **By Page** now live in ONE shared toolbar that sits in the SAME position on all three

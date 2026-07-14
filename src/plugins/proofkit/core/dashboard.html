@@ -50,8 +50,9 @@
         <h1 class="rvd-h1">Admin Console</h1>
         <span class="rvd-headtoggle" data-pk-toggle></span>
       </div>
-      <p class="rvd-lead">Every comment left across the site. Open a pin to see it in
-        context on the live page; resolve items here as you action them.</p>
+      <p class="rvd-lead">Every ticket raised across the site, directed to you as Builder. Open a
+        pin to see it in context on the live page; Start, Mark Complete (deploy live) or Reopen
+        each ticket as you action it.</p>
     </div>
 
     <!-- Stat tiles -->
@@ -61,8 +62,7 @@
 
     <div class="rvd-shell">
       <aside class="rvd-side">
-        <button class="rvd-nav is-active" data-view="dash">Overview</button>
-        <button class="rvd-nav" data-view="deploy">Delivery<span class="rvd-navbadge" id="rvd-badge-deploy" hidden>0</span></button>
+        <button class="rvd-nav is-active" data-view="dash">Team Queue</button>
         <button class="rvd-nav" data-view="notifs">Notifications<span class="rvd-navbadge rvd-navbadge-alert" id="rvd-badge-notifs" hidden>0</span></button>
         <button class="rvd-nav" data-view="entries">Master Log</button>
         <div class="rvd-teamview">
@@ -84,21 +84,15 @@
           <div class="rvd-tabs" id="rvd-tabs" role="tablist">
             <button class="rvd-tab is-active" data-tab="all">All</button>
             <button class="rvd-tab" data-tab="page">By Page</button>
-            <button class="rvd-tab" data-tab="open">Open</button>
-            <button class="rvd-tab" data-tab="deployed">Deployed</button>
-            <button class="rvd-tab" data-tab="closed">Closed</button>
           </div>
           <div class="rvd-teamchips" id="rvd-teamchips"></div>
           <div id="rvd-list"></div>
         </div>
 
-        <!-- Deploy Bucket: completed/closed comments awaiting publish -->
-        <div id="rvd-view-deploy" hidden></div>
-
-        <!-- Notifications: fired on Deploy, newest first -->
+        <!-- Notifications: fired as tickets move through the status machine, newest first -->
         <div id="rvd-view-notifs" hidden></div>
 
-        <!-- Master Log: tabular log (one row per change) + per-entry detail drill-in -->
+        <!-- Master Log: tabular log (one row per ticket chain) + per-entry detail drill-in -->
         <div id="rvd-view-entries" hidden>
           <div id="rvd-entries"></div>
         </div>
@@ -107,13 +101,13 @@
       </div>
     </div>
 
-    <!-- bulk-select action bar (shows when ≥1 comment is selected) -->
+    <!-- bulk-select action bar (shows when ≥1 ticket is selected) -->
     <div class="rvd-bulk" id="rvd-bulk" hidden>
       <span class="rvd-bulk-n" id="rvd-bulk-n">0 selected</span>
       <button class="rvd-bulk-a" type="button" data-act="all">Select all</button>
+      <button class="rvd-bulk-a" type="button" data-act="start">Start</button>
       <button class="rvd-bulk-a" type="button" data-act="complete">Mark Complete</button>
       <button class="rvd-bulk-a" type="button" data-act="reopen">Reopen</button>
-      <button class="rvd-bulk-a" type="button" data-act="close">Close</button>
       <button class="rvd-bulk-a" type="button" data-act="copy">Copy prompts</button>
       <button class="rvd-bulk-a danger" type="button" data-act="delete">Delete</button>
       <button class="rvd-bulk-x" type="button" id="rvd-bulk-clear" aria-label="Clear selection">×</button>

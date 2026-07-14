@@ -137,6 +137,35 @@ export const TEAMS = ['Product', 'SEO', 'Marketing', 'Content', 'Design', 'Busin
  */
 export const ADMIN_TEAM = 'Builder';
 
+/* --------------------------------------------------------------------------
+ * TEAM ENABLEMENT — the ONE switch that gates which teams may use Proofkit.
+ * Phase 1 ships with ONLY Content live; every other team is parked OFF (kept in
+ * the codebase, NOT deleted). Re-enabling a team later is a SINGLE flag flip
+ * here — flip its `false` to `true` and it lights up everywhere at once (login
+ * dropdown, the sign-in guard, its dashboard route), no other edit needed. This
+ * is the single source of truth every gate derives from — never hardcode a team
+ * name to gate it elsewhere. Builder/ADMIN_TEAM is the admin identity and is
+ * ALWAYS enabled (it is deliberately not listed here).
+ * ------------------------------------------------------------------------ */
+export const TEAM_ENABLED = {
+  Content: true,
+  Product: false,
+  SEO: false,
+  Marketing: false,
+  Design: false,
+  Business: false,
+};
+
+/** True when team `t` may use Proofkit. Builder (ADMIN_TEAM) is always enabled;
+ *  an unknown/blank identity is treated as enabled (nothing to gate). */
+export function isTeamEnabled(t) {
+  if (t === ADMIN_TEAM) return true;
+  return t in TEAM_ENABLED ? TEAM_ENABLED[t] : true;
+}
+
+/** The enabled subset of TEAMS (derived — never hand-maintain a second list). */
+export const ENABLED_TEAMS = TEAMS.filter(isTeamEnabled);
+
 /** Per-team chip colours as [background, text]. Keys must match TEAMS (+ ADMIN_TEAM,
  *  which is a directable target and so needs a chip too). */
 export const TEAM_COLORS = {
@@ -346,7 +375,8 @@ export function buildDropdown(opts) {
   const onDoc = (e) => { if (!wrap.contains(e.target)) close(); };
   const onKey = (e) => {
     if (e.key === 'Escape') { close(); trigger.focus(); return; }
-    const list = [].slice.call(menu.querySelectorAll('.pk-dropdown-item'));
+    // Disabled items are inert — never a keyboard-focus stop.
+    const list = [].slice.call(menu.querySelectorAll('.pk-dropdown-item:not([aria-disabled="true"])'));
     const i = list.indexOf(document.activeElement);
     if (e.key === 'ArrowDown') { e.preventDefault(); (list[i + 1] || list[0]).focus(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); (list[i - 1] || list[list.length - 1]).focus(); }
@@ -354,7 +384,7 @@ export function buildDropdown(opts) {
   function open() {
     isOpen = true; wrap.classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true'); // CSS animates the menu in
     document.addEventListener('click', onDoc, true); document.addEventListener('keydown', onKey, true);
-    const sel = menu.querySelector('[aria-selected="true"]') || menu.querySelector('.pk-dropdown-item');
+    const sel = menu.querySelector('[aria-selected="true"]') || menu.querySelector('.pk-dropdown-item:not([aria-disabled="true"])');
     if (sel) sel.focus();
   }
   function close() {
@@ -370,10 +400,14 @@ export function buildDropdown(opts) {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'pk-dropdown-item'; b.setAttribute('role', 'option');
     b.dataset.value = v; b.style.setProperty('--i', idx); // stagger index for the open animation
+    // Greyed, inert item (e.g. a team gated off via TEAM_ENABLED): visible but not
+    // selectable — aria-disabled, out of the focus order, click is a no-op below.
+    if (it.disabled) { b.setAttribute('aria-disabled', 'true'); b.tabIndex = -1; }
     if (it.icon) { const ico = document.createElement('span'); ico.className = 'pk-dropdown-ico'; ico.innerHTML = it.icon; b.appendChild(ico); }
     const txt = document.createElement('span'); txt.className = 'pk-dropdown-txt'; txt.textContent = it.label; b.appendChild(txt);
-    if (!fixed && v === value) b.setAttribute('aria-selected', 'true');
+    if (!fixed && !it.disabled && v === value) b.setAttribute('aria-selected', 'true');
     b.addEventListener('click', () => {
+      if (it.disabled) return; // inert — no value change, no onSelect
       if (!fixed) {
         value = v;
         menu.querySelectorAll('.pk-dropdown-item').forEach((e) => e.removeAttribute('aria-selected'));
@@ -444,7 +478,9 @@ export function buildPanelLogin(opts) {
     '</div>';
   const q = (s) => el.querySelector(s);
   // Team = a custom (non-native) dropdown, full-width inside the card.
-  const teamItems = [...TEAMS].sort((a, b) => a.localeCompare(b)).map((t) => ({ value: t, label: t }));
+  // Teams gated off via TEAM_ENABLED render greyed + inert; only enabled teams
+  // (and Builder, always enabled) are pickable. One flag flip re-enables one.
+  const teamItems = [...TEAMS].sort((a, b) => a.localeCompare(b)).map((t) => ({ value: t, label: t, disabled: !isTeamEnabled(t) }));
   // Builder (admin) sits last, fenced off from the ordinary teams by a divider.
   teamItems.push({ value: ADMIN_TEAM, label: ADMIN_TEAM, dividerBefore: true });
   const teamDD = buildDropdown({ items: teamItems, placeholder: 'Select Team', block: true });

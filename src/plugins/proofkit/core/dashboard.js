@@ -1,12 +1,15 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword, pageName,
     ADMIN_TEAM, buildPanelLogin, buildDropdown, getSession, setSession, clearSession,
-    initTheme, mountThemeToggle, ensureDemoReset } from './config.js';
+    initTheme, mountThemeToggle, ensureDemoReset, isTeamEnabled } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter); apply the
     // global choice and mount the admin toggle.
     initTheme(); mountThemeToggle();
     const LOCAL = !WORKER_URL;
+    // Whether a team is active in this phase (config.js owns the list). Defensive: if the
+    // export is missing/throws, fall back to "enabled" so navigation never hard-breaks.
+    const teamEnabled = (t) => { try { return typeof isTeamEnabled === 'function' ? !!isTeamEnabled(t) : true; } catch { return true; } };
 
     async function apiFetch(path, opts = {}) {
       const headers = { 'Content-Type': 'application/json' };
@@ -28,65 +31,60 @@
     }
     const NOTIF_KEY = 'rvc-notifications'; // local mirror of the Worker's notifications store
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'n_' + Date.now() + '_' + Math.random().toString(16).slice(2));
-    // Set the working status locally + mirror the Worker's completedAt/closedAt/validation stamping.
-    function localStatus(rec, status) {
+
+    // ---- Builder status state machine (mirror of the Worker's POST /team-status action) ----
+    // Locate the root by id within its rvc:<path> bucket, apply the transition, stamp
+    // history + iteration, and (on complete/reopen) drop a status notification to the
+    // raising team (Content). Returns the mutated record. Contract transitions:
+    //   start    : to_be_initiated -> in_progress
+    //   complete : in_progress     -> deployed_live (terminal for that iteration)
+    //   reopen   : in_progress|deployed_live -> reopened (requires a reason)
+    const TEAM_NEXT = {
+      start: { from: ['to_be_initiated'], to: 'in_progress' },
+      complete: { from: ['in_progress'], to: 'deployed_live' },
+      reopen: { from: ['in_progress', 'deployed_live'], to: 'reopened' },
+    };
+    function localTeamAction(rec, action, reason) {
       const key = 'rvc:' + rec.page.path;
       const arr = JSON.parse(localStorage.getItem(key) || '[]');
       const r = arr.find((x) => x.id === rec.id);
+      if (!r) return { ...rec };
+      const cur = r.teamStatus || 'to_be_initiated';
+      const step = TEAM_NEXT[action];
+      if (!step || step.from.indexOf(cur) === -1) return { ...r }; // invalid transition → no-op
       const now = new Date().toISOString();
-      if (!r) return { ...rec, status };
-      r.status = status;
-      if (status === 'completed') {
-        r.completedAt = now;
-        r.validation = { ok: true, method: 'manual', detail: 'Local mode — not auto-verified.', checkedAt: now };
-      } else if (status === 'closed') {
-        r.closedAt = now;
-      } else {
-        r.validation = null; // reopened
-      }
+      r.iteration = r.iteration || 1;
+      r.teamStatus = step.to; r.teamStatusAt = now;
+      if (!Array.isArray(r.history)) r.history = [];
+      const h = { status: step.to, at: now, event: 'team-' + action, iteration: r.iteration };
+      if (action === 'reopen') { h.reason = reason || ''; r.reopenReason = reason || ''; }
+      r.history.push(h);
       localStorage.setItem(key, JSON.stringify(arr));
+      if (action === 'complete' || action === 'reopen') {
+        const n = localStatusNotif(r, step.to, action === 'reopen' ? reason : '');
+        if (n) { let ex = []; try { ex = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch {}
+          ex.push(n); localStorage.setItem(NOTIF_KEY, JSON.stringify(ex)); }
+      }
       return { ...r };
     }
-    // A local notification for one just-published root comment (shape mirrors the Worker's makeNotif).
-    function localMakeNotif(r, now) {
-      const done = r.publishedStatus === 'closed' ? 'closed' : 'marked Done';
+    // A status notification to the RAISING team when Builder deploys live or reopens.
+    function localStatusNotif(r, next, reason) {
       const where = (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
+      const tick = r.ticket ? '#' + r.ticket + ' ' : '';
+      const summary = next === 'reopened'
+        ? 'Builder reopened ' + tick + 'on ' + where + (reason ? ': ' + reason : '') + '.'
+        : tick + 'on ' + where + ' was deployed live.';
       return {
-        id: uid(), createdAt: now, team: r.team || '', commentId: r.id, ticket: r.ticket || '',
-        path: (r.page && r.page.path) || '/', pageName: where, publishedStatus: r.publishedStatus,
-        summary: 'Your comment ' + (r.ticket ? '#' + r.ticket + ' ' : '') + 'on ' + where + ' was ' + done + '.', readTeam: false, readAdmin: false,
+        id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        team: r.team || '', kind: 'status', chainId: r.parentId || r.id, commentId: r.id,
+        ticket: r.ticket || '', teamStatus: next, iteration: r.iteration || 1, reason: reason || '',
+        fromTeam: r.toTeam || '', path: (r.page && r.page.path) || '/', pageName: where,
+        summary, readTeam: false, readAdmin: false,
       };
-    }
-    // Publish the whole local bucket: every completed/closed record not already live.
-    function localDeploy() {
-      const now = new Date().toISOString();
-      const created = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (!k || !k.startsWith('rvc:')) continue;
-        let arr; try { arr = JSON.parse(localStorage.getItem(k) || '[]'); } catch { continue; }
-        let dirty = false;
-        for (const r of arr) {
-          let st = r.status || 'open'; if (st === 'resolved') st = 'completed';
-          const ready = st === 'completed' || st === 'closed';
-          const alreadyLive = r.published && r.publishedStatus === st;
-          if (ready && !alreadyLive) {
-            r.status = st; r.published = true; r.publishedStatus = st; r.publishedAt = now; dirty = true;
-            if (!r.parentId) created.push(localMakeNotif(r, now));
-          }
-        }
-        if (dirty) localStorage.setItem(k, JSON.stringify(arr));
-      }
-      if (created.length) {
-        let ex = []; try { ex = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch {}
-        ex.push(...created);
-        localStorage.setItem(NOTIF_KEY, JSON.stringify(ex));
-      }
-      return { deployed: created.length, notifications: created };
     }
     function localNotifs() {
       let arr = []; try { arr = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch {}
-      arr.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      arr.sort((a, b) => ((a.updatedAt || a.createdAt) < (b.updatedAt || b.createdAt) ? 1 : -1));
       return arr;
     }
     function localMarkRead(ids, read = true) {
@@ -99,7 +97,9 @@
     function localDelete(rec) {
       const key = 'rvc:' + rec.page.path;
       let arr = JSON.parse(localStorage.getItem(key) || '[]');
-      arr = arr.filter((r) => r.id !== rec.id && r.parentId !== rec.id); // root + replies
+      // remove the whole chain: the record, its replies, and its resubmit sub-tickets
+      const rootId = rec.parentId || rec.id;
+      arr = arr.filter((r) => r.id !== rootId && r.parentId !== rootId);
       localStorage.setItem(key, JSON.stringify(arr));
     }
     // Re-route: set the raising team (From) and/or directed team (To) on a record.
@@ -113,20 +113,15 @@
       localStorage.setItem(key, JSON.stringify(arr));
       return { ...r };
     }
-    // No-Worker gate (static/live included): the local store has no server, so check
-    // the session password against the configured review password (hash-compared).
-    // Throws the same 'unauthorized' the Worker would, so login/init handle it alike.
+    // No-Worker gate: check the session password against the configured review password.
     const localGuard = async () => {
       if (!(await checkReviewPassword(getSession().key || ''))) throw new Error('unauthorized');
     };
     const store = LOCAL
       ? {
           all: async () => { await localGuard(); return localAll(); },
-          // working status: open | completed | closed (stamps validation on completed).
-          status: async (rec, status) => { await localGuard(); return localStatus(rec, status); },
-          // back-compat: route the old resolve() through status ('resolved' ⇒ 'completed').
-          resolve: async (rec, status) => { await localGuard(); return localStatus(rec, status === 'resolved' ? 'completed' : status); },
-          deploy: async () => { await localGuard(); return localDeploy(); },
+          // Builder drives the status machine: start | complete | reopen(reason).
+          teamAction: async (rec, action, reason) => { await localGuard(); return localTeamAction(rec, action, reason); },
           notifications: async () => { await localGuard(); return localNotifs(); },
           markRead: async (ids, read = true) => { await localGuard(); return localMarkRead(ids, read); },
           del: async (rec) => { await localGuard(); localDelete(rec); return { ok: true }; },
@@ -134,13 +129,11 @@
         }
       : {
           all: () => apiFetch('/comments'),
-          // the UI drives /status; the Worker keeps /resolve only as a back-compat alias.
-          status: (rec, status) => apiFetch('/status', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, status }) }),
-          resolve: (rec, status) => apiFetch('/status', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, status: status === 'resolved' ? 'completed' : status }) }),
-          deploy: () => apiFetch('/deploy', { method: 'POST', body: '{}' }),
+          // Contract body: { id, action:'start'|'complete'|'reopen', reason? }. No `path`.
+          teamAction: (rec, action, reason) => apiFetch('/team-status', { method: 'POST', body: JSON.stringify({ id: rec.id, action, reason }) }),
           notifications: () => apiFetch('/notifications'),
           markRead: (ids, read = true) => apiFetch('/notifications/read', { method: 'POST', body: JSON.stringify({ ids, read }) }),
-          del: (rec) => apiFetch('/delete', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path }) }),
+          del: (rec) => apiFetch('/delete', { method: 'POST', body: JSON.stringify({ id: rec.parentId || rec.id, path: rec.page.path }) }),
           setTeams: (rec, team, toTeam) => apiFetch('/teams', { method: 'POST', body: JSON.stringify({ id: rec.id, path: rec.page.path, team, toTeam }) }),
         };
 
@@ -148,25 +141,18 @@
 
     async function loadData() {
       all = await store.all();
-      // Notifications drive the nav badge + the Notifications view; a failure here
-      // must never break the dashboard, so fall back to the last-known list.
       try { notifs = await store.notifications(); } catch (e) { notifs = notifs || []; }
       counts(); render();
-      // Mark "seen" once per dashboard open, so the NEW badges clear on the next visit.
       if (!seenMarked) { seenMarked = true; try { localStorage.setItem(SEEN_KEY, new Date().toISOString()); } catch (e) {} }
     }
 
-    // Keep the review page current: submits land in the DB instantly; poll so the
-    // dashboard reflects new comments without a manual Refresh.
+    // Poll on the shared ~5s debounced cadence (the Worker coalesces server-side).
     function startAutoRefresh() {
       if (refreshTimer) return;
-      refreshTimer = setInterval(() => { if (!document.hidden) loadData().catch(() => {}); }, 30000);
+      refreshTimer = setInterval(() => { if (!document.hidden) loadData().catch(() => {}); }, 5000);
       window.addEventListener('focus', () => loadData().catch(() => {}));
     }
 
-    // The /reviewdash gate IS the shared common login. Picking "Design (Admin)" + the
-    // admin key opens the admin panel here; picking any other team hands off to that
-    // team's dashboard (/teamdash) — symmetric with /teamdash's admin hand-off.
     function showLogin() {
       if (!login) {
         login = buildPanelLogin({ title: 'Panel Login', sub: 'Enter your key to continue.' });
@@ -175,8 +161,6 @@
         login.keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       }
       login.setError(''); login.keyInput.value = '';
-      // "Upgrade access to admin" (and any /reviewdash?login=builder) prefills the Team
-      // dropdown to Builder so the user only needs to enter the admin key.
       let prefill = '';
       try { if ((new URLSearchParams(location.search).get('login') || '').toLowerCase() === ADMIN_TEAM.toLowerCase()) prefill = ADMIN_TEAM; } catch {}
       login.setTeam(prefill);
@@ -190,11 +174,9 @@
       const key = login.keyInput.value.trim();
       if (!team) { login.focusTeam(); login.setError('Please choose your team.'); return; }
       if (!key) { login.keyInput.focus(); return; }
-      setSession(team, key); // the one shared per-tab session
+      setSession(team, key);
       login.setBusy(true, 'Authenticating'); login.setError('');
-      // Non-admin team at the admin URL → hand off to their team dashboard.
       if (team !== ADMIN_TEAM) { location.replace('/teamdash'); return; }
-      // Design = admin: validate the key by loading the admin panel.
       try { await loadData(); hideLogin(); startAutoRefresh(); }
       catch (e) {
         clearSession();
@@ -205,11 +187,11 @@
     }
 
     function init() {
-      if (LOCAL) ensureDemoReset(); // demo mode: start clean (clears old demo rows once)
+      if (LOCAL) ensureDemoReset();
+      buildQueueTabs();   // rebuild the tab bar for the Phase-1 Team Queue
+      relabelNav();       // "Team Queue" + retire the Delivery nav
       const s = getSession();
-      // Already signed in this tab as a team (not admin) → their team dashboard.
       if (s.key && s.team && s.team !== ADMIN_TEAM) { location.replace('/teamdash'); return; }
-      // Admin session → open the panel; otherwise ask to log in once.
       if (s.key && s.team === ADMIN_TEAM) {
         loadData().then(startAutoRefresh).catch((e) => {
           if (e.message === 'unauthorized') { clearSession(); showLogin(); }
@@ -218,12 +200,24 @@
       } else showLogin();
     }
 
+    // Rebuild the Team Queue tab bar (the shell markup carries the retired lifecycle tabs).
+    function buildQueueTabs() {
+      const el = $('#rvd-tabs'); if (!el) return;
+      el.innerHTML =
+        `<button class="rvd-tab is-active" data-tab="all">All</button>` +
+        `<button class="rvd-tab" data-tab="page">By Page</button>`;
+      tab = 'all';
+    }
+    // Relabel Overview→Team Queue and retire the Delivery (deploy-gate) nav item.
+    function relabelNav() {
+      const nav = (v) => document.querySelector('.rvd-nav[data-view="' + v + '"]');
+      const dash = nav('dash'); if (dash) dash.textContent = 'Team Queue';
+      const dep = nav('deploy'); if (dep) dep.hidden = true;
+    }
+
     const $ = (s) => document.querySelector(s);
     const esc = (s) => { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; };
     const fmt = (iso) => { try { return new Date(iso).toLocaleString(); } catch { return iso; } };
-    // Dark-mode chip colours derived from each team's identity hue (TEAM_COLORS'
-    // saturated ink value), blended toward the canvas for a muted dark fill + a
-    // brightened readable label — instead of the bright light pastels used on-page.
     const mix = (a, b, t) => {
       const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
       const [ar, ag, ab] = p(a), [br, bg, bb] = p(b);
@@ -231,13 +225,10 @@
       return '#' + ch(ar, br) + ch(ag, bg) + ch(ab, bb);
     };
     const isLight = () => document.documentElement.getAttribute('data-pk-theme') === 'light';
-    // Blend anchors read from the live tokens (canvas / white) so the derived team-chip
-    // colours track the theme — no isolated literals (the fallbacks are defensive only).
     const tokenHex = (name, fb) => { try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb; } catch { return fb; } };
     const teamStyle = (team) => {
-      const tc = TEAM_COLORS[team] || ['#e8e8e8', '#888']; // fallback: every real team is in TEAM_COLORS
+      const tc = TEAM_COLORS[team] || ['#e8e8e8', '#888'];
       const white = tokenHex('--pk-on-accent', '#ffffff');
-      // Light: the on-page pastel chip (light bg + dark ink). Dark: hue muted toward the canvas.
       if (isLight()) return { bg: tc[0], fg: tc[1], bd: mix(tc[1], white, 0.62) };
       const canvas = tokenHex('--pk-canvas', '#181818');
       const accent = tc[1];
@@ -248,92 +239,68 @@
       const s = teamStyle(team);
       return `<span class="rvd-team-chip" style="background:${s.bg};color:${s.fg};border:1px solid ${s.bd}">${esc(team)}</span>`;
     };
-    // "From → To": which team raised the comment (team) and which it's directed to (toTeam).
-    // Renders as an arrow between two chips; falls back to just the from-chip if undirected.
     const routeChips = (c) => {
       const from = teamChip(c.team);
       if (!c.toTeam) return from;
       return `${from || '<span class="rvd-team-chip rvd-team-none">—</span>'}` +
         `<span class="rvd-route-arrow" aria-label="directed to">→</span>${teamChip(c.toTeam)}`;
     };
-    // ---- lifecycle (deploy gate) ----
-    // Working status the admin controls (legacy 'resolved' ⇒ 'completed').
-    const workingStatus = (c) => { let s = (c && c.status) || 'open'; return s === 'resolved' ? 'completed' : s; };
-    // In the DEPLOY BUCKET: completed/closed but not yet published to teams (matches the
-    // Worker's deploy readiness — published AND publishedStatus===status means it's live).
-    const isBucketed = (c) => {
-      const s = workingStatus(c);
-      return (s === 'completed' || s === 'closed') && !(c.published && c.publishedStatus === s);
-    };
-    const isOpen = (c) => workingStatus(c) === 'open';
-    const isDeployed = (c) => !!c.published && c.publishedStatus === 'completed';
-    const isClosedLive = (c) => !!c.published && c.publishedStatus === 'closed';
-    // Four display states from status + published + publishedStatus.
-    const displayState = (c) => {
-      if (isOpen(c)) return 'open';
-      if (isBucketed(c)) return 'bucket';
-      return c.publishedStatus === 'closed' ? 'closed' : 'deployed';
-    };
-    const STATUS_META = {
-      open: ['open', 'Open'],
-      bucket: ['bucket', 'In Bucket'],
-      deployed: ['deployed', 'Deployed'],
-      closed: ['closed', 'Closed'],
-    };
-    const statusLabel = (c) => STATUS_META[displayState(c)][1];
-    const statusChip = (c) => {
-      const [cls, label] = STATUS_META[displayState(c)];
-      return `<span class="rvd-chip ${cls}">${label}</span>`;
-    };
-    // Card validation flag — only for content-copy-match (manual completions show nothing).
-    const validLine = (c) => {
-      const v = c && c.validation;
-      if (!v || v.method !== 'content-copy-match') return '';
-      const t = esc(v.detail || '');
-      return v.ok
-        ? `<div class="rvd-valid ok" title="${t}">✓ Verified on live page</div>`
-        : `<div class="rvd-valid warn" title="${t}">⚠ Not verified on live page yet</div>`;
-    };
-    let all = [], notifs = [], tab = 'all', teamFilter = '', entryDetail = null, view = 'dash', search = '', sort = 'new', deployResult = '';
-    const sel = new Set(); // bulk-selected root ids
-    let selectMode = false; // multi-select armed? (checkboxes only show in this mode)
 
-    // ---- unread: comments arrived since the last dashboard visit ----
+    // ---- real-time status (Builder framing) ----
+    const TEAM_STATUS = {
+      to_be_initiated: ['tbi', 'TBI'],
+      in_progress: ['inprog', 'In Progress'],
+      deployed_live: ['deployed', 'Deployed live'],
+      reopened: ['reopened', 'Reopened'],
+    };
+    const teamStatusOf = (c) => (TEAM_STATUS[c && c.teamStatus] ? c.teamStatus : 'to_be_initiated');
+    const statusLabel = (c) => TEAM_STATUS[teamStatusOf(c)][1];
+    const displayState = (c) => TEAM_STATUS[teamStatusOf(c)][0];
+    const statusChip = (c) => { const [cls, label] = TEAM_STATUS[teamStatusOf(c)]; return `<span class="rvd-chip ${cls}">${label}</span>`; };
+    // Builder's Team Queue = every ticket currently directed at Builder in a non-terminal
+    // iteration state (to_be_initiated | in_progress). deployed_live is terminal; reopened
+    // has bounced back to the raiser (Content).
+    const inQueue = (c) => { const s = teamStatusOf(c); return s === 'to_be_initiated' || s === 'in_progress'; };
+
+    // ---- ticket-chain (iteration) model ----
+    // A resubmit sub-ticket AND a comment reply both carry parentId → the origin root id;
+    // they are told apart by iteration (reply = iteration 1; sub-ticket = iteration ≥ 2).
+    // The LIVE record of a chain is the highest-iteration member (its teamStatus is "now").
+    const isReply = (c) => !!c.parentId && (c.iteration || 1) < 2;
+    const chainOf = (c) => c.parentId || c.id;
+
+    let all = [], notifs = [], tab = 'all', teamFilter = '', entryDetail = null, view = 'dash', search = '', sort = 'new';
+    const sel = new Set();
+    let selectMode = false;
+
+    // ---- unread: chains touched since the last dashboard visit ----
     const SEEN_KEY = 'reviewLastSeen';
     const seenAt = localStorage.getItem(SEEN_KEY) || '';
     let seenMarked = false;
-    const isNew = (c) => !!seenAt && c.createdAt > seenAt;
+    const isNew = (c) => !!seenAt && (c.teamStatusAt || c.createdAt) > seenAt;
 
     // ---- search / sort ----
     function matchesSearch(c) {
       if (!search) return true;
       const a = c.anchor || {};
-      return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, c.toTeam, a.snippet, a.tag]
+      return [c.comment, c.changeTo, c.page && c.page.path, c.name, c.team, c.toTeam, c.reopenReason, a.snippet, a.tag]
         .filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase());
     }
     function sortRoots(rs) {
       const s = rs.slice();
       if (sort === 'old') s.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
       else if (sort === 'page') s.sort((a, b) => a.page.path.localeCompare(b.page.path) || (a.createdAt < b.createdAt ? 1 : -1));
-      else s.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)); // newest
+      else s.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
       return s;
     }
-    // Roots for the current Dashboard view (tab + team + search + sort) - shared by
-    // the list render and the toolbar's copy/export actions ("what's in view").
+    // Team Queue roots for the current view (tab + team + search + sort).
     function currentRoots() {
-      let rs = roots();
-      // "All" = the open worklist. In-bucket comments live ONLY under the Deploy nav
-      // (not duplicated here); published items show under their own tab + Master Log.
-      if (tab === 'all') rs = rs.filter(isOpen);
-      if (tab === 'open') rs = rs.filter(isOpen);
-      if (tab === 'bucket') rs = rs.filter(isBucketed);
-      if (tab === 'deployed') rs = rs.filter(isDeployed);
-      if (tab === 'closed') rs = rs.filter(isClosedLive);
+      let rs = roots().filter(inQueue);
       if (teamFilter) rs = rs.filter((c) => c.team === teamFilter);
       return sortRoots(rs.filter(matchesSearch));
     }
 
-    // ---- AI prompt text (falls back to a deterministic instruction) ----
+    // ---- AI prompt text ----
     function localPrompt(c) {
       if (c.aiPrompt) return c.aiPrompt;
       const a = c.anchor || {};
@@ -342,8 +309,6 @@
       if (c.changeTo) s += `\nChange the content to exactly (preserve casing/punctuation): “${c.changeTo}”`;
       return s;
     }
-    // Bulleted, stackable list of change-prompts (each prompt one bullet; wrapped
-    // lines indented under it) — ready to paste into a coding agent.
     const promptsText = (list) => list.map((c) => '- ' + localPrompt(c).replace(/\n/g, '\n  ')).join('\n');
     async function copyToClip(text, btn, okLabel) {
       try {
@@ -371,67 +336,89 @@
     function buildTeamChips() {
       const one = (label, team) => {
         const active = teamFilter === team;
-        // Active = a vibrant SOLID fill (was just a stroke). A team chip fills with its
-        // OWN identity colour; only "All Teams" fills red.
         let style;
         if (active && team) { const accent = (TEAM_COLORS[team] || [])[1] || 'var(--pk-red)'; style = `background:${accent};color:var(--pk-on-accent);border-color:${accent}`; }
-        else if (active) style = 'background:var(--pk-red);color:var(--pk-on-accent);border-color:var(--pk-red)'; // All = red
+        else if (active) style = 'background:var(--pk-red);color:var(--pk-on-accent);border-color:var(--pk-red)';
         else if (team) { const s = teamStyle(team); style = `background:${s.bg};color:${s.fg};border-color:${s.bd}`; }
         else style = 'background:var(--pk-elev);color:var(--pk-body);border-color:var(--pk-hair)';
         return `<button class="rvd-tchip${active ? ' is-active' : ''}" data-team="${esc(team)}" style="${style}">${esc(label)}</button>`;
       };
-      $('#rvd-teamchips').innerHTML = '<span class="rvd-chips-from">From</span>' + one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
-      $('#rvd-teamchips').querySelectorAll('.rvd-tchip').forEach((b) => {
+      const host = $('#rvd-teamchips'); if (!host) return;
+      host.innerHTML = '<span class="rvd-chips-from">From</span>' + one('All Teams', '') + TEAMS.map((t) => one(t, t)).join('');
+      host.querySelectorAll('.rvd-tchip').forEach((b) => {
         b.addEventListener('click', () => { teamFilter = b.dataset.team; buildTeamChips(); render(); });
       });
     }
 
-    // Live re-skin: when the admin flips the global theme, the JS-inlined chip colours
-    // must be re-derived — repaint the team chips + the current view on the new palette.
     document.addEventListener('pk:themechange', () => {
       try { buildTeamChips(); if (typeof counts === 'function') counts(); render(); } catch (e) {}
     });
-    const roots = () => all.filter((c) => !c.parentId);
-    const repliesOf = (id) => all.filter((c) => c.parentId === id).sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+
+    // ---- ticket-chain helpers (the LIVE record per family + timeline) ----
+    function families() {
+      const byChain = new Map();
+      for (const c of all) {
+        if (isReply(c)) continue;
+        const cid = chainOf(c);
+        const prev = byChain.get(cid);
+        if (!prev || (c.iteration || 1) > (prev.iteration || 1)) byChain.set(cid, c);
+      }
+      return [...byChain.values()];
+    }
+    const roots = () => families();
+    const repliesOf = (rec) => all.filter((c) => isReply(c) && chainOf(c) === chainOf(rec)).sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+    function chainMembers(rec) {
+      const cid = chainOf(rec);
+      return all.filter((c) => !isReply(c) && chainOf(c) === cid)
+        .sort((a, b) => (a.iteration || 1) - (b.iteration || 1) || (a.createdAt < b.createdAt ? -1 : 1));
+    }
+    function chainHistory(rec) {
+      const evs = [];
+      for (const m of chainMembers(rec)) {
+        (Array.isArray(m.history) ? m.history : []).forEach((h) => evs.push({ ...h, iteration: h.iteration || m.iteration || 1 }));
+      }
+      if (!evs.length) evs.push({ at: rec.createdAt, event: 'created', iteration: rec.iteration || 1 });
+      return evs.sort((a, b) => (a.at < b.at ? -1 : 1));
+    }
+    function eventLabel(h) {
+      const e = h.event || '', st = h.status || '';
+      if (e === 'created') return 'Raised (TBI)';
+      if (e === 'resubmitted' || e === 'resubmit') return 'Resubmitted (TBI)';
+      if (e === 'team-start' || e === 'start' || st === 'in_progress') return 'Started — in progress';
+      if (e === 'team-complete' || e === 'complete' || st === 'deployed_live') return 'Deployed live';
+      if (e === 'team-reopen' || e === 'reopen' || st === 'reopened') return 'Reopened' + (h.reason ? ' — ' + h.reason : '');
+      return 'Status → ' + (st || '');
+    }
 
     function counts() {
       const rs = roots();
-      const open = rs.filter(isOpen).length;
-      const bucket = rs.filter(isBucketed).length;
-      const deployed = rs.filter(isDeployed).length;
-      const newN = rs.filter(isNew).length;
+      const tbi = rs.filter((c) => teamStatusOf(c) === 'to_be_initiated').length;
+      const prog = rs.filter((c) => teamStatusOf(c) === 'in_progress').length;
+      const live = rs.filter((c) => teamStatusOf(c) === 'deployed_live').length;
+      const reop = rs.filter((c) => teamStatusOf(c) === 'reopened').length;
       $('#rvd-counts').innerHTML =
-        `<span class="rvd-count"><b>${open}</b> open</span>` +
-        `<span class="rvd-count"><b>${bucket}</b> Delivery Queue</span>` +
-        `<span class="rvd-count"><b>${deployed}</b> deployed</span>` +
-        (newN ? `<span class="rvd-count rvd-count-new"><b>${newN}</b> new</span>` : '');
+        `<span class="rvd-count"><b>${tbi}</b> TBI</span>` +
+        `<span class="rvd-count"><b>${prog}</b> In Progress</span>` +
+        `<span class="rvd-count"><b>${live}</b> Deployed live</span>` +
+        `<span class="rvd-count"><b>${reop}</b> Reopened</span>`;
       updateBadges();
     }
-    // Live counts on the Deploy + Notifications nav items.
     function updateBadges() {
-      const bucket = roots().filter(isBucketed).length;
       const unread = (notifs || []).filter((n) => n.readAdmin === false).length;
-      const bd = $('#rvd-badge-deploy'); if (bd) { bd.textContent = bucket; bd.hidden = !bucket; }
       const nd = $('#rvd-badge-notifs'); if (nd) { nd.textContent = unread; nd.hidden = !unread; }
     }
 
-    // The route row — raising team → directed team, just the two chips and an arrow
-    // (no "From"/"To" labels; the arrow reads as the direction on its own).
     function routeRow(root) {
       const chip = (t) => t ? teamChip(t) : `<span class="rvd-team-chip rvd-team-none">—</span>`;
       return `<div class="rvd-route">` + chip(root.team) +
         `<span class="rvd-route-arrow" aria-hidden="true">→</span>` + chip(root.toTeam) + `</div>`;
     }
 
-    // The comment card, reorganised into clean geometric bands:
-    //   META (select · status · page · time) → COMMENT (+anchor) → ROUTE (From→To)
-    //   → CALLOUT (legacy change-to, only if present) → ACTION FOOTER (replies · actions).
-    // The left edge is colour-keyed to the lifecycle state for at-a-glance scanning.
-    // Shared by the Overview list, the By-Page groups and the Deploy bucket.
     function card(root) {
       const a = root.anchor || {};
       const id = esc(root.id);
-      const replies = repliesOf(root.id);
+      const iter = root.iteration || 1;
+      const replies = repliesOf(root);
       const repliesToggle = replies.length
         ? `<button class="rvd-repliestoggle" type="button" data-replies="${id}">` +
             `<span class="rvd-caret">▸</span>${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}</button>`
@@ -445,28 +432,23 @@
       const selected = sel.has(root.id);
       return (
         `<article class="rvd-item${selectMode && selected ? ' is-selected' : ''}" data-state="${displayState(root)}">` +
-          // META — [checkbox in select mode] · status · New · (right) page · time
           `<div class="rvd-card-top">` +
             (selectMode ? `<input type="checkbox" class="rvd-sel" data-id="${id}"${selected ? ' checked' : ''} aria-label="Select">` : '') +
             (isNew(root) ? `<span class="rvd-chip rvd-new">New</span>` : '') +
             statusChip(root) +
+            (iter > 1 ? `<span class="rvd-iter">Iter ${iter}</span>` : '') +
             `<span class="rvd-loc">` +
               `<a class="rvd-slug" href="${esc(root.page.path)}" target="_blank" rel="noopener">${esc(pageName(root.page.path))}</a>` +
               `<span class="rvd-time">${esc(fmt(root.createdAt))}</span>` +
             `</span>` +
           `</div>` +
-          // COMMENT — primary text (clamped) + the anchored element
           `<div class="rvd-card-body">` +
             `<div class="rvd-comment-text rvd-clamp">${esc(root.comment)}</div>` +
             `<button class="rvd-morebtn" type="button" hidden>Show more</button>` +
             (a.snippet ? `<div class="rvd-snip">on “${esc(a.snippet)}”</div>` : '') +
-            validLine(root) +
           `</div>` +
-          // ROUTE — From → To
           routeRow(root) +
-          // CALLOUT — legacy change-to (only when present)
           (root.changeTo ? `<div class="rvd-change"><span>Change to</span><div>${esc(root.changeTo)}</div></div>` : '') +
-          // ACTION FOOTER — replies toggle (left) · actions (right)
           `<div class="rvd-card-foot">` +
             `<div class="rvd-foot-left">${repliesToggle}</div>` +
             `<div class="rvd-acts">` +
@@ -481,8 +463,6 @@
       );
     }
 
-    // After a card render, reveal the comment "Show more" button only where the
-    // clamped text actually overflows (measure in the live, visible DOM).
     function revealClamps(host) {
       host.querySelectorAll('.rvd-comment-text.rvd-clamp').forEach((el) => {
         const btn = el.parentElement.querySelector('.rvd-morebtn');
@@ -490,50 +470,53 @@
       });
     }
 
-    // Status buttons per working state (section 1): open→Mark Complete; completed→Reopen
-    // (+ Re-verify when content-copy-match failed); Close on any non-closed; closed→Reopen.
+    // Status actions per state: TBI→Start · In Progress→Mark Complete + Reopen ·
+    // Deployed live→Reopen. Reopen prompts for a required reason.
     function lifecycleActions(root) {
       const id = esc(root.id);
-      const st = workingStatus(root);
-      const v = root.validation;
-      const reverify = (st === 'completed' && v && v.method === 'content-copy-match' && !v.ok)
-        ? `<button class="rvd-a" data-id="${id}" data-status="completed">Re-verify</button>` : '';
-      let btns;
-      if (st === 'open') btns = `<button class="rvd-a" data-id="${id}" data-status="completed">Mark Complete</button>`;
-      else if (st === 'completed') btns = reverify + `<button class="rvd-a" data-id="${id}" data-status="open">Reopen</button>`;
-      else btns = `<button class="rvd-a" data-id="${id}" data-status="open">Reopen</button>`; // closed
-      if (st !== 'closed') btns += `<button class="rvd-a" data-id="${id}" data-status="closed">Close</button>`;
-      return btns;
+      const s = teamStatusOf(root);
+      if (s === 'to_be_initiated') return `<button class="rvd-a" data-action="start" data-id="${id}">Start</button>`;
+      if (s === 'in_progress') return `<button class="rvd-a" data-action="complete" data-id="${id}">Mark Complete</button>` +
+        `<button class="rvd-a" data-action="reopen" data-id="${id}">Reopen</button>`;
+      if (s === 'deployed_live') return `<button class="rvd-a" data-action="reopen" data-id="${id}">Reopen</button>`;
+      return ''; // reopened → with the raiser (Content)
     }
 
-    // ---- shared row actions (Master Log "More options" menu) ----
-    async function rowStatus(root, status) {
-      try { Object.assign(root, await store.status(root, status)); counts(); render(); }
+    // ---- status actions ----
+    async function doTeamAction(rec, action) {
+      let reason;
+      if (action === 'reopen') {
+        reason = prompt('Reason for reopening (required — shown to the raising team):');
+        if (reason == null) return;
+        reason = reason.trim();
+        if (!reason) { alert('A reason is required to reopen.'); return; }
+      }
+      try { Object.assign(rec, await store.teamAction(rec, action, reason)); counts(); render(); }
       catch (e) { alert('Could not update — ' + e.message); }
     }
     async function rowDelete(root) {
-      if (!confirm('Delete this whole thread (comment + all replies)? This cannot be undone.')) return;
-      try { await store.del(root); all = all.filter((c) => c.id !== root.id && c.parentId !== root.id); counts(); render(); }
-      catch (e) { alert('Could not delete — ' + e.message); }
+      if (!confirm('Delete this whole ticket chain (all iterations + replies)? This cannot be undone.')) return;
+      try {
+        await store.del(root);
+        const rootId = root.parentId || root.id;
+        all = all.filter((c) => c.id !== rootId && c.parentId !== rootId);
+        counts(); render();
+      } catch (e) { alert('Could not delete — ' + e.message); }
     }
-    // Every action available on an Overview card, plus Edit teams — the Master Log's
-    // per-row menu. Lifecycle labels track the record's working status.
     function rowMenuItems(root) {
-      const st = workingStatus(root);
+      const s = teamStatusOf(root);
       const items = [
         { label: 'View details', onSelect: () => { entryDetail = root.id; render(); } },
         { label: 'Open pin', onSelect: () => window.open(root.page.path + '?review=1#c=' + encodeURIComponent(root.id), '_blank', 'noopener') },
         { label: 'Edit teams (From / To)', onSelect: () => openEditTeams(root) },
       ];
-      if (st === 'open') items.push({ label: 'Mark complete', onSelect: () => rowStatus(root, 'completed') });
-      else items.push({ label: 'Reopen', onSelect: () => rowStatus(root, 'open') });
-      if (st !== 'closed') items.push({ label: 'Close', onSelect: () => rowStatus(root, 'closed') });
+      if (s === 'to_be_initiated') items.push({ label: 'Start', onSelect: () => doTeamAction(root, 'start') });
+      if (s === 'in_progress') items.push({ label: 'Mark complete', onSelect: () => doTeamAction(root, 'complete') });
+      if (s === 'in_progress' || s === 'deployed_live') items.push({ label: 'Reopen', onSelect: () => doTeamAction(root, 'reopen') });
       items.push({ label: 'Copy prompt', onSelect: () => copyToClip(localPrompt(root), null) });
       items.push({ label: 'Delete', danger: true, onSelect: () => rowDelete(root) });
       return items;
     }
-    // A fixed-position action menu anchored to a trigger button — appended to <body> so
-    // it's never clipped by the log's horizontal scroll container.
     let rowMenuEl = null;
     function closeRowMenu() {
       if (!rowMenuEl) return;
@@ -554,8 +537,6 @@
       document.body.appendChild(menu); rowMenuEl = menu;
       const r = btn.getBoundingClientRect();
       const mw = menu.offsetWidth, mh = menu.offsetHeight;
-      // Anchor to the button's right edge, but clamp fully inside the viewport (the wide
-      // log can overflow horizontally, so the button itself may be near/over an edge).
       let left = r.right - mw;
       if (left + mw > innerWidth - 8) left = innerWidth - mw - 8;
       if (left < 8) left = 8;
@@ -573,8 +554,6 @@
       }, 0);
     }
 
-    // Edit the From/To teams of a comment (admin re-route). A small modal with the same
-    // custom dropdowns used everywhere; Builder is offered as a To target (divider).
     function openEditTeams(root) {
       const el = document.createElement('div'); el.className = 'rvd-editmodal';
       el.innerHTML =
@@ -603,7 +582,7 @@
       });
     }
 
-    // ---- Master Log: tabular log of every root change, with drill-in detail ----
+    // ---- Master Log: tabular log of every ticket chain (live state), with drill-in ----
     function renderEntries() {
       if (entryDetail) { renderEntryDetail(); return; }
       const rs = sortRoots(roots());
@@ -632,176 +611,92 @@
           `</tr>`;
         }).join('') +
         `</tbody></table></div>`;
-      // Clicking a row opens the entry detail; the More-options button opens the action
-      // menu (all overview actions + Edit teams). Both are kept from double-firing.
       const open = (id) => { entryDetail = id; render(); };
       $('#rvd-entries').querySelectorAll('.rvd-logrow').forEach((tr) => {
         tr.addEventListener('click', (e) => {
-          if (e.target.closest('a, .rvd-moreopts')) return; // links + the menu button handle themselves
+          if (e.target.closest('a, .rvd-moreopts')) return;
           open(tr.dataset.id);
         });
       });
       $('#rvd-entries').querySelectorAll('.rvd-moreopts').forEach((b) => {
         b.addEventListener('click', (e) => {
           e.stopPropagation();
-          const rec = all.find((c) => c.id === b.dataset.more); if (rec) openRowMenu(b, rec);
+          const rec = roots().find((c) => c.id === b.dataset.more); if (rec) openRowMenu(b, rec);
         });
       });
     }
 
-    // Build the status-history timeline: use record.history when present, else
-    // synthesize it from the lifecycle timestamps (old records predate history).
-    function entryHistory(c) {
-      if (Array.isArray(c.history) && c.history.length) {
-        const TEAM_ST = { to_be_initiated: 'To Be Initiated', in_progress: 'In Progress', complete: 'Complete' };
-        return c.history.slice().map((h) => ({
-          at: h.at,
-          label: h.event === 'created' ? 'Created (open)'
-            : h.event === 'deployed' ? 'Deployed — ' + (h.status === 'closed' ? 'closed' : 'completed')
-            // team-owned workflow events (round-trip between receiver + raiser)
-            : h.event === 'teamStatus' ? (h.team ? h.team + ' → ' : 'Team → ') + (TEAM_ST[h.teamStatus] || h.teamStatus || '')
-            : h.event === 'teamDeliver' ? (h.team ? h.team + ' delivered to raiser' : 'Delivered to raiser')
-            : h.event === 'ack' ? (h.team ? h.team + ' concluded' : 'Concluded')
-            : h.event === 'redo' ? (h.team ? h.team + ' requested redo' : 'Redo requested')
-            : 'Status → ' + (h.status || 'open'),
-        })).sort((a, b) => (a.at < b.at ? -1 : 1));
-      }
-      const out = [];
-      if (c.createdAt) out.push({ at: c.createdAt, label: 'Created (open)' });
-      if (c.completedAt) out.push({ at: c.completedAt, label: 'Status → completed' });
-      if (c.closedAt) out.push({ at: c.closedAt, label: 'Status → closed' });
-      if (c.publishedAt) out.push({ at: c.publishedAt, label: 'Deployed — ' + (c.publishedStatus === 'closed' ? 'closed' : 'completed') });
-      return out.sort((a, b) => (a.at < b.at ? -1 : 1));
-    }
-
     function renderEntryDetail() {
-      const c = all.find((x) => x.id === entryDetail);
+      const c = roots().find((x) => x.id === entryDetail) || all.find((x) => x.id === entryDetail);
       if (!c) { entryDetail = null; return renderEntries(); }
       $('#rvd-empty').hidden = true;
       const a = c.anchor || {};
-      const v = c.validation;
-      const validTxt = v
-        ? (v.method === 'content-copy-match'
-            ? (v.ok ? '✓ Verified on live page' : '⚠ Not verified on live page yet') + (v.detail ? ' — ' + esc(v.detail) : '')
-            : 'Manual completion' + (v.detail ? ' — ' + esc(v.detail) : ''))
-        : '—';
       const where = a.snippet ? '“' + esc(a.snippet) + '”' + (a.tag ? ' · ' + esc(a.tag) : '') : (a.tag ? esc(a.tag) : '—');
-      const hist = entryHistory(c);
+      const hist = chainHistory(c);
       const field = (k, vHtml) => `<div class="rvd-field"><div class="rvd-field-k">${k}</div><div class="rvd-field-v">${vHtml}</div></div>`;
       const timeline = hist.length
         ? `<ol class="rvd-timeline">` + hist.map((h, i) =>
             `<li class="rvd-tl${i === hist.length - 1 ? ' is-current' : ''}">` +
-              `<div class="rvd-tl-top"><span class="rvd-tl-event">${esc(h.label)}</span>` +
+              `<div class="rvd-tl-top"><span class="rvd-tl-iter">-${h.iteration || 1}</span>` +
+              `<span class="rvd-tl-event">${esc(eventLabel(h))}</span>` +
               `<span class="rvd-tl-time">${esc(fmt(h.at))}</span></div>` +
             `</li>`).join('') + `</ol>`
         : '—';
+      const acts = lifecycleActions(c);
       $('#rvd-entries').innerHTML =
         `<button class="rvd-back" id="rvd-back">← Back to Master Log</button>` +
         `<article class="rvd-detail">` +
           `<h2 class="rvd-detail-title">${esc(c.comment)}</h2>` +
           `<div class="rvd-detail-chips">${statusChip(c)}${routeChips(c)}` +
             `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">Open pin</a></div>` +
+          (acts ? `<div class="rvd-detail-acts">${acts}</div>` : '') +
           `<div class="rvd-fields">` +
             field('Ticket', c.ticket ? `<span class="rvd-ticket">${esc(c.ticket)}</span>` : '—') +
+            field('Iteration', String(c.iteration || 1)) +
             field('Page', `<a href="${esc(c.page.path)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a> <span style="color:var(--pk-muted)">${esc(c.page.path)}</span>`) +
             field('Element / anchor', where) +
             field('From (raised by)', esc(c.name || 'anonymous') + (c.team ? ' · ' + esc(c.team) : '')) +
             field('Directed to', c.toTeam ? teamChip(c.toTeam) : '—') +
             field('Submitted', esc(fmt(c.createdAt))) +
             (c.changeTo ? `<div class="rvd-field"><div class="rvd-field-k">Change to</div><div class="rvd-change"><div>${esc(c.changeTo)}</div></div></div>` : '') +
+            (c.reopenReason && teamStatusOf(c) === 'reopened' ? field('Reopen reason', esc(c.reopenReason)) : '') +
             field('Current status', esc(statusLabel(c))) +
-            field('Validation', validTxt) +
             `<div class="rvd-field"><div class="rvd-field-k">AI prompt</div>` +
               (c.aiPrompt ? `<div class="rvd-field-prompt">${esc(c.aiPrompt)}</div>`
                           : `<div class="rvd-field-v" style="color:var(--pk-muted);font-style:italic">Generating — usually ready within seconds of submit. Refresh in a moment.</div>`) + `</div>` +
-            `<div class="rvd-field"><div class="rvd-field-k">Status history</div>${timeline}</div>` +
+            `<div class="rvd-field"><div class="rvd-field-k">Iteration timeline</div>${timeline}</div>` +
           `</div>` +
         `</article>`;
       $('#rvd-back').addEventListener('click', () => { entryDetail = null; render(); });
-    }
-
-    // AI change-prompt overlay (precise, ready-to-hand-to-a-dev instruction)
-    function openPrompt(c) {
-      if (!c) return;
-      const a = c.anchor || {};
-      const el = document.createElement('div'); el.className = 'rvd-prompt';
-      const body = c.aiPrompt
-        ? `<div class="rvd-prompt-box">${esc(c.aiPrompt)}</div>` +
-          `<div class="rvd-prompt-actions"><button class="rvd-prompt-copy">Copy prompt</button></div>`
-        : `<div class="rvd-prompt-box rvd-prompt-gen">Generating the AI prompt — usually ready within seconds of submit. This view auto-refreshes; reopen in a moment.</div>`;
-      el.innerHTML =
-        `<div class="rvd-prompt-card">` +
-          `<div class="rvd-prompt-head"><div class="rvd-prompt-title">AI Change Prompt</div>` +
-          `<button class="rvd-prompt-x" aria-label="Close">×</button></div>` +
-          `<div class="rvd-prompt-meta">${teamChip(c.team)}` +
-            `<a class="rvd-slug" href="${esc(c.page.path)}?review=1#c=${esc(c.id)}" target="_blank" rel="noopener">${esc(pageName(c.page.path))}</a>` +
-            (a.tag ? `<span>·</span><span>${esc(a.tag)}</span>` : '') + `</div>` +
-          body +
-        `</div>`;
-      document.body.appendChild(el);
-      const close = () => el.remove();
-      el.querySelector('.rvd-prompt-x').addEventListener('click', close);
-      el.addEventListener('click', (e) => { if (e.target === el) close(); });
-      const copy = el.querySelector('.rvd-prompt-copy');
-      if (copy) copy.addEventListener('click', () => {
-        navigator.clipboard.writeText(c.aiPrompt || '').then(() => {
-          copy.textContent = 'Copied ✓'; setTimeout(() => { copy.textContent = 'Copy prompt'; }, 1500);
-        }).catch(() => {});
+      $('#rvd-entries').querySelectorAll('.rvd-detail-acts .rvd-a[data-action]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const rec = roots().find((x) => x.id === btn.dataset.id); if (!rec) return;
+          btn.disabled = true;
+          await doTeamAction(rec, btn.dataset.action);
+        });
       });
-    }
-
-    // ---- Deploy Bucket: every root completed/closed but not yet published ----
-    function renderDeploy() {
-      $('#rvd-empty').hidden = true;
-      const bucket = sortRoots(roots().filter(isBucketed));
-      const banner = deployResult
-        ? `<div class="rvd-deploy-banner">${esc(deployResult)}</div>` : '';
-      const body = bucket.length
-        ? `<div class="rvd-grid">${bucket.map(card).join('')}</div>`
-        : `<p class="rvd-empty">Nothing waiting to deploy. Mark comments complete to fill the bucket.</p>`;
-      $('#rvd-view-deploy').innerHTML =
-        `<div class="rvd-deployhead">` +
-          `<div><h2>Delivery Queue</h2>` +
-          `<p class="rvd-deploy-explain">Publishing releases these status changes to teams and sends notifications.</p></div>` +
-          `<button class="rvd-deploy-btn" id="rvd-deploy-go"${bucket.length ? '' : ' disabled'}>Deploy${bucket.length ? ' ' + bucket.length : ''}</button>` +
-        `</div>` + banner + body;
-      const go = $('#rvd-deploy-go');
-      if (go && bucket.length) go.addEventListener('click', doDeploy);
-      bindActions($('#rvd-view-deploy'));
-    }
-    async function doDeploy() {
-      const go = $('#rvd-deploy-go'); if (!go) return;
-      if (!confirm('Deploy all completed/closed comments now? This publishes them to teams and sends notifications.')) return;
-      go.disabled = true; go.textContent = 'Deploying…';
-      try {
-        const res = await store.deploy();
-        const n = res.deployed || 0, nn = (res.notifications || []).length;
-        deployResult = `Deployed ${n} update${n === 1 ? '' : 's'} · ${nn} notification${nn === 1 ? '' : 's'} sent`;
-        await loadData(); // refreshes bucket + notifs; render() redraws this view with the banner
-      } catch (e) { go.disabled = false; go.textContent = 'Deploy'; alert('Deploy failed — ' + e.message); }
     }
 
     // ---- Notifications (admin: all), newest first, unread flagged ----
     function renderNotifs() {
       $('#rvd-empty').hidden = true;
-      const list = (notifs || []).slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      const list = (notifs || []).slice().sort((a, b) => ((a.updatedAt || a.createdAt) < (b.updatedAt || b.createdAt) ? 1 : -1));
       const unread = list.filter((n) => n.readAdmin === false);
       $('#rvd-view-notifs').innerHTML =
         `<div class="rvd-notifhead">` +
           `<div><h2>Notifications</h2>` +
-          `<p class="rvd-deploy-explain">Fired when a deploy publishes a comment to its team.</p></div>` +
+          `<p class="rvd-deploy-explain">Fired as tickets move through the status machine (started, deployed live, reopened, resubmitted).</p></div>` +
           (unread.length ? `<button class="rvd-a" id="rvd-notif-read">Mark all read (${unread.length})</button>` : '') +
         `</div>` +
         (list.length
           ? `<div class="rvd-notiflist">${list.map(notifItem).join('')}</div>`
-          : `<p class="rvd-empty">No notifications yet. Deploy the bucket to notify teams.</p>`);
+          : `<p class="rvd-empty">No notifications yet.</p>`);
       const rb = $('#rvd-notif-read');
       if (rb) rb.addEventListener('click', async () => {
         rb.disabled = true;
         try { await store.markRead(unread.map((n) => n.id), true); await loadData(); }
         catch (e) { rb.disabled = false; alert('Could not update — ' + e.message); }
       });
-      // per-item read/unread toggle: data-read is the target state (true = mark read)
       $('#rvd-view-notifs').querySelectorAll('.rvd-notif-toggle').forEach((btn) => {
         btn.addEventListener('click', async () => {
           btn.disabled = true;
@@ -812,11 +707,15 @@
     }
     function notifItem(n) {
       const unread = n.readAdmin === false;
-      const directed = n.kind === 'directed';
-      const done = n.publishedStatus === 'closed' ? 'closed' : 'deployed';
-      const kindChip = directed
-        ? `<span class="rvd-chip open">Directed</span>`
-        : `<span class="rvd-chip ${done}">${done === 'closed' ? 'Closed' : 'Deployed'}</span>`;
+      let chip;
+      if (n.kind === 'status' && TEAM_STATUS[n.teamStatus]) {
+        const [cls, label] = TEAM_STATUS[n.teamStatus];
+        chip = `<span class="rvd-chip ${cls}">${label}</span>`;
+      } else if (n.kind === 'directed') {
+        chip = `<span class="rvd-chip open">Directed</span>`;
+      } else {
+        chip = `<span class="rvd-chip deployed">Update</span>`;
+      }
       const openPin = n.commentId
         ? `<a class="rvd-openpin" href="${esc(n.path)}?review=1#c=${esc(n.commentId)}" target="_blank" rel="noopener">Open Pin</a>` : '';
       return `<div class="rvd-notif${unread ? ' is-unread' : ''}">` +
@@ -825,8 +724,8 @@
           `<div class="rvd-notif-summary">${esc(n.summary || '')}</div>` +
           `<div class="rvd-notif-meta">${teamChip(n.team)}` +
             `<a class="rvd-slug" href="${esc(n.path)}" target="_blank" rel="noopener">${esc(pageName(n.path))}</a>` +
-            `<span class="rvd-time">${esc(fmt(n.createdAt))}</span>` +
-            kindChip + openPin +
+            `<span class="rvd-time">${esc(fmt(n.updatedAt || n.createdAt))}</span>` +
+            chip + openPin +
           `</div>` +
         `</div>` +
         `<button class="rvd-a rvd-notif-toggle" type="button" data-id="${esc(n.id)}" data-read="${unread ? 'true' : 'false'}">` +
@@ -835,13 +734,11 @@
     }
 
     function render() {
-      // left-panel view: Overview / Deploy / Notifications / Master Log.
       $('#rvd-view-dash').hidden = view !== 'dash';
       $('#rvd-view-entries').hidden = view !== 'entries';
-      $('#rvd-view-deploy').hidden = view !== 'deploy';
       $('#rvd-view-notifs').hidden = view !== 'notifs';
+      const dep = $('#rvd-view-deploy'); if (dep) dep.hidden = true;
       if (view === 'entries') { renderEntries(); return; }
-      if (view === 'deploy') { renderDeploy(); return; }
       if (view === 'notifs') { renderNotifs(); return; }
 
       const host = $('#rvd-list');
@@ -851,13 +748,11 @@
         const paths = [...new Set(rs.map((c) => c.page.path))].sort();
         host.innerHTML = paths.map((p) => {
           const group = rs.filter((c) => c.page.path === p);
-          const openN = group.filter(isOpen).length;
-          const bucketN = group.filter(isBucketed).length;
-          const deployedN = group.filter(isDeployed).length;
-          const closedN = group.filter(isClosedLive).length;
+          const tbiN = group.filter((c) => teamStatusOf(c) === 'to_be_initiated').length;
+          const progN = group.filter((c) => teamStatusOf(c) === 'in_progress').length;
           return `<div class="rvd-group"><h2 class="rvd-gh">` +
             `<a href="${esc(p)}" target="_blank" rel="noopener">${esc(pageName(p))}</a>` +
-            `<span class="rvd-gh-rollup">${openN} open · ${bucketN} in bucket · ${deployedN} deployed${closedN ? ' · ' + closedN + ' closed' : ''}</span>` +
+            `<span class="rvd-gh-rollup">${tbiN} TBI · ${progN} in progress</span>` +
             `<span class="rvd-gh-actions"><button class="rvd-gh-copy" data-page="${esc(p)}">Copy prompts</button></span>` +
             `</h2><div class="rvd-grid">${group.map(card).join('')}</div></div>`;
         }).join('');
@@ -868,7 +763,7 @@
       }
       const emp = $('#rvd-empty');
       emp.hidden = rs.length > 0;
-      if (!rs.length) emp.textContent = search ? 'No comments match your search.' : 'No comments yet.';
+      if (!rs.length) emp.textContent = search ? 'No tickets match your search.' : 'Nothing in the Team Queue.';
       bindActions();
       updateSelectToggle();
     }
@@ -876,20 +771,16 @@
     function updateBulk() {
       const n = sel.size;
       const bar = $('#rvd-bulk');
-      // The bottom action overlay shows only in select mode with ≥1 selected.
       bar.hidden = !(selectMode && n > 0);
       if (n) $('#rvd-bulk-n').textContent = n + ' selected';
       updateSelectToggle();
     }
 
-    // The toolbar toggle: "Select" arms multi-select (checkboxes appear); once armed it
-    // reads "Deselect All" and clicking it clears the selection + leaves select mode.
     function updateSelectToggle() {
       const btn = $('#rvd-selectall'); if (!btn) return;
       btn.textContent = selectMode ? 'Deselect All' : 'Select';
       btn.classList.toggle('is-active', selectMode);
     }
-    // Enter/leave select mode. Leaving always clears the selection.
     function setSelectMode(on) {
       selectMode = on;
       if (!on) sel.clear();
@@ -901,15 +792,14 @@
       host.querySelectorAll('.rvd-sel').forEach((cb) => {
         cb.addEventListener('change', () => {
           cb.checked ? sel.add(cb.dataset.id) : sel.delete(cb.dataset.id);
-          updateBulk(); render(); // re-render so the selected card's vibrant fill updates
+          updateBulk(); render();
         });
       });
-      host.querySelectorAll('.rvd-a[data-status]').forEach((btn) => {
+      host.querySelectorAll('.rvd-a[data-action]').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          const rec = all.find((c) => c.id === btn.dataset.id); if (!rec) return;
+          const rec = roots().find((c) => c.id === btn.dataset.id); if (!rec) return;
           btn.disabled = true;
-          try { const updated = await store.status(rec, btn.dataset.status); Object.assign(rec, updated); counts(); render(); }
-          catch (e) { btn.disabled = false; alert('Could not update — ' + e.message); }
+          await doTeamAction(rec, btn.dataset.action);
         });
       });
       host.querySelectorAll('.rvd-copyone').forEach((btn) => {
@@ -920,17 +810,10 @@
       });
       host.querySelectorAll('.delete').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          const rec = all.find((c) => c.id === btn.dataset.id); if (!rec) return;
-          if (!confirm('Delete this whole thread (comment + all replies)? This cannot be undone.')) return;
-          btn.disabled = true;
-          try {
-            await store.del(rec);
-            all = all.filter((c) => c.id !== rec.id && c.parentId !== rec.id);
-            counts(); render();
-          } catch (e) { btn.disabled = false; alert('Could not delete — ' + e.message); }
+          const rec = roots().find((c) => c.id === btn.dataset.id) || all.find((c) => c.id === btn.dataset.id); if (!rec) return;
+          rowDelete(rec);
         });
       });
-      // comment body: Show more / Show less (clamp toggle)
       host.querySelectorAll('.rvd-morebtn').forEach((btn) => {
         btn.addEventListener('click', () => {
           const el = btn.parentElement.querySelector('.rvd-comment-text');
@@ -938,8 +821,6 @@
           btn.textContent = clamped ? 'Show more' : 'Show less';
         });
       });
-      // footer: expand / collapse replies (block located by id — it's not the toggle's
-      // sibling anymore; the toggle lives in the action footer, the block at card end)
       host.querySelectorAll('.rvd-repliestoggle').forEach((btn) => {
         btn.addEventListener('click', () => {
           const wrap = host.querySelector('.rvd-replies[data-replies-for="' + btn.dataset.replies + '"]');
@@ -949,13 +830,12 @@
           btn.classList.toggle('is-open', open);
         });
       });
-      revealClamps(host); // reveal Show-more only where the comment actually overflows
+      revealClamps(host);
     }
 
     document.querySelector('.rvd-side').addEventListener('click', (e) => {
       const b = e.target.closest('.rvd-nav'); if (!b) return;
-      view = b.dataset.view; entryDetail = null; // reset Master Log drill-in when switching views
-      deployResult = ''; // the deploy banner only shows right after a deploy action
+      view = b.dataset.view; entryDetail = null;
       document.querySelectorAll('.rvd-nav').forEach((n) => n.classList.toggle('is-active', n === b));
       render();
     });
@@ -969,17 +849,17 @@
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     $('#rvd-refresh').addEventListener('click', async () => {
       const btn = $('#rvd-refresh');
-      if (btn.classList.contains('is-refreshing')) return; // ignore rapid re-clicks
+      if (btn.classList.contains('is-refreshing')) return;
       btn.classList.remove('is-done');
       btn.classList.add('is-refreshing');
       const t0 = Date.now();
       try {
         await loadData();
-        await wait(Math.max(0, 650 - (Date.now() - t0))); // keep the spin visible for instant local loads
+        await wait(Math.max(0, 650 - (Date.now() - t0)));
         btn.classList.remove('is-refreshing');
-        btn.classList.add('is-done');       // tick morphs in
+        btn.classList.add('is-done');
         setTimeout(() => {
-          btn.classList.add('is-resetting');  // ring pulses out + tick morphs back to refresh
+          btn.classList.add('is-resetting');
           btn.classList.remove('is-done');
           setTimeout(() => btn.classList.remove('is-resetting'), 550);
         }, 1100);
@@ -990,9 +870,7 @@
     });
     // ---- toolbar: search / sort / export / copy-all-prompts ----
     $('#rvd-search').addEventListener('input', (e) => { search = e.target.value.trim(); render(); });
-    // Toolbar toggle: arm select mode ("Select") / clear + leave it ("Deselect All").
     $('#rvd-selectall').addEventListener('click', () => setSelectMode(!selectMode));
-    // Toolbar dropdown icons (Lucide-style; inherit currentColor).
     const IC = {
       newest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>',
       oldest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>',
@@ -1001,7 +879,6 @@
       md: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
       json: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
     };
-    // Sort — a custom (non-native) themed dropdown.
     const sortDD = buildDropdown({
       small: true, value: sort,
       items: [
@@ -1012,7 +889,6 @@
       onSelect: (v) => { sort = v; render(); },
     });
     $('#rvd-sort-mount').appendChild(sortDD.el);
-    // Copy — ONE dropdown consolidating Copy prompts / Copy MD / Download JSON.
     let copyDD;
     const flashCopy = () => { copyDD.setLabel('Copied ✓'); setTimeout(() => copyDD.setLabel('Copy'), 1400); };
     copyDD = buildDropdown({
@@ -1025,22 +901,29 @@
     });
     $('#rvd-copy-mount').appendChild(copyDD.el);
 
-    // ---- bulk actions on the selected comments ----
+    // ---- bulk actions on the selected tickets (Start / Mark Complete / Reopen) ----
     $('#rvd-bulk').addEventListener('click', async (e) => {
       const b = e.target.closest('.rvd-bulk-a'); if (!b) return;
       const act = b.dataset.act;
       if (act === 'all') { currentRoots().forEach((c) => sel.add(c.id)); updateBulk(); render(); return; }
-      const recs = [...sel].map((id) => all.find((c) => c.id === id)).filter(Boolean);
+      const recs = [...sel].map((id) => roots().find((c) => c.id === id)).filter(Boolean);
       if (!recs.length) return;
       if (act === 'copy') { copyToClip(promptsText(recs), b, 'Copied ✓'); return; }
-      if (act === 'delete' && !confirm(`Delete ${recs.length} thread${recs.length > 1 ? 's' : ''} + their replies? This cannot be undone.`)) return;
+      if (act === 'delete' && !confirm(`Delete ${recs.length} ticket chain${recs.length > 1 ? 's' : ''} (all iterations + replies)? This cannot be undone.`)) return;
+      let reason;
+      if (act === 'reopen') {
+        reason = prompt('Reason for reopening the selected tickets (required):');
+        if (reason == null) return;
+        reason = reason.trim();
+        if (!reason) { alert('A reason is required to reopen.'); return; }
+      }
       [...$('#rvd-bulk').querySelectorAll('.rvd-bulk-a')].forEach((x) => (x.disabled = true));
       try {
         for (const rec of recs) {
-          if (act === 'complete') { Object.assign(rec, await store.status(rec, 'completed')); }
-          else if (act === 'reopen') { Object.assign(rec, await store.status(rec, 'open')); }
-          else if (act === 'close') { Object.assign(rec, await store.status(rec, 'closed')); }
-          else if (act === 'delete') { await store.del(rec); all = all.filter((c) => c.id !== rec.id && c.parentId !== rec.id); }
+          if (act === 'start') { Object.assign(rec, await store.teamAction(rec, 'start')); }
+          else if (act === 'complete') { Object.assign(rec, await store.teamAction(rec, 'complete')); }
+          else if (act === 'reopen') { Object.assign(rec, await store.teamAction(rec, 'reopen', reason)); }
+          else if (act === 'delete') { await store.del(rec); const rid = rec.parentId || rec.id; all = all.filter((c) => c.id !== rid && c.parentId !== rid); }
         }
         sel.clear(); updateBulk(); counts(); render();
       } catch (err) { alert('Bulk action failed — ' + err.message); }
@@ -1050,15 +933,16 @@
 
     buildTeamChips();
 
-    // "Team dashboards" — admin can open ANY team's board at will, with full access.
-    // Opens /teamdash?team=<T> in a new tab; the admin session is adopted there (shared
-    // session), and the admin key gives full read access to that team's inbox.
+    // "Team dashboards" — admin can open ANY team's board. Teams not enabled in this phase
+    // (config.js: isTeamEnabled) are greyed out + non-navigable.
     const teamViewMount = $('#rvd-teamview-mount');
     if (teamViewMount) {
       const teamViewDD = buildDropdown({
         block: true, fixedLabel: 'Jump To Team',
+        // Teams gated off via config.js (isTeamEnabled) render greyed + inert (buildDropdown
+        // honours `disabled`: aria-disabled, out of the focus order, click is a no-op).
         items: TEAMS.map((t) => ({
-          value: t, label: t,
+          value: t, label: t, disabled: !teamEnabled(t),
           onSelect: () => window.open('/teamdash?team=' + encodeURIComponent(t), '_blank', 'noopener'),
         })),
       });

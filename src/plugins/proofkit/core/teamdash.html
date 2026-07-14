@@ -49,9 +49,9 @@
         <h1 class="tmd-h1">Team</h1>
         <span class="tmd-headtoggle" data-pk-toggle></span>
       </div>
-      <p class="tmd-lead">Comments your team raised or was asked to action. Set your progress on
-        each item — To Be Initiated, In Progress, Complete — then deploy your Delivery Queue to
-        hand completed work back to the team that raised it.</p>
+      <p class="tmd-lead">Everything your team submitted to Builder. Track each ticket's live
+        status in Completed — With builder (TBI / in progress) or Deployed live. When Builder
+        reopens one, it moves to Active with the reason, ready to clarify and resubmit.</p>
     </div>
 
     <!-- Stat tiles -->
@@ -61,8 +61,8 @@
 
     <div class="tmd-shell">
       <aside class="tmd-side">
-        <button class="tmd-nav is-active" data-view="comments">Team Queue</button>
-        <button class="tmd-nav" data-view="delivery">Delivery Queue<span class="tmd-navbadge" id="tmd-badge-delivery" hidden>0</span></button>
+        <button class="tmd-nav is-active" data-view="comments">Completed</button>
+        <button class="tmd-nav" data-view="delivery">Active<span class="tmd-navbadge" id="tmd-badge-delivery" hidden>0</span></button>
         <button class="tmd-nav" data-view="notifs">
           Notifications
           <span class="tmd-navbadge" id="tmd-navbadge" hidden>0</span>
@@ -79,20 +79,20 @@
             <span class="tmd-toolbar-sp"></span>
             <button class="tmd-tbtn tmd-tbtn--primary" id="tmd-primary" type="button">Clear filters</button>
           </div>
-          <!-- Status filter tabs — Team Queue only -->
+          <!-- Status filter tabs — Completed tab only -->
           <div class="tmd-filters" id="tmd-filters" role="tablist">
             <button class="tmd-filter is-active" data-filter="all">All</button>
-            <button class="tmd-filter" data-filter="tbi">To Be Initiated</button>
+            <button class="tmd-filter" data-filter="to_be_initiated">TBI</button>
             <button class="tmd-filter" data-filter="in_progress">In Progress</button>
-            <button class="tmd-filter" data-filter="complete">Complete</button>
+            <button class="tmd-filter" data-filter="deployed_live">Deployed live</button>
           </div>
           <div class="tmd-teamchips" id="tmd-teamchips" hidden></div>
           <p class="tmd-viewnote" id="tmd-viewnote" hidden></p>
         </div>
 
-        <!-- Team Queue -->
+        <!-- Completed: everything submitted, with its live status -->
         <div id="tmd-view-comments"><div id="tmd-list"></div></div>
-        <!-- Delivery Queue: completed items staged before pushing live -->
+        <!-- Active: tickets Builder reopened, awaiting clarify + resubmit -->
         <div id="tmd-view-delivery" hidden></div>
         <!-- Notifications -->
         <div id="tmd-view-notifs" hidden><div id="tmd-notes"></div></div>

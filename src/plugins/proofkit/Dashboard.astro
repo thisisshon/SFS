@@ -2,11 +2,12 @@
 /**
  * Proofkit Dashboard - the /reviewdash admin view.
  *
- * Client-rendered admin view of every comment across the site: where each sits
- * on its page, who wrote it, when, open/resolved status, threaded replies, the
- * per-session Master Log, and the AI change-prompt per entry. Reads the
+ * Client-rendered admin view of every ticket across the site: where each sits
+ * on its page, who raised it, when, its real-time status (TBI → In Progress →
+ * Deployed live; Reopen bounces it back), threaded replies, the iteration
+ * timeline, the Master Log, and the AI change-prompt per entry. Reads the
  * Cloudflare Worker (WORKER_URL) when set, else the localStorage demo store.
- * Resolving/deleting happen here (admin side); the on-page overlay is add-only.
+ * Builder drives status + deletes here (admin side); the on-page overlay is add-only.
  *
  * Rendered by the src/pages/reviewdash.astro route shim, gated on PROOFKIT_ENABLED
  * (./config.ts). Keeps its own admin-password gate so hitting /reviewdash
@@ -26,6 +27,19 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
 <script is:inline set:html={`window.PROOFKIT_WORKER_URL=${JSON.stringify(WORKER_URL)}`}></script>
 
 <section class="rvd">
+  {/* Gated-off stub — a clean "no access" state instead of a blank/broken app.
+      Hidden at build; dashboard.js reveals it (and hides .rvd-app) if a signed-in
+      identity is parked off via TEAM_ENABLED / isTeamEnabled (Builder/admin is
+      always enabled, so this is defence-in-depth). Self-contained + token-styled. */}
+  <div class="rvd-blocked" id="rvd-blocked" hidden
+       style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box">
+    <div style="max-width:420px;text-align:center;color:var(--pk-body)">
+      <h1 style="margin:0 0 8px;font:700 22px/1.3 var(--pk-font,Outfit);color:var(--pk-ink)">Review access unavailable</h1>
+      <p style="margin:0 0 20px;font:400 14px/1.5 var(--pk-font,Outfit)">This team’s review access isn’t currently available.</p>
+      <a class="rvd-btn rvd-btn-primary" href="/">Go to site</a>
+    </div>
+  </div>
+
   <div class="rvd-app" data-enter>
     <!-- Brand top bar -->
     <header class="rvd-top">
@@ -55,8 +69,9 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
         <h1 class="rvd-h1">Admin Console</h1>
         <span class="rvd-headtoggle" data-pk-toggle></span>
       </div>
-      <p class="rvd-lead">Every comment left across the site. Open a pin to see it in
-        context on the live page; resolve items here as you action them.</p>
+      <p class="rvd-lead">Every ticket raised across the site, directed to you as Builder. Open a
+        pin to see it in context on the live page; Start, Mark Complete (deploy live) or Reopen
+        each ticket as you action it.</p>
     </div>
 
     <!-- Stat tiles -->
@@ -66,8 +81,7 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
 
     <div class="rvd-shell">
       <aside class="rvd-side">
-        <button class="rvd-nav is-active" data-view="dash">Overview</button>
-        <button class="rvd-nav" data-view="deploy">Delivery<span class="rvd-navbadge" id="rvd-badge-deploy" hidden>0</span></button>
+        <button class="rvd-nav is-active" data-view="dash">Team Queue</button>
         <button class="rvd-nav" data-view="notifs">Notifications<span class="rvd-navbadge rvd-navbadge-alert" id="rvd-badge-notifs" hidden>0</span></button>
         <button class="rvd-nav" data-view="entries">Master Log</button>
         <div class="rvd-teamview">
@@ -89,21 +103,15 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
           <div class="rvd-tabs" id="rvd-tabs" role="tablist">
             <button class="rvd-tab is-active" data-tab="all">All</button>
             <button class="rvd-tab" data-tab="page">By Page</button>
-            <button class="rvd-tab" data-tab="open">Open</button>
-            <button class="rvd-tab" data-tab="deployed">Deployed</button>
-            <button class="rvd-tab" data-tab="closed">Closed</button>
           </div>
           <div class="rvd-teamchips" id="rvd-teamchips"></div>
           <div id="rvd-list"></div>
         </div>
 
-        <!-- Deploy Bucket: completed/closed comments awaiting publish -->
-        <div id="rvd-view-deploy" hidden></div>
-
-        <!-- Notifications: fired on Deploy, newest first -->
+        <!-- Notifications: fired as tickets move through the status machine, newest first -->
         <div id="rvd-view-notifs" hidden></div>
 
-        <!-- Master Log: tabular log (one row per change) + per-entry detail drill-in -->
+        <!-- Master Log: tabular log (one row per ticket chain) + per-entry detail drill-in -->
         <div id="rvd-view-entries" hidden>
           <div id="rvd-entries"></div>
         </div>
@@ -112,13 +120,13 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
       </div>
     </div>
 
-    <!-- bulk-select action bar (shows when ≥1 comment is selected) -->
+    <!-- bulk-select action bar (shows when ≥1 ticket is selected) -->
     <div class="rvd-bulk" id="rvd-bulk" hidden>
       <span class="rvd-bulk-n" id="rvd-bulk-n">0 selected</span>
       <button class="rvd-bulk-a" type="button" data-act="all">Select all</button>
+      <button class="rvd-bulk-a" type="button" data-act="start">Start</button>
       <button class="rvd-bulk-a" type="button" data-act="complete">Mark Complete</button>
       <button class="rvd-bulk-a" type="button" data-act="reopen">Reopen</button>
-      <button class="rvd-bulk-a" type="button" data-act="close">Close</button>
       <button class="rvd-bulk-a" type="button" data-act="copy">Copy prompts</button>
       <button class="rvd-bulk-a danger" type="button" data-act="delete">Delete</button>
       <button class="rvd-bulk-x" type="button" id="rvd-bulk-clear" aria-label="Clear selection">×</button>

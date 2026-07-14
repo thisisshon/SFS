@@ -13,6 +13,14 @@ ALLOW_ORIGIN = "https://thisisshon.github.io"
 # move to `wrangler secret put TEAM_KEYS` if you want them out of git.
 TEAM_KEYS = '{"Product":"product2026","SEO":"seo2026","Marketing":"marketing2026","Content":"content2026"}'
 
+# Optional config gate: JSON array of the teams allowed to authenticate / be read.
+# Leave UNSET to enable every team (the default). Phase 1 runs Content + the Builder/Admin
+# role only; the other teams stay in TEAM_KEYS but are gated off here (a disabled team's
+# key, and any team-scoped read for it, gets a 403). The Builder/Admin role (ADMIN_PASS)
+# is never gated. Re-enable a team by adding it here (keep in sync with TEAM_ENABLED in
+# core/config.js, which drives the UI greying).
+ENABLED_TEAMS = '["Content"]'
+
 # KV store for comments. Create it once with:
 #   wrangler kv namespace create COMMENTS
 # then paste the printed id below.

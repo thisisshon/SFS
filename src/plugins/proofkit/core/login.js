@@ -1,4 +1,4 @@
-  import { WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword } from './config.js';
+  import { WORKER_URL, PROOFKIT_ENABLED, checkReviewPassword, getSession, isTeamEnabled } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     const LOCAL = !WORKER_URL;
@@ -49,6 +49,13 @@
       if (!pass) { input.focus(); return; }
       const err = loginEl.querySelector('.rvd-login-err');
       const btn = loginEl.querySelector('.rvd-login-btn');
+      // Access gate (defence-in-depth): if the shared session belongs to a team
+      // parked off via TEAM_ENABLED, reject here — before hitting the Worker.
+      const sTeam = getSession().team;
+      if (sTeam && !isTeamEnabled(sTeam)) {
+        err.textContent = "This team's review access isn't currently available.";
+        err.hidden = false; input.focus(); return;
+      }
       btn.disabled = true; btn.textContent = 'Checking…'; err.hidden = true;
       try {
         await validate(pass);

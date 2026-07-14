@@ -2,14 +2,15 @@
 /**
  * Proofkit Team Dashboard — the /teamdash per-team view.
  *
- * A client-rendered, READ-ONLY window a single team gets onto its OWN review
- * items. The team signs in with its team key; the Cloudflare Worker returns
- * ONLY that team's comments (server-side isolation, masked to the team-visible
- * status) plus that team's notifications. No admin actions, no delete, no AI
- * prompt, no other team's data — a lighter sibling of the admin Dashboard.
+ * A client-rendered window a single team (Content in Phase 1) gets onto its OWN
+ * tickets. The team signs in with its team key; the Cloudflare Worker returns
+ * ONLY that team's tickets (server-side isolation) plus its notifications. No
+ * other team's data — a lighter sibling of the admin Dashboard.
  *
- * Statuses are framed for the team (the deploy BUCKET is never exposed):
- *   masked 'open' → "Pending"   ·  'completed' → "Done"   ·  'closed' → "Closed".
+ * Statuses are the shared real-time state machine, framed for the raiser:
+ *   to_be_initiated → "With builder – TBI" · in_progress → "With builder – in
+ *   progress" · deployed_live → "Deployed live" · reopened → "Reopened" (bounced
+ *   back by Builder with a reason — Content clarifies and Resubmits for another pass).
  *
  * Rendered by the src/pages/teamdash.astro route shim, gated on PROOFKIT_ENABLED
  * (./config.ts). Reads the Worker (WORKER_URL) when set, else the localStorage
@@ -30,6 +31,19 @@ import './core/teamdash.css';            // team-dashboard-specific styles
 <script is:inline set:html={`window.PROOFKIT_WORKER_URL=${JSON.stringify(WORKER_URL)}`}></script>
 
 <section class="tmd">
+  {/* Gated-off team stub — a clean "no access" state instead of a blank/broken app.
+      Hidden at build; teamdash.js reveals it (and hides .tmd-app) when the signed-in
+      team is parked off via TEAM_ENABLED / isTeamEnabled (../config → ./core/config.js).
+      Self-contained + token-styled so it needs nothing from teamdash.css. */}
+  <div class="tmd-blocked" id="tmd-blocked" hidden
+       style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box">
+    <div style="max-width:420px;text-align:center;color:var(--pk-body)">
+      <h1 style="margin:0 0 8px;font:700 22px/1.3 var(--pk-font,Outfit);color:var(--pk-ink)">Review access unavailable</h1>
+      <p style="margin:0 0 20px;font:400 14px/1.5 var(--pk-font,Outfit)">This team’s review access isn’t currently available.</p>
+      <a class="tmd-btn tmd-btn-primary" href="/">Go to site</a>
+    </div>
+  </div>
+
   <div class="tmd-app" data-enter>
     <!-- Brand top bar -->
     <header class="tmd-top">
@@ -58,9 +72,9 @@ import './core/teamdash.css';            // team-dashboard-specific styles
         <h1 class="tmd-h1">Team</h1>
         <span class="tmd-headtoggle" data-pk-toggle></span>
       </div>
-      <p class="tmd-lead">Comments your team raised or was asked to action. Set your progress on
-        each item — To Be Initiated, In Progress, Complete — then deploy your Delivery Queue to
-        hand completed work back to the team that raised it.</p>
+      <p class="tmd-lead">Everything your team submitted to Builder. Track each ticket's live
+        status in Completed — With builder (TBI / in progress) or Deployed live. When Builder
+        reopens one, it moves to Active with the reason, ready to clarify and resubmit.</p>
     </div>
 
     <!-- Stat tiles -->
@@ -70,8 +84,8 @@ import './core/teamdash.css';            // team-dashboard-specific styles
 
     <div class="tmd-shell">
       <aside class="tmd-side">
-        <button class="tmd-nav is-active" data-view="comments">Team Queue</button>
-        <button class="tmd-nav" data-view="delivery">Delivery Queue<span class="tmd-navbadge" id="tmd-badge-delivery" hidden>0</span></button>
+        <button class="tmd-nav is-active" data-view="comments">Completed</button>
+        <button class="tmd-nav" data-view="delivery">Active<span class="tmd-navbadge" id="tmd-badge-delivery" hidden>0</span></button>
         <button class="tmd-nav" data-view="notifs">
           Notifications
           <span class="tmd-navbadge" id="tmd-navbadge" hidden>0</span>
@@ -88,20 +102,20 @@ import './core/teamdash.css';            // team-dashboard-specific styles
             <span class="tmd-toolbar-sp"></span>
             <button class="tmd-tbtn tmd-tbtn--primary" id="tmd-primary" type="button">Clear filters</button>
           </div>
-          <!-- Status filter tabs — Team Queue only -->
+          <!-- Status filter tabs — Completed tab only -->
           <div class="tmd-filters" id="tmd-filters" role="tablist">
             <button class="tmd-filter is-active" data-filter="all">All</button>
-            <button class="tmd-filter" data-filter="tbi">To Be Initiated</button>
+            <button class="tmd-filter" data-filter="to_be_initiated">TBI</button>
             <button class="tmd-filter" data-filter="in_progress">In Progress</button>
-            <button class="tmd-filter" data-filter="complete">Complete</button>
+            <button class="tmd-filter" data-filter="deployed_live">Deployed live</button>
           </div>
           <div class="tmd-teamchips" id="tmd-teamchips" hidden></div>
           <p class="tmd-viewnote" id="tmd-viewnote" hidden></p>
         </div>
 
-        <!-- Team Queue -->
+        <!-- Completed: everything submitted, with its live status -->
         <div id="tmd-view-comments"><div id="tmd-list"></div></div>
-        <!-- Delivery Queue: completed items staged before pushing live -->
+        <!-- Active: tickets Builder reopened, awaiting clarify + resubmit -->
         <div id="tmd-view-delivery" hidden></div>
         <!-- Notifications -->
         <div id="tmd-view-notifs" hidden><div id="tmd-notes"></div></div>

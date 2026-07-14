@@ -158,6 +158,9 @@
 .pk-dropdown-item[aria-selected="true"]{background:var(--pk-elev);color:var(--pk-red)}
 .pk-dropdown-item:focus-visible{outline:none;background:var(--pk-elev);color:var(--pk-ink)}
 @media (min-width:1024px) and (hover:hover){.pk-dropdown-item:hover{background:var(--pk-elev);color:var(--pk-ink)}}
+/* Gated-off item (e.g. a team parked via TEAM_ENABLED): muted + inert, no hover. */
+.pk-dropdown-item[aria-disabled="true"]{color:var(--pk-muted);opacity:.5;cursor:not-allowed}
+@media (min-width:1024px) and (hover:hover){.pk-dropdown-item[aria-disabled="true"]:hover{background:transparent;color:var(--pk-muted)}}
 
 /* ---------------------------------------------------------------------------
    THE LIGHT/DARK TOGGLE (.pk-tt) — control DOM is built by config.js

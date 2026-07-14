@@ -4,46 +4,45 @@
  *
  * Storage model:
  *   page:<encoded path>  - JSON array of comment records for that page.
- *   notifications        - JSON array of notification records (created on Deploy).
+ *   notifications        - JSON array of notification records (status pushes + arrivals).
  * The dashboard lists every `page:` key.
  *
  * Auth: every request sends header `X-Review-Pass: <key>`.
  *   Reviewer key -> add a comment, read a page's pins, read+notifications for OWN team.
- *     - a per-team key from TEAM_KEYS (a JSON var: {"Product":"...","SEO":"..."})
+ *     - a per-team key from TEAM_KEYS (a JSON var: {"Content":"...","Product":"..."})
  *     - REVIEW_PASS (a single shared reviewer key; optional fallback)
- *   Admin (ADMIN_PASS) -> the dashboard: read ALL, status, deploy, delete, all notifications.
- *   Admin is a superset of reviewer. A team's key ALSO scopes team-only reads to that team.
+ *   Admin (ADMIN_PASS) = the Builder/Admin role -> read ALL, drive team-status, resubmit,
+ *     delete, all notifications. Admin is a superset of reviewer. A team's key ALSO scopes
+ *     team-only reads to that team.
+ *   ENABLED_TEAMS (optional JSON array) config-gates which teams may authenticate at all;
+ *     a key for a disabled team is rejected with 403 (defense-in-depth). Unset = all enabled.
  *
- * The lifecycle (deploy gate):
- *   open --Mark Complete--> completed (validated, in the deploy BUCKET, still team-invisible)
- *        --Deploy (batch)--> published=true, publishedStatus=status, notifications fire.
- *   The team only ever sees `published ? publishedStatus : 'open'`.
- *
- * The team-owned workflow (independent of the admin lifecycle above):
- *   The RECEIVER team (toTeam) drives teamStatus: to_be_initiated -> in_progress -> complete.
- *   Marking complete stages it in that team's Delivery Queue; /team-deliver publishes the
- *   completed items back to the RAISER (team), who /team-ack's them (conclude | redo). Every
- *   transition is appended to `history`, so the admin's Master Log shows the whole round-trip.
+ * The status state machine (real-time, per ticket - NO deploy gate, NO delivery queue):
+ *   `teamStatus` is the single source of truth. The receiver is always 'Builder' in Phase 1.
+ *     to_be_initiated --start--> in_progress --complete--> deployed_live  (TERMINAL / live now)
+ *     in_progress | deployed_live --reopen(reason)--> reopened
+ *   Builder drives start | complete | reopen via POST /team-status.
+ *   Content resubmits a 'reopened' ticket via POST /resubmit: this spawns a NEW sub-ticket
+ *   (parentId -> origin root, ticket = base + '-<n>', iteration++) back at to_be_initiated;
+ *   the prior iteration's record is retained for the timeline. Every transition is appended
+ *   to `history[]` as {status, at, event, reason?, iteration} so both sides can render it.
  *
  * Bindings (wrangler.toml):
  *   COMMENTS      - KV namespace (the store).
- *   ADMIN_PASS    - secret, the admin passcode.
+ *   ADMIN_PASS    - secret, the admin (Builder) passcode.
  *   TEAM_KEYS     - JSON of per-team reviewer keys.
  *   REVIEW_PASS   - optional single shared reviewer key (fallback).
- *   ALLOW_ORIGIN  - the exact site origin (CORS lock) AND the base used to fetch live
- *                   pages for content validation (e.g. "https://owner.github.io").
+ *   ENABLED_TEAMS - optional JSON array of enabled team names (unset = all enabled).
+ *   ALLOW_ORIGIN  - the exact site origin (CORS lock).
  *
  * Endpoints (see ./worker/CONTRACT or the package CONTRACT for the full table):
  *   POST /comments             add a comment                   -> the saved record
  *   GET  /comments?path=/x     one page's comments (reviewer)  -> record[]
  *   GET  /comments             ALL comments (admin)            -> record[]
  *   GET  /comments?team=X      team-scoped, masked             -> record[]
- *   POST /status               set working status (+validate)  -> the updated record
- *   POST /resolve              back-compat alias of /status    -> the updated record
- *   POST /team-status          receiver sets its team status   -> the masked record
- *   POST /team-deliver         receiver delivers completed     -> {delivered, notifications}
- *   POST /team-ack             raiser concludes / requests redo-> the masked record
- *   POST /deploy               publish the bucket + notify     -> {deployed, notifications}
+ *   POST /team-status          Builder start|complete|reopen   -> the masked record
+ *   POST /resubmit             Content re-raises a reopened    -> the masked sub-ticket
+ *   POST /teams                admin re-routes From/To teams   -> the updated record
  *   POST /delete               delete a whole thread (admin)   -> {ok, removed}
  *   GET  /notifications        all (admin) / ?team=X (team)    -> notification[]
  *   POST /notifications/read   mark notifications read         -> {ok, updated}
@@ -72,6 +71,16 @@ export default {
     const isTeamKey = !!passTeam;
     const isReviewer = isAdmin || isTeamKey || (!!env.REVIEW_PASS && pass === env.REVIEW_PASS);
     const deny = () => json({ error: 'unauthorized' }, 401, cors);
+
+    // ---- disabled-team config gate (defense-in-depth) ----
+    // ENABLED_TEAMS is an optional JSON array of team names; unset/empty = every team is
+    // enabled. A team-scoped read or a team key for a team NOT in the list is rejected
+    // with a clear 403 (the UI gating is handled separately). Admin (Builder) is never
+    // gated. In Phase 1 only 'Content' + the Builder/Admin role are enabled.
+    const enabledTeams = parseEnabledTeams(env);
+    const teamEnabled = (t) => !enabledTeams || enabledTeams.includes(t);
+    const forbid = (team) => json({ error: 'team disabled', team: team || '' }, 403, cors);
+    if (passTeam && !teamEnabled(passTeam)) return forbid(passTeam);
 
     const url = new URL(request.url);
     const kv = env.COMMENTS;
@@ -156,20 +165,14 @@ export default {
           id: crypto.randomUUID(),
           ticket,                       // human-facing ticket number (YYMMDD + 4-digit serial)
           createdAt: nowIso,
-          status: 'open',              // working status: open | completed | closed
-          published: false,            // released to the team via Deploy?
-          publishedStatus: '',         // snapshot of status at last Deploy (team-visible)
-          completedAt: '', closedAt: '', publishedAt: '',
-          // Team-owned workflow (independent of the admin lifecycle above). Set by the
-          // RECEIVER team (toTeam): to_be_initiated -> in_progress -> complete. Marking
-          // complete stages it in the receiver's Delivery Queue; team-deliver publishes it
-          // back to the RAISER (team) to acknowledge (conclude) or bounce back (redo).
+          // The real-time status state machine. The receiver (toTeam) is 'Builder' in Phase 1.
+          //   to_be_initiated -> in_progress -> deployed_live (terminal); reopen -> reopened.
+          // Builder drives it via /team-status; Content re-raises a reopened one via /resubmit.
           teamStatus: 'to_be_initiated', teamStatusAt: '',
-          teamDelivered: false, teamDeliveredAt: '',
-          ack: '',                     // '' | 'concluded' (set by the raising team)
-          validation: null,            // set on Mark Complete
-          history: [{ status: 'open', at: nowIso, event: 'created', published: false }], // audit trail: current + past status
-          parentId: b.parentId || null, // set on replies -> threads a comment
+          iteration: 1,                // 1 for the original; each resubmit spawns iteration N+1
+          reopenReason: '',            // last Builder bounce-back reason (set on reopen)
+          history: [{ status: 'to_be_initiated', at: nowIso, event: 'created', iteration: 1 }], // full transition trail
+          parentId: b.parentId || null, // set on replies AND on resubmit sub-tickets -> chains to the origin root
           sessionId: b.sessionId ? String(b.sessionId).slice(0, 64) : '', // groups a review sitting
           team: b.team ? String(b.team).slice(0, 40) : '',      // FROM: the reviewer's own team
           toTeam: b.toTeam ? String(b.toTeam).slice(0, 40) : '', // TO: the team this is directed to for action
@@ -213,6 +216,7 @@ export default {
           // AND ones DIRECTED to it (toTeam) — so the raiser and the receiver both see
           // it. Thread-aware: matching roots carry all their replies. Admin may read
           // any team; a team key may read only its own.
+          if (!teamEnabled(team)) return forbid(team);
           if (!isAdmin && passTeam !== team) return deny();
           const all = await readAll(kv);
           const mine = new Set(
@@ -242,37 +246,6 @@ export default {
         return json({ ok: true, removed: before - arr.length }, 200, cors);
       }
 
-      // ---- set working status (admin) - open | completed | closed ----
-      // /resolve is kept as a back-compat alias (maps legacy 'resolved' -> 'completed').
-      if (request.method === 'POST' && (url.pathname === '/status' || url.pathname === '/resolve')) {
-        if (!isAdmin) return deny();
-        const b = await request.json();
-        const path = b.path || '/';
-        let status = b.status;
-        if (status === 'resolved') status = 'completed';      // legacy alias
-        if (status === 'reopen' || status === 'unresolve') status = 'open';
-        if (!['open', 'completed', 'closed'].includes(status)) status = 'open';
-        const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
-        const rec = arr.find((r) => r.id === b.id);
-        if (!rec) return json({ error: 'not found' }, 404, cors);
-        const nowIso = new Date().toISOString();
-        rec.status = status;
-        if (status === 'completed') {
-          rec.completedAt = nowIso;
-          rec.validation = await validateCompletion(env, rec); // content-copy-match | manual
-        } else if (status === 'closed') {
-          rec.closedAt = nowIso;
-        } else {
-          // reopened: clear the completion validation
-          rec.validation = null;
-        }
-        // audit trail: record every working-status transition (current + past status).
-        if (!Array.isArray(rec.history)) rec.history = [];
-        rec.history.push({ status, at: nowIso, event: 'status', published: !!rec.published });
-        await kv.put(keyFor(path), JSON.stringify(arr));
-        return json(rec, 200, cors);
-      }
-
       // ---- edit the From/To teams of a comment (admin) ----
       // Body: { id, path, team?, toTeam? }. Updates the raising team and/or the directed
       // team on a root record — lets the admin re-route a comment after the fact.
@@ -289,150 +262,124 @@ export default {
         return json(rec, 200, cors);
       }
 
-      // ---- set the team's OWN working status (receiver team) ----
-      // Body: { id, path, teamStatus }. The RECEIVER (toTeam) drives its own progress —
-      // to_be_initiated | in_progress | complete — independent of the admin lifecycle.
-      // Only that team (or admin) may set it. Marking complete stages it for team-deliver.
+      // ---- Builder drives the status state machine ----
+      // Body: { id, action:'start'|'complete'|'reopen', reason? }. No `path` — the record
+      // is located by id. The receiver (toTeam, i.e. Builder) or admin may drive it.
+      //   start    : to_be_initiated -> in_progress
+      //   complete : in_progress     -> deployed_live   (manual, unvalidated self-attestation)
+      //   reopen   : in_progress|deployed_live -> reopened  (requires a non-empty reason)
+      // The change is pushed to the RAISER (Content) debounced 5s (see pushStatusNotif).
       if (request.method === 'POST' && url.pathname === '/team-status') {
         if (!isReviewer) return deny();
         const b = await request.json();
-        const path = b.path || '/';
-        const ts = b.teamStatus;
-        if (!['to_be_initiated', 'in_progress', 'complete'].includes(ts)) return json({ error: 'bad status' }, 400, cors);
-        const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
-        const rec = arr.find((r) => r.id === b.id);
-        if (!rec) return json({ error: 'not found' }, 404, cors);
-        if (!isAdmin && passTeam !== (rec.toTeam || '')) return deny(); // only the directed team
-        const nowIso = new Date().toISOString();
-        rec.teamStatus = ts; rec.teamStatusAt = nowIso;
-        if (!Array.isArray(rec.history)) rec.history = [];
-        rec.history.push({ event: 'teamStatus', teamStatus: ts, team: rec.toTeam || '', at: nowIso });
-        await kv.put(keyFor(path), JSON.stringify(arr));
-        return json(maskForTeam(rec), 200, cors);
-      }
-
-      // ---- team-deliver: publish the receiver's completed items to the raiser (team) ----
-      // Body: { team }. Walks every item DIRECTED to <team> that the team marked complete
-      // and hasn't delivered, flags it delivered, and notifies the RAISING team so they can
-      // acknowledge (conclude) or bounce it back (redo). Only that team (or admin) may run it.
-      if (request.method === 'POST' && url.pathname === '/team-deliver') {
-        if (!isReviewer) return deny();
-        const b = await request.json();
-        const team = String(b.team || '');
-        if (!team) return json({ error: 'no team' }, 400, cors);
-        if (!isAdmin && passTeam !== team) return deny();
-        const now = new Date().toISOString();
-        const created = [];
-        let cursor;
-        do {
-          const page = await kv.list({ prefix: 'page:', cursor });
-          for (const k of page.keys) {
-            const arr = JSON.parse((await kv.get(k.name)) || '[]');
-            let dirty = false;
-            for (const r of arr) {
-              if (r.parentId) continue;
-              if ((r.toTeam || '') !== team) continue;
-              if (r.teamStatus !== 'complete' || r.teamDelivered) continue;
-              r.teamDelivered = true; r.teamDeliveredAt = now;
-              if (!Array.isArray(r.history)) r.history = [];
-              r.history.push({ event: 'teamDeliver', team, at: now });
-              dirty = true;
-              if (r.team) created.push(makeTeamNotif(r, now, 'delivered')); // tell the raiser
-            }
-            if (dirty) await kv.put(k.name, JSON.stringify(arr));
-          }
-          cursor = page.list_complete ? null : page.cursor;
-        } while (cursor);
-        if (created.length) {
-          const existing = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
-          existing.push(...created);
-          await kv.put(NOTIF_KEY, JSON.stringify(existing));
-        }
-        return json({ delivered: created.length, notifications: created }, 200, cors);
-      }
-
-      // ---- team-ack: the RAISING team accepts or bounces a delivered item ----
-      // Body: { id, path, action:'conclude'|'redo' }. conclude closes the trail; redo
-      // sends it back to the receiver (teamStatus->in_progress, un-delivered) + notifies
-      // them. Only the raiser (team) or admin may act.
-      if (request.method === 'POST' && url.pathname === '/team-ack') {
-        if (!isReviewer) return deny();
-        const b = await request.json();
-        const path = b.path || '/';
         const action = b.action;
-        if (!['conclude', 'redo'].includes(action)) return json({ error: 'bad action' }, 400, cors);
-        const arr = JSON.parse((await kv.get(keyFor(path))) || '[]');
-        const rec = arr.find((r) => r.id === b.id);
-        if (!rec) return json({ error: 'not found' }, 404, cors);
-        if (!isAdmin && passTeam !== (rec.team || '')) return deny(); // only the raising team
+        if (!['start', 'complete', 'reopen'].includes(action)) return json({ error: 'bad action' }, 400, cors);
+        const reason = String(b.reason || '').trim();
+        if (action === 'reopen' && !reason) return json({ error: 'reason required' }, 400, cors);
+        const found = await findById(kv, b.id);
+        if (!found) return json({ error: 'not found' }, 404, cors);
+        const { key, arr, rec } = found;
+        if (!isAdmin && passTeam !== (rec.toTeam || '')) return deny(); // only the receiver (Builder)
+        const cur = rec.teamStatus || 'to_be_initiated';
+        let next;
+        if (action === 'start') {
+          if (cur !== 'to_be_initiated') return json({ error: 'bad transition', from: cur }, 409, cors);
+          next = 'in_progress';
+        } else if (action === 'complete') {
+          if (cur !== 'in_progress') return json({ error: 'bad transition', from: cur }, 409, cors);
+          next = 'deployed_live';
+        } else { // reopen
+          if (cur !== 'in_progress' && cur !== 'deployed_live') return json({ error: 'bad transition', from: cur }, 409, cors);
+          next = 'reopened';
+        }
         const nowIso = new Date().toISOString();
+        const iter = rec.iteration || 1;
+        rec.teamStatus = next; rec.teamStatusAt = nowIso;
+        if (action === 'reopen') rec.reopenReason = reason;
         if (!Array.isArray(rec.history)) rec.history = [];
-        let notif = null;
-        if (action === 'conclude') {
-          rec.ack = 'concluded';
-          rec.history.push({ event: 'ack', team: rec.team || '', at: nowIso });
-        } else {
-          rec.teamStatus = 'in_progress'; rec.teamStatusAt = nowIso;
-          rec.teamDelivered = false; rec.teamDeliveredAt = '';
-          rec.ack = '';
-          rec.history.push({ event: 'redo', team: rec.team || '', at: nowIso });
-          if (rec.toTeam) notif = makeTeamNotif(rec, nowIso, 'redo'); // bounce back to the receiver
-        }
-        await kv.put(keyFor(path), JSON.stringify(arr));
-        if (notif) {
-          const existing = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
-          existing.push(notif);
-          await kv.put(NOTIF_KEY, JSON.stringify(existing));
-        }
+        const h = { status: next, at: nowIso, event: 'team-' + action, iteration: iter };
+        if (action === 'reopen') h.reason = reason;
+        rec.history.push(h);
+        await kv.put(key, JSON.stringify(arr));
+        // push the change to the raiser (Content), coalesced within a 5s window
+        ctx.waitUntil(pushStatusNotif(kv, NOTIF_KEY, {
+          chainId: rec.parentId || rec.id, commentId: rec.id, ticket: rec.ticket || '',
+          team: rec.team || '', fromTeam: rec.toTeam || '', teamStatus: next, iteration: iter,
+          reason: action === 'reopen' ? reason : '',
+          path: (rec.page && rec.page.path) || '/', pageName: pageNameOf(rec),
+          summary: statusSummary(rec, next, reason),
+        }));
         return json(maskForTeam(rec), 200, cors);
       }
 
-      // ---- Deploy: publish the whole bucket + fire notifications (admin) ----
-      if (request.method === 'POST' && url.pathname === '/deploy') {
-        if (!isAdmin) return deny();
-        const now = new Date().toISOString();
-        const created = [];
-        // Walk every page, publish each unpublished completed/closed record.
-        let cursor;
-        do {
-          const page = await kv.list({ prefix: 'page:', cursor });
-          for (const k of page.keys) {
-            const arr = JSON.parse((await kv.get(k.name)) || '[]');
-            let dirty = false;
-            for (const r of arr) {
-              const ready = (r.status === 'completed' || r.status === 'closed');
-              const alreadyLive = r.published && r.publishedStatus === r.status;
-              if (ready && !alreadyLive) {
-                r.published = true;
-                r.publishedStatus = r.status;
-                r.publishedAt = now;
-                if (!Array.isArray(r.history)) r.history = [];
-                r.history.push({ status: r.status, at: now, event: 'deployed', published: true });
-                dirty = true;
-                if (!r.parentId) created.push(makeNotif(r, now)); // notify per root comment
-              }
-            }
-            if (dirty) await kv.put(k.name, JSON.stringify(arr));
+      // ---- Content re-raises a reopened ticket -> spawns the next iteration ----
+      // Body: { id }. The ticket must be 'reopened'. Creates a NEW sub-ticket that shares
+      // the origin's base ticket with a '-<n>' suffix, chains to the origin root via
+      // parentId, bumps `iteration`, and starts back at to_be_initiated in Builder's queue.
+      // The prior iteration's record is retained untouched for the timeline. Only the raiser
+      // (Content, rec.team) or admin may resubmit. The new iteration is pushed to Builder (5s).
+      if (request.method === 'POST' && url.pathname === '/resubmit') {
+        if (!isReviewer) return deny();
+        const b = await request.json();
+        const found = await findById(kv, b.id);
+        if (!found) return json({ error: 'not found' }, 404, cors);
+        const { key, arr, rec } = found;
+        if (!isAdmin && passTeam !== (rec.team || '')) return deny(); // only the raiser (Content)
+        if ((rec.teamStatus || '') !== 'reopened') return json({ error: 'not reopened', teamStatus: rec.teamStatus || '' }, 409, cors);
+        const nowIso = new Date().toISOString();
+        const rootId = rec.parentId || rec.id;                 // the origin (iteration 1) record
+        // base ticket + current max iteration across the whole chain (all live in this page)
+        let maxIter = 1;
+        let baseTicket = '';
+        for (const r of arr) {
+          if (r.id === rootId || r.parentId === rootId) {
+            if ((r.iteration || 1) > maxIter) maxIter = r.iteration || 1;
           }
-          cursor = page.list_complete ? null : page.cursor;
-        } while (cursor);
-        if (created.length) {
-          const existing = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
-          existing.push(...created);
-          await kv.put(NOTIF_KEY, JSON.stringify(existing));
+          if (r.id === rootId) baseTicket = String(r.ticket || '').replace(/-\d+$/, '');
         }
-        return json({ deployed: created.length, notifications: created }, 200, cors);
+        const nextIter = maxIter + 1;
+        const newTicket = baseTicket ? baseTicket + '-' + (nextIter - 1) : '';
+        const sub = {
+          id: crypto.randomUUID(),
+          ticket: newTicket,
+          createdAt: nowIso,
+          teamStatus: 'to_be_initiated', teamStatusAt: nowIso,
+          iteration: nextIter,
+          reopenReason: '',
+          parentId: rootId,            // chains the sub-ticket to the origin root (reuses parentId)
+          sessionId: rec.sessionId || '',
+          team: rec.team || '', toTeam: rec.toTeam || '',
+          name: rec.name || 'anonymous',
+          comment: rec.comment || '',
+          changeTo: rec.changeTo || '',
+          aiPrompt: rec.aiPrompt || '',
+          page: rec.page,
+          anchor: rec.anchor || {},
+          history: [{ status: 'to_be_initiated', at: nowIso, event: 'resubmitted', iteration: nextIter }],
+        };
+        arr.push(sub);
+        await kv.put(key, JSON.stringify(arr));
+        // push the fresh iteration to the receiver (Builder), coalesced within a 5s window
+        ctx.waitUntil(pushStatusNotif(kv, NOTIF_KEY, {
+          chainId: rootId, commentId: sub.id, ticket: sub.ticket, team: sub.toTeam || '',
+          fromTeam: sub.team || '', teamStatus: 'to_be_initiated', iteration: nextIter, reason: '',
+          path: (sub.page && sub.page.path) || '/', pageName: pageNameOf(sub),
+          summary: `Resubmitted ${sub.ticket ? '#' + sub.ticket + ' ' : ''}for another pass.`,
+        }));
+        return json(maskForTeam(sub), 200, cors);
       }
 
       // ---- list notifications: all (admin) / own team (team key) ----
+      // Sorted by recency (coalesced status pushes bump `updatedAt`, so they resurface).
       if (request.method === 'GET' && url.pathname === '/notifications') {
         const team = url.searchParams.get('team');
         const all = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
-        if (isAdmin && !team) { all.sort(byNewest); return json(all, 200, cors); }
+        if (isAdmin && !team) { all.sort(byRecent); return json(all, 200, cors); }
         const t = team || passTeam;
         if (!t) return deny();
+        if (!teamEnabled(t)) return forbid(t);
         if (!isAdmin && passTeam !== t) return deny();
-        const mine = all.filter((n) => n.team === t).sort(byNewest);
+        const mine = all.filter((n) => n.team === t).sort(byRecent);
         return json(mine, 200, cors);
       }
 
@@ -468,7 +415,111 @@ function json(obj, status, cors) {
     headers: { 'Content-Type': 'application/json', ...cors },
   });
 }
-const byNewest = (a, b) => (a.createdAt < b.createdAt ? 1 : -1);
+// Sort notifications newest-first by last activity — a coalesced status push updates
+// `updatedAt` (see pushStatusNotif), so freshly-changed tickets resurface to the top.
+const byRecent = (a, b) => ((a.updatedAt || a.createdAt) < (b.updatedAt || b.createdAt) ? 1 : -1);
+const pageNameOf = (r) => (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
+
+// ENABLED_TEAMS is an optional JSON array of enabled team names. Returns null when it is
+// unset / empty / malformed (meaning "all teams enabled"), else the array of names.
+function parseEnabledTeams(env) {
+  const raw = (env.ENABLED_TEAMS || '').trim();
+  if (!raw) return null;
+  try {
+    const a = JSON.parse(raw);
+    return Array.isArray(a) && a.length ? a.map(String) : null;
+  } catch (e) { return null; }
+}
+
+// Locate a single record by id across every page: key. The status endpoints work by id
+// alone (no path), so we scan; returns { key, arr, rec } or null. Mutate `arr` in place
+// then `kv.put(key, JSON.stringify(arr))` to persist.
+async function findById(kv, id) {
+  if (!id) return null;
+  let cursor;
+  do {
+    const page = await kv.list({ prefix: 'page:', cursor });
+    for (const k of page.keys) {
+      const arr = JSON.parse((await kv.get(k.name)) || '[]');
+      const rec = arr.find((r) => r.id === id);
+      if (rec) return { key: k.name, arr, rec };
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return null;
+}
+
+// One-line human summary of a status transition (for the notification card).
+function statusSummary(r, next, reason) {
+  const where = pageNameOf(r);
+  const tick = r.ticket ? '#' + r.ticket + ' ' : '';
+  if (next === 'in_progress') return `Builder started ${tick}on ${where}.`;
+  if (next === 'deployed_live') return `${tick}on ${where} was deployed live.`;
+  if (next === 'reopened') return `Builder reopened ${tick}on ${where}${reason ? ': ' + reason : ''}.`;
+  if (next === 'to_be_initiated') return `${tick}on ${where} is back with Builder (TBI).`;
+  return `Status changed on ${where}.`;
+}
+
+// Debounced (5s) status push to the OTHER side. KV has no timers and the dashboards poll
+// on a ~5s cadence, so instead of appending one notification per change we COALESCE
+// server-side: a status change for a ticket-chain (chainId = the origin root id) targeting
+// a given team UPDATES that chain's latest status notification in place when it was written
+// less than 5s ago — so a burst of changes inside one 5s window collapses to a single record
+// carrying only the LATEST state. Older, settled notifications are left as history. The
+// notification's `updatedAt` (bumped on coalesce) drives the recency sort. Read-modify-write
+// on the notifications key is not atomic, matching the rest of the store's posture; at
+// review-tool volume the race is negligible and worst case is a duplicate card.
+const DEBOUNCE_MS = 5000;
+async function pushStatusNotif(kv, NOTIF_KEY, info) {
+  try {
+    const now = Date.now();
+    const nowIso = new Date(now).toISOString();
+    const all = JSON.parse((await kv.get(NOTIF_KEY)) || '[]');
+    let latest = null;
+    for (const n of all) {
+      if (n.kind !== 'status') continue;
+      if (n.chainId !== info.chainId || n.team !== info.team) continue;
+      if (!latest || (n.updatedAt || n.createdAt) > (latest.updatedAt || latest.createdAt)) latest = n;
+    }
+    const within = latest && (now - Date.parse(latest.updatedAt || latest.createdAt)) < DEBOUNCE_MS;
+    if (within) {
+      // coalesce: overwrite the in-window record with the latest state
+      latest.updatedAt = nowIso;
+      latest.commentId = info.commentId;
+      latest.ticket = info.ticket || '';
+      latest.teamStatus = info.teamStatus;
+      latest.iteration = info.iteration || 1;
+      latest.reason = info.reason || '';
+      latest.fromTeam = info.fromTeam || '';
+      latest.path = info.path || '/';
+      latest.pageName = info.pageName || 'a page';
+      latest.summary = info.summary || '';
+      latest.readTeam = false;
+      latest.readAdmin = false;
+    } else {
+      all.push({
+        id: crypto.randomUUID(),
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        team: info.team,             // who should see it (the OTHER side)
+        kind: 'status',
+        chainId: info.chainId,       // the origin root id — coalescing key
+        commentId: info.commentId,   // the specific iteration record that changed
+        ticket: info.ticket || '',
+        teamStatus: info.teamStatus,
+        iteration: info.iteration || 1,
+        reason: info.reason || '',
+        fromTeam: info.fromTeam || '',
+        path: info.path || '/',
+        pageName: info.pageName || 'a page',
+        summary: info.summary || '',
+        readTeam: false,
+        readAdmin: false,
+      });
+    }
+    await kv.put(NOTIF_KEY, JSON.stringify(all));
+  } catch (e) { /* best-effort; a missed notification never blocks the state change */ }
+}
 
 // Ticket number = YYMMDD (from the comment's own timestamp) + a 4-digit serial that
 // resets each day and runs 0001–9999. The serial lives in KV under `ticketseq:<YYMMDD>`
@@ -500,36 +551,30 @@ async function readAll(kv) {
   return out;
 }
 
-// The team-visible projection: never leak the true working status or the deploy
-// bucket. Teams DO get full per-comment detail — reviewer identity, the AI change
-// prompt, the completion validation — plus enough to synthesise a team-safe status
-// history (Raised → Marked done/Closed) client-side. The raw `history` (which carries
-// pre-deploy transitions) is deliberately NOT sent.
+// The team-visible projection. `teamStatus` is the single, real-time status — shared
+// verbatim with both the raiser (Content) and the receiver (Builder); there is no hidden
+// admin lifecycle or deploy bucket to mask anymore. The full `history[]` is included so
+// both sides can render the iteration timeline (-1, -2, -3…).
 function maskForTeam(r) {
   return {
     id: r.id,
-    ticket: r.ticket || '',   // human-facing ticket number (safe to share with the team)
-    parentId: r.parentId || null,
+    ticket: r.ticket || '',   // human-facing ticket number (base, or base-<n> for a sub-ticket)
+    parentId: r.parentId || null, // chains sub-tickets (and replies) to the origin root
+    iteration: r.iteration || 1,
     createdAt: r.createdAt,
-    team: r.team || '',       // FROM: which team raised it
-    toTeam: r.toTeam || '',   // TO: which team it is directed to (this team)
+    team: r.team || '',       // FROM: which team raised it (Content)
+    toTeam: r.toTeam || '',   // TO: which team it is directed to (Builder)
     name: r.name || '',       // reviewer identity
     comment: r.comment,
     changeTo: r.changeTo || '',
     aiPrompt: r.aiPrompt || '',       // ready-to-hand-to-a-dev change instruction
-    validation: r.validation || null, // completion validation (content-copy-match / manual)
     page: r.page,
     anchor: r.anchor || {},
-    status: r.published ? (r.publishedStatus || 'open') : 'open', // masked
-    publishedStatus: r.published ? (r.publishedStatus || '') : '', // for the Raised→Done timeline
-    publishedAt: r.publishedAt || '',
-    // Team-owned workflow — the team's OWN progress, shared with both the receiver
-    // (who sets it) and the raiser (who acknowledges after delivery). Not masked.
+    // the real-time state machine
     teamStatus: r.teamStatus || 'to_be_initiated',
     teamStatusAt: r.teamStatusAt || '',
-    teamDelivered: !!r.teamDelivered,
-    teamDeliveredAt: r.teamDeliveredAt || '',
-    ack: r.ack || '',
+    reopenReason: r.reopenReason || '', // last Builder bounce-back reason
+    history: Array.isArray(r.history) ? r.history : [], // full transition trail for the timeline
   };
 }
 
@@ -557,78 +602,6 @@ async function fireArrivalNotif(kv, NOTIF_KEY, rec) {
     existing.push(notif);
     await kv.put(NOTIF_KEY, JSON.stringify(existing));
   } catch (e) { /* best-effort; never block the comment write */ }
-}
-
-// A notification for one just-published root comment.
-function makeNotif(r, now) {
-  const done = r.publishedStatus === 'closed' ? 'closed' : 'marked Done';
-  const where = (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
-  return {
-    id: crypto.randomUUID(),
-    createdAt: now,
-    team: r.team || '',
-    commentId: r.id,
-    ticket: r.ticket || '',
-    path: (r.page && r.page.path) || '/',
-    pageName: where,
-    publishedStatus: r.publishedStatus,
-    summary: `Your comment ${r.ticket ? '#' + r.ticket + ' ' : ''}on ${where} was ${done}.`,
-    readTeam: false,
-    readAdmin: false,
-  };
-}
-
-// Team round-trip notification. kind 'delivered' → the receiver finished + delivered,
-// so tell the RAISER (rec.team) to acknowledge. kind 'redo' → the raiser bounced it back,
-// so tell the RECEIVER (rec.toTeam) to have another go.
-function makeTeamNotif(r, now, kind) {
-  const where = (r.page && r.page.title) || (r.page && r.page.path) || 'a page';
-  const toTeam = kind === 'redo' ? (r.toTeam || '') : (r.team || '');
-  const tick = r.ticket ? '#' + r.ticket + ' ' : '';
-  const summary = kind === 'redo'
-    ? `Redo requested on ${tick}(${where}) by ${r.team || 'the raising team'}.`
-    : `${r.toTeam || 'A team'} completed & delivered your comment ${tick}on ${where} — acknowledge it.`;
-  return {
-    id: crypto.randomUUID(),
-    createdAt: now,
-    team: toTeam,               // who should see it
-    kind,                       // 'delivered' | 'redo'
-    fromTeam: kind === 'redo' ? (r.team || '') : (r.toTeam || ''),
-    commentId: r.id,
-    ticket: r.ticket || '',
-    path: (r.page && r.page.path) || '/',
-    pageName: where,
-    summary,
-    readTeam: false,
-    readAdmin: false,
-  };
-}
-
-// Content validation - only meaningful when the change carries replacement copy.
-// Fetches the live page and confirms the new copy is present. Non-content changes
-// are 'manual' (the admin's Mark-Complete action is the confirmation).
-async function validateCompletion(env, rec) {
-  const checkedAt = new Date().toISOString();
-  const changeTo = (rec.changeTo || '').trim();
-  if (!changeTo) return { ok: true, method: 'manual', detail: 'No copy change to verify.', checkedAt };
-  const base = (env.ALLOW_ORIGIN && env.ALLOW_ORIGIN !== '*') ? env.ALLOW_ORIGIN.replace(/\/$/, '') : '';
-  if (!base) return { ok: true, method: 'manual', detail: 'No live origin configured; not auto-verified.', checkedAt };
-  const target = base + ((rec.page && rec.page.path) || '/');
-  try {
-    const res = await fetch(target, { headers: { 'User-Agent': 'ProofkitValidator/1.0' } });
-    if (!res.ok) return { ok: false, method: 'content-copy-match', detail: `Live page returned ${res.status}.`, checkedAt };
-    const html = await res.text();
-    const norm = (s) => s.replace(/\s+/g, ' ').trim();
-    const found = norm(html).includes(norm(changeTo));
-    return {
-      ok: found,
-      method: 'content-copy-match',
-      detail: found ? 'New copy found on the live page.' : 'New copy NOT found on the live page yet.',
-      checkedAt,
-    };
-  } catch (e) {
-    return { ok: false, method: 'content-copy-match', detail: 'Could not fetch the live page: ' + String(e && e.message), checkedAt };
-  }
 }
 
 // Deterministic prompt - always available even if the AI call fails.
