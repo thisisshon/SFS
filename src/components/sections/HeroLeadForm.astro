@@ -8,24 +8,49 @@
  *
  *   <Hero ...>
  *     <Fragment slot="title">...</Fragment>
- *     <Fragment slot="lead">...</Fragment>
- *     <HeroLeadForm slot="aside" heading="..." purposes={[...]} />
+ *     <HeroLeadForm slot="aside" heading="..." />
  *   </Hero>
  *
  * Layout (width / gap / mobile stacking) is canonical in global.css
- * (.hero-grid / .hero-aside); the shared field atom is .hf-field (rule 8).
- * Only the card's own look (.hero-form / .hf-head / .hf-body / .hf-otp /
- * .hf-success + the .hf-field.tel decoration) and the submit→OTP→done flow
- * live here, so a change lands once for every page that uses it.
+ * (.hero-grid / .hero-aside); every field is the shared .hf-field atom
+ * (rule 8). Only the card's own look (.hero-form / .hf-head / .hf-body /
+ * .hf-otp / .hf-success + the .hf-field.tel decoration) and the
+ * submit → OTP → thank-you flow live here, so a change lands once for
+ * every page that uses it.
+ *
+ * The card is data-driven: `rows` is an array of rows, each row an array of
+ * field descriptors (1 field = full width, 2 = side by side). The default
+ * reproduces the contact-us card exactly (Mobile / Name+City / Purpose). Pass
+ * a custom `rows` for a page with its own field set (see nps.astro).
+ *
+ * Field descriptor
+ *   { kind: 'text' | 'tel' | 'select' | 'city',
+ *     name, label, placeholder?, required?, error?,
+ *     flag?  (tel only - India flag + +91 prefix; default true),
+ *     options? (select only) }
  *
  * Props
- *   heading?      form title (default "Let's Schedule A Quick Call")
- *   purposes?     Purpose dropdown options (default: the contact-us set)
- *   submitLabel?  submit button label (default "Submit")
+ *   heading?      form title
+ *   description?  optional line under the title
+ *   rows?         field layout (default: Mobile / Name+City / Purpose)
+ *   purposes?     Purpose options for the DEFAULT rows (ignored if `rows` set)
+ *   submitLabel?  submit button label
  *   ariaLabel?    accessible name for the <form> (default = heading)
  */
+interface Field {
+  kind: 'text' | 'tel' | 'select' | 'city';
+  name: string;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  error?: string;
+  flag?: boolean;
+  options?: string[];
+}
 interface Props {
   heading?: string;
+  description?: string;
+  rows?: Field[][];
   purposes?: string[];
   submitLabel?: string;
   ariaLabel?: string;
@@ -33,6 +58,8 @@ interface Props {
 
 const {
   heading = "Let's Schedule A Quick Call",
+  description,
+  rows,
   purposes = ['Product related', 'Service related', 'Demat account related', 'Others'],
   submitLabel = 'Submit',
   ariaLabel,
@@ -49,69 +76,78 @@ const cities = [
   'Rajkot', 'Ranchi', 'Salem', 'Surat', 'Thane', 'Thiruvananthapuram', 'Tiruchirappalli',
   'Udaipur', 'Vadodara', 'Varanasi', 'Vijayawada', 'Visakhapatnam', 'Warangal', 'Other',
 ];
+
+/* Default layout = the contact-us card (Mobile / Name+City / Purpose). */
+const defaultRows: Field[][] = [
+  [{ kind: 'tel', name: 'mobile', label: 'Mobile Number', placeholder: '00000 00000', flag: true, required: true }],
+  [
+    { kind: 'text', name: 'name', label: 'Name', placeholder: 'Name', required: true },
+    { kind: 'city', name: 'city', label: 'City', placeholder: 'City', required: true },
+  ],
+  [{ kind: 'select', name: 'purpose', label: 'Purpose', placeholder: 'Purpose', options: purposes, required: true }],
+];
+const layout = rows ?? defaultRows;
+
+/* per-field fallbacks (id / error copy / autocomplete keyed off the field name) */
+const DEFAULT_ERR: Record<string, string> = {
+  mobile: 'Enter a valid 10-digit mobile number.',
+  name: 'Please enter your name.',
+  city: 'Please select your city.',
+  purpose: 'Please select a purpose.',
+};
+const fieldId = (f: Field) => `cf-${f.name}`;
+const errId = (f: Field) => `err-${f.name}`;
+const errText = (f: Field) => f.error ?? DEFAULT_ERR[f.name] ?? 'This field is required.';
+const autoComplete = (f: Field) =>
+  f.name === 'name' ? 'name' : f.kind === 'tel' ? 'tel-national' : undefined;
+const optionsFor = (f: Field) => (f.kind === 'city' ? cities : f.options ?? []);
 ---
 
 <form class="hero-form hero-lead-form hero-aside" aria-label={ariaLabel ?? heading} onsubmit="return false;">
   <div class="hf-head">
     <h2>{heading}</h2>
+    {description && <p>{description}</p>}
   </div>
   <div class="hf-body">
-    <!-- Row 1: Mobile Number (full width) - India flag + +91 treatment on the shared .hf-field -->
-    <div class="hf-row">
-      <div class="hf-unit">
-        <div class="hf-field tel">
-          <span class="tel-flag" aria-hidden="true"><img src="/images/india-flag.png" alt="" /></span>
-          <span class="tel-div" aria-hidden="true"></span>
-          <div class="hf-field-in">
-            <label for="cf-mobile">Mobile Number</label>
-            <div class="tel-row">
-              <span class="tel-cc">+91</span>
-              <input id="cf-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="00000 00000" aria-describedby="err-mobile" required />
-            </div>
+    {layout.map((row) => (
+      <div class="hf-row">
+        {row.map((f) => (
+          <div class="hf-unit">
+            {f.kind === 'tel' && f.flag !== false ? (
+              <div class="hf-field tel">
+                <span class="tel-flag" aria-hidden="true"><img src="/images/india-flag.png" alt="" /></span>
+                <span class="tel-div" aria-hidden="true"></span>
+                <div class="hf-field-in">
+                  <label for={fieldId(f)}>{f.label}</label>
+                  <div class="tel-row">
+                    <span class="tel-cc">+91</span>
+                    <input id={fieldId(f)} name={f.name} type="tel" inputmode="numeric" autocomplete="tel-national" placeholder={f.placeholder} aria-describedby={errId(f)} required={f.required} />
+                  </div>
+                </div>
+              </div>
+            ) : f.kind === 'select' || f.kind === 'city' ? (
+              <div class="hf-field sel">
+                <div class="hf-field-in">
+                  <label for={fieldId(f)}>{f.label}</label>
+                  <select id={fieldId(f)} name={f.name} aria-describedby={errId(f)} required={f.required}>
+                    <option value="">{f.placeholder ?? f.label}</option>
+                    {optionsFor(f).map((o) => <option>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <div class="hf-field">
+                <div class="hf-field-in">
+                  <label for={fieldId(f)}>{f.label}</label>
+                  <input id={fieldId(f)} name={f.name} type={f.kind === 'tel' ? 'tel' : 'text'} inputmode={f.kind === 'tel' ? 'numeric' : undefined} autocomplete={autoComplete(f)} placeholder={f.placeholder} aria-describedby={errId(f)} required={f.required} />
+                </div>
+              </div>
+            )}
+            <p class="hf-err" id={errId(f)}>{errText(f)}</p>
           </div>
-        </div>
-        <p class="hf-err" id="err-mobile">Enter a valid 10-digit mobile number.</p>
+        ))}
       </div>
-    </div>
-    <!-- Row 2: Name + City -->
-    <div class="hf-row">
-      <div class="hf-unit">
-        <div class="hf-field">
-          <div class="hf-field-in">
-            <label for="cf-name">Name</label>
-            <input id="cf-name" name="name" type="text" autocomplete="name" placeholder="Name" aria-describedby="err-name" required />
-          </div>
-        </div>
-        <p class="hf-err" id="err-name">Please enter your name.</p>
-      </div>
-      <div class="hf-unit">
-        <div class="hf-field sel">
-          <div class="hf-field-in">
-            <label for="cf-city">City</label>
-            <select id="cf-city" name="city" aria-describedby="err-city" required>
-              <option value="">City</option>
-              {cities.map((c) => <option>{c}</option>)}
-            </select>
-          </div>
-        </div>
-        <p class="hf-err" id="err-city">Please select your city.</p>
-      </div>
-    </div>
-    <!-- Row 3: Purpose (full width) -->
-    <div class="hf-row">
-      <div class="hf-unit">
-        <div class="hf-field sel">
-          <div class="hf-field-in">
-            <label for="cf-purpose">Purpose</label>
-            <select id="cf-purpose" name="purpose" aria-describedby="err-purpose" required>
-              <option value="">Purpose</option>
-              {purposes.map((p) => <option>{p}</option>)}
-            </select>
-          </div>
-        </div>
-        <p class="hf-err" id="err-purpose">Please select a purpose.</p>
-      </div>
-    </div>
+    ))}
   </div>
   <button class="btn btn-primary btn-xl" type="submit">{submitLabel}</button>
   <div class="hf-otp" role="group" aria-label="OTP Verification">
@@ -262,16 +298,16 @@ const cities = [
 
 <script>
   /* Hero lead-capture card: mobile-number grouping + inline validation +
-     submit → OTP → thank-you flow. Scoped per-form so multiple cards on a page
-     (or one per page) each behave independently. */
+     submit → OTP → thank-you flow. Scoped per-form and per-field so a card
+     with a custom field set (e.g. no Purpose) validates only the fields it
+     actually renders. */
   (function () {
     'use strict';
     var forms = Array.prototype.slice.call(document.querySelectorAll('.hero-lead-form'));
     forms.forEach(function (form) {
       var q = function (sel) { return form.querySelector(sel); };
 
-      /* mobile: +91 is a fixed visual prefix, so the value holds only the 10
-         digits grouped "##### #####". A pasted +91 12-digit number is trimmed. */
+      /* mobile: grouped "##### #####"; a pasted +91 12-digit number is trimmed. */
       var mob = q('#cf-mobile');
       if (mob) {
         mob.addEventListener('input', function () {
@@ -282,12 +318,15 @@ const cities = [
         });
       }
 
-      var fields = [
+      /* candidate validators, keyed by field id; only those present are wired */
+      var candidates = [
         { id: '#cf-name', err: '#err-name', test: function (v) { return v.trim().length >= 2; } },
         { id: '#cf-mobile', err: '#err-mobile', test: function (v) { var d = v.replace(/\D/g, ''); if (d.length === 12 && d.slice(0, 2) === '91') { d = d.slice(2); } return d.length === 10; } },
         { id: '#cf-city', err: '#err-city', test: function (v) { return !!v; } },
         { id: '#cf-purpose', err: '#err-purpose', test: function (v) { return !!v; } },
       ];
+      var fields = candidates.filter(function (f) { return q(f.id); });
+
       var check = function (f, showErr) {
         var input = q(f.id), errEl = q(f.err);
         if (!input || !errEl) { return true; }
@@ -299,7 +338,6 @@ const cities = [
       };
       fields.forEach(function (f) {
         var input = q(f.id);
-        if (!input) { return; }
         input.addEventListener('input', function () {
           if (input.closest('.hf-field').classList.contains('invalid')) check(f, true);
         });
