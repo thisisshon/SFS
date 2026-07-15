@@ -8,6 +8,7 @@
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
+import HeroLeadForm from '../components/sections/HeroLeadForm.astro';
 import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
@@ -70,6 +71,7 @@ const seo = {
     <Fragment slot="title">Loan Against Shares – Unlock Liquidity Without Selling a Single Share</Fragment>
     <Fragment slot="lead">Need quick funds for short‑term expenses? A Loan Against Shares lets you access money instantly while keeping your investments intact. With Shriram Financial Services, you can get credit against your shares — currently available for Demat accounts with NSDL.</Fragment>
     <div class="cta"><a class="btn btn-primary" href="/open-demat-account">Apply Now</a></div>
+    <HeroLeadForm slot="aside" />
   </Hero>
 
   <!-- ===== At-a-glance snapshot (moved from hero) ===== -->

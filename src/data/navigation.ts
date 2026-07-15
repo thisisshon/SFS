@@ -130,14 +130,15 @@ export const megaNavSections: MegaNavSection[] = [
         linkGroups: [
           [
             { label: 'FAQs', href: '/faqs' },
-            { label: 'Contact & Help', href: '/contact-us' },
+            { label: 'Contact Us', href: '/contact-us' },
+            { label: 'Branch Locator', href: '/contact-us#branch-locator' },
+            { label: 'Downloads', href: '/contact-us#downloads' },
             { label: 'Grievance Redressal', href: '/grievance-redressal' },
             { label: 'Regulatory & Compliance', href: '/regulatorydocuments' },
           ],
         ],
       },
     ],
-    viewAll: { label: 'View All Support', href: '/contact-us' },
   },
 ];
 

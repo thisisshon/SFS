@@ -8,6 +8,7 @@
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
+import HeroLeadForm from '../components/sections/HeroLeadForm.astro';
 import StepsRows from '../components/sections/StepsRows.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
@@ -118,6 +119,7 @@ const seo = {
   >
     <Fragment slot="title">Loan Against Mutual Fund: Unlock the Value of Your Mutual Fund Portfolio</Fragment>
     <Fragment slot="lead">Get quick access to funds by leveraging your mutual fund portfolio while your investments remain intact.</Fragment>
+    <HeroLeadForm slot="aside" />
   </Hero>
 
   <!-- ===== Access Funds While Your Investments Grow ===== -->

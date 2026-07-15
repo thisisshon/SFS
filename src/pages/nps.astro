@@ -9,6 +9,7 @@
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
+import HeroLeadForm from '../components/sections/HeroLeadForm.astro';
 import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
@@ -125,6 +126,7 @@ const seo = {
   >
     <Fragment slot="title">Build a Retirement Corpus With the <span class="g">National Pension System</span></Fragment>
     <Fragment slot="lead">A voluntary, market-linked retirement scheme regulated by PFRDA - with an exclusive extra tax benefit, low costs and the flexibility to shape your own asset mix.</Fragment>
+    <HeroLeadForm slot="aside" />
   </Hero>
 
   <!-- ===== What Is NPS ===== -->

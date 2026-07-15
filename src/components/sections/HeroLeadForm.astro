@@ -1,0 +1,331 @@
+---
+/**
+ * HeroLeadForm - the "Schedule a call" lead-capture card for the two-column
+ * hero aside (rule 7 Type 2). Single source of truth for the pattern that was
+ * previously hand-copied into contact-us / open-demat-account /
+ * karnataka-bank-customers. Drop it into a <Hero> `aside` slot to promote a
+ * one-column hero to two columns:
+ *
+ *   <Hero ...>
+ *     <Fragment slot="title">...</Fragment>
+ *     <Fragment slot="lead">...</Fragment>
+ *     <HeroLeadForm slot="aside" heading="..." purposes={[...]} />
+ *   </Hero>
+ *
+ * Layout (width / gap / mobile stacking) is canonical in global.css
+ * (.hero-grid / .hero-aside); the shared field atom is .hf-field (rule 8).
+ * Only the card's own look (.hero-form / .hf-head / .hf-body / .hf-otp /
+ * .hf-success + the .hf-field.tel decoration) and the submit→OTP→done flow
+ * live here, so a change lands once for every page that uses it.
+ *
+ * Props
+ *   heading?      form title (default "Let's Schedule A Quick Call")
+ *   purposes?     Purpose dropdown options (default: the contact-us set)
+ *   submitLabel?  submit button label (default "Submit")
+ *   ariaLabel?    accessible name for the <form> (default = heading)
+ */
+interface Props {
+  heading?: string;
+  purposes?: string[];
+  submitLabel?: string;
+  ariaLabel?: string;
+}
+
+const {
+  heading = "Let's Schedule A Quick Call",
+  purposes = ['Product related', 'Service related', 'Demat account related', 'Others'],
+  submitLabel = 'Submit',
+  ariaLabel,
+} = Astro.props;
+
+/* City dropdown - shared across every instance of the card. */
+const cities = [
+  'Agra', 'Ahmedabad', 'Ajmer', 'Aligarh', 'Amritsar', 'Aurangabad', 'Bengaluru', 'Bhopal',
+  'Bhubaneswar', 'Chandigarh', 'Chennai', 'Coimbatore', 'Dehradun', 'Delhi', 'Faridabad',
+  'Ghaziabad', 'Guntur', 'Gurugram', 'Guwahati', 'Gwalior', 'Hubballi', 'Hyderabad', 'Indore',
+  'Jabalpur', 'Jaipur', 'Jalandhar', 'Jammu', 'Jamshedpur', 'Jodhpur', 'Kanpur', 'Kochi',
+  'Kolkata', 'Kozhikode', 'Lucknow', 'Ludhiana', 'Madurai', 'Mangaluru', 'Meerut', 'Mumbai',
+  'Mysuru', 'Nagpur', 'Nashik', 'Navi Mumbai', 'Noida', 'Patna', 'Prayagraj', 'Pune', 'Raipur',
+  'Rajkot', 'Ranchi', 'Salem', 'Surat', 'Thane', 'Thiruvananthapuram', 'Tiruchirappalli',
+  'Udaipur', 'Vadodara', 'Varanasi', 'Vijayawada', 'Visakhapatnam', 'Warangal', 'Other',
+];
+---
+
+<form class="hero-form hero-lead-form hero-aside" aria-label={ariaLabel ?? heading} onsubmit="return false;">
+  <div class="hf-head">
+    <h2>{heading}</h2>
+  </div>
+  <div class="hf-body">
+    <!-- Row 1: Mobile Number (full width) - India flag + +91 treatment on the shared .hf-field -->
+    <div class="hf-row">
+      <div class="hf-unit">
+        <div class="hf-field tel">
+          <span class="tel-flag" aria-hidden="true"><img src="/images/india-flag.png" alt="" /></span>
+          <span class="tel-div" aria-hidden="true"></span>
+          <div class="hf-field-in">
+            <label for="cf-mobile">Mobile Number</label>
+            <div class="tel-row">
+              <span class="tel-cc">+91</span>
+              <input id="cf-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="00000 00000" aria-describedby="err-mobile" required />
+            </div>
+          </div>
+        </div>
+        <p class="hf-err" id="err-mobile">Enter a valid 10-digit mobile number.</p>
+      </div>
+    </div>
+    <!-- Row 2: Name + City -->
+    <div class="hf-row">
+      <div class="hf-unit">
+        <div class="hf-field">
+          <div class="hf-field-in">
+            <label for="cf-name">Name</label>
+            <input id="cf-name" name="name" type="text" autocomplete="name" placeholder="Name" aria-describedby="err-name" required />
+          </div>
+        </div>
+        <p class="hf-err" id="err-name">Please enter your name.</p>
+      </div>
+      <div class="hf-unit">
+        <div class="hf-field sel">
+          <div class="hf-field-in">
+            <label for="cf-city">City</label>
+            <select id="cf-city" name="city" aria-describedby="err-city" required>
+              <option value="">City</option>
+              {cities.map((c) => <option>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <p class="hf-err" id="err-city">Please select your city.</p>
+      </div>
+    </div>
+    <!-- Row 3: Purpose (full width) -->
+    <div class="hf-row">
+      <div class="hf-unit">
+        <div class="hf-field sel">
+          <div class="hf-field-in">
+            <label for="cf-purpose">Purpose</label>
+            <select id="cf-purpose" name="purpose" aria-describedby="err-purpose" required>
+              <option value="">Purpose</option>
+              {purposes.map((p) => <option>{p}</option>)}
+            </select>
+          </div>
+        </div>
+        <p class="hf-err" id="err-purpose">Please select a purpose.</p>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-xl" type="submit">{submitLabel}</button>
+  <div class="hf-otp" role="group" aria-label="OTP Verification">
+    <div class="hf-head">
+      <h2>OTP Verification</h2>
+      <p>We've sent a 6-digit verification code to your phone number. Please enter it below to submit your message.</p>
+    </div>
+    <button class="btn btn-primary btn-xl" type="button" id="cf-verify">Verify &amp; Submit</button>
+  </div>
+  <div class="hf-success" role="status" aria-live="polite">
+    <span class="ok" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+    <h3>Thanks for reaching out!</h3>
+    <p class="hf-msg">Your message has been successfully sent. Our team is on it, and we'll get back to you within 24 hours.</p>
+  </div>
+</form>
+
+<style>
+  /* "Schedule a call" lead-capture card. Width + flex come from .hero-aside
+     (global.css); the shared field atom is .hf-field (rule 8) - only the card's
+     own look + the .hf-field.tel decoration + the submit→OTP→done states live here. */
+  .hero-form {
+    background: var(--color-cream-350); /* #f8f4e8 */
+    border: 1px solid var(--color-tan-300); /* #e1dbc6 */
+    border-radius: 24px;
+    padding: clamp(24px, 3vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .hf-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .hero-form h2 {
+    font-weight: 500;
+    font-size: clamp(22px, 2.1vw, 26px);
+    color: var(--color-olive-600); /* #4f583b */
+  }
+  .hf-head p {
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--color-sage-700); /* #6b6f5e */
+  }
+  .hf-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  /* Mobile field - homepage hero mobile input brought here as DECORATION on the
+     shared .hf-field (rule 8): India flag + hairline divider + persistent +91
+     country code. Structure/height/label/states inherit from .hf-field. */
+  .hf-field.tel { gap: 12px; }
+  .hf-field.tel .tel-flag {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .hf-field.tel .tel-flag img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hf-field.tel .tel-div {
+    width: 1px;
+    height: 24px;
+    flex: none;
+    background: var(--color-gray-250); /* #ddd - home hero-card divider */
+  }
+  .hf-field.tel .tel-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hf-field.tel .tel-cc {
+    flex: none;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-field-ink);
+  }
+  .hf-field.tel .tel-row input {
+    flex: 1 1 auto;
+  }
+  .hero-form .btn-primary {
+    width: 100%;
+    min-width: 0; /* full-width form submit: exempt from the 220px footprint */
+  }
+  /* OTP verification step (between Submit and the thank-you state) */
+  .hf-otp {
+    display: none;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .hf-otp .btn-primary {
+    width: 100%;
+    min-width: 0;
+  }
+  .hero-form.otp .hf-body, .hero-form.otp > .btn-primary {
+    display: none;
+  }
+  .hero-form.otp .hf-otp {
+    display: flex;
+  }
+  /* success state */
+  .hf-success {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .hero-form.done .hf-body, .hero-form.done .btn-primary,
+  .hero-form.done .hf-otp {
+    display: none;
+  }
+  .hero-form.done .hf-success {
+    display: flex;
+  }
+  .hf-success .ok {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-green-100); /* #daead7 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hf-success .ok svg {
+    width: 24px;
+    height: 24px;
+    color: var(--color-success-strong); /* #067a45 */
+  }
+  .hf-success h3 {
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--color-olive-900); /* #2e3914 */
+  }
+  .hf-success p {
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--color-sage-700); /* #6b6f5e */
+  }
+</style>
+
+<script>
+  /* Hero lead-capture card: mobile-number grouping + inline validation +
+     submit → OTP → thank-you flow. Scoped per-form so multiple cards on a page
+     (or one per page) each behave independently. */
+  (function () {
+    'use strict';
+    var forms = Array.prototype.slice.call(document.querySelectorAll('.hero-lead-form'));
+    forms.forEach(function (form) {
+      var q = function (sel) { return form.querySelector(sel); };
+
+      /* mobile: +91 is a fixed visual prefix, so the value holds only the 10
+         digits grouped "##### #####". A pasted +91 12-digit number is trimmed. */
+      var mob = q('#cf-mobile');
+      if (mob) {
+        mob.addEventListener('input', function () {
+          var raw = mob.value.replace(/\D/g, '');
+          if (raw.length === 12 && raw.slice(0, 2) === '91') { raw = raw.slice(2); }
+          var d = raw.slice(0, 10);
+          mob.value = d ? (d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d) : '';
+        });
+      }
+
+      var fields = [
+        { id: '#cf-name', err: '#err-name', test: function (v) { return v.trim().length >= 2; } },
+        { id: '#cf-mobile', err: '#err-mobile', test: function (v) { var d = v.replace(/\D/g, ''); if (d.length === 12 && d.slice(0, 2) === '91') { d = d.slice(2); } return d.length === 10; } },
+        { id: '#cf-city', err: '#err-city', test: function (v) { return !!v; } },
+        { id: '#cf-purpose', err: '#err-purpose', test: function (v) { return !!v; } },
+      ];
+      var check = function (f, showErr) {
+        var input = q(f.id), errEl = q(f.err);
+        if (!input || !errEl) { return true; }
+        var ok = f.test(input.value);
+        input.closest('.hf-field').classList.toggle('invalid', showErr && !ok);
+        errEl.classList.toggle('show', showErr && !ok);
+        input.setAttribute('aria-invalid', showErr && !ok ? 'true' : 'false');
+        return ok;
+      };
+      fields.forEach(function (f) {
+        var input = q(f.id);
+        if (!input) { return; }
+        input.addEventListener('input', function () {
+          if (input.closest('.hf-field').classList.contains('invalid')) check(f, true);
+        });
+        input.addEventListener('change', function () { check(f, true); });
+      });
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var firstBad = null, allOk = true;
+        fields.forEach(function (f) {
+          var ok = check(f, true);
+          if (!ok && !firstBad) { firstBad = f; }
+          if (!ok) { allOk = false; }
+        });
+        if (!allOk) {
+          if (firstBad) { var b = q(firstBad.id); if (b) b.focus(); }
+          return;
+        }
+        form.classList.add('otp'); /* step 1 -> OTP verification screen */
+      });
+      var verifyBtn = q('#cf-verify');
+      if (verifyBtn) {
+        verifyBtn.addEventListener('click', function () {
+          form.classList.remove('otp');
+          form.classList.add('done'); /* OTP verify -> thank-you screen */
+        });
+      }
+    });
+  })();
+</script>

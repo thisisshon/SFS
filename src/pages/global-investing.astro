@@ -10,6 +10,7 @@
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
+import HeroLeadForm from '../components/sections/HeroLeadForm.astro';
 import StepsRow from '../components/sections/StepsRow.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { faqPageSchema, breadcrumbSchema, organizationSchema } from '../lib/seo';
@@ -133,6 +134,7 @@ const seo = {
   >
     <Fragment slot="title">Invest in <span class="g">US Stocks &amp; ETFs</span> from India</Fragment>
     <Fragment slot="lead">Diversify beyond home. Own the world's leading companies through the RBI's LRS route - with fractional investing, USD assets and research-led guidance from Shriram.</Fragment>
+    <HeroLeadForm slot="aside" />
   </Hero>
 
   <!-- ===== Why Invest Globally ===== -->
