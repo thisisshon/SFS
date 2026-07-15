@@ -1,5 +1,5 @@
   import { TEAMS, TEAM_COLORS, WORKER_URL, PROOFKIT_ENABLED, pageName, ADMIN_TEAM,
-    buildPanelLogin, buildDropdown, getSession, setSession, clearSession, initLocalTheme, mountThemeToggle, ensureDemoReset } from './config.js';
+    buildPanelLogin, buildDropdown, getSession, setSession, clearSession, initLocalTheme, mountThemeToggle, ensureDemoReset, isTeamEnabled } from './config.js';
   (() => {
     if (!PROOFKIT_ENABLED) return; // master switch (./config.ts)
     // Theme skins come from design/tokens.css (linked by the adapter). Each team member
@@ -224,6 +224,9 @@
     // ---- state ----
     let comments = [], notes = [], view = 'comments', filter = 'all', byPage = false;
     let search = '', sort = 'new', fromFilter = '', entryDetail = null;
+    let landed = false; // set once we've landed on the first visible tab (post first load)
+    let lastSig = '';   // signature of the last-rendered data — lets polling skip no-op re-renders
+    const dataSig = () => JSON.stringify([comments, notes]);
 
     // Iteration members of a chain (root + resubmit sub-tickets), oldest→newest by iteration.
     function chainMembers(rec) {
@@ -298,7 +301,18 @@
       const [c, n] = await Promise.all([store.comments(), store.notifs()]);
       comments = Array.isArray(c) ? c : [];
       notes = Array.isArray(n) ? n : [];
-      renderHeader(); counts(); render();
+      // Polling runs every ~5s; skip the whole re-render when the data is byte-identical
+      // to what's already on screen. This stops the entry animation replaying (and the DOM
+      // churn / scroll jump) on every idle poll — we only repaint when something actually changed.
+      const sig = dataSig();
+      if (landed && sig === lastSig) return;
+      lastSig = sig;
+      renderHeader(); counts();   // counts() → updateActiveBadge() toggles the Active tab's visibility
+      // Land on the first VISIBLE tab on first load; thereafter only re-home if the
+      // current tab has just been hidden (e.g. Active after its last item is resubmitted).
+      const cur = document.querySelector('.tmd-nav[data-view="' + view + '"]');
+      if (!landed || !cur || cur.hidden) { landed = true; setView(firstVisibleView()); }
+      render();
     }
     // Poll on the shared ~5s debounced cadence (the Worker coalesces server-side).
     let refreshTimer = null;
@@ -334,10 +348,15 @@
         `<span class="tmd-count tmd-count-reopened"><b>${reop}</b> Reopened</span>`;
       updateActiveBadge();
     }
-    // Live count on the Active nav item (items reopened, awaiting Content's resubmit).
+    // The Active (bounceback) category only exists when Builder has reopened something.
+    // Hide the whole nav tab — indication and all — when the queue is empty; show it
+    // (with its live count) the moment an item is bounced back.
     function updateActiveBadge() {
+      const n = reopenedRoots().length;
       const b = $('#tmd-badge-delivery');
-      if (b) { const n = reopenedRoots().length; b.textContent = n; b.hidden = n === 0; }
+      if (b) { b.textContent = n; b.hidden = n === 0; }
+      const navBtn = $('.tmd-nav[data-view="delivery"]');
+      if (navBtn) navBtn.hidden = n === 0;
     }
 
     // The reopen band on an Active card: Builder's reason + a Resubmit action. Content can
@@ -618,6 +637,18 @@
       note.hidden = note.hidden || inDetail;
     }
 
+    // Point `view` at a nav tab and sync the highlight (does not render).
+    function setView(v) {
+      view = v; entryDetail = null;
+      document.querySelectorAll('.tmd-nav').forEach((n) => n.classList.toggle('is-active', n.dataset.view === v));
+    }
+    // The first nav tab that's actually visible — the landing target on load, and the
+    // fallback when the current tab (e.g. Active) gets hidden out from under us.
+    function firstVisibleView() {
+      const first = [...document.querySelectorAll('.tmd-side .tmd-nav')].find((n) => !n.hidden);
+      return first ? first.dataset.view : 'comments';
+    }
+
     function render() {
       const detail = !!entryDetail; // a drilled-in ticket detail renders in the comments host
       $('#tmd-view-comments').hidden = !(view === 'comments' || detail);
@@ -651,7 +682,7 @@
       try {
         await store.markRead(ids, true);
         notes.forEach((n) => { if (ids.includes(n.id)) n.readTeam = true; });
-        counts(); render();
+        counts(); render(); lastSig = dataSig();
       } catch (err) { prim.disabled = false; alert('Could not update — ' + err.message); }
     }
 
@@ -669,6 +700,15 @@
       if (team()) login.keyInput.focus(); else login.focusTeam();
     }
     function hideLogin() { login && login.el.remove(); }
+
+    // Reveal the gated-off stub and hide the app shell (init calls this when the
+    // signed-in/previewed team is parked off via TEAM_ENABLED). CSS keys `display`
+    // off `:not([hidden])`, so clearing/​setting `hidden` is all that's needed.
+    function showBlocked() {
+      const b = $('#tmd-blocked'); const app = $('.tmd-app');
+      if (b) b.hidden = false;
+      if (app) app.hidden = true;
+    }
 
     async function tryLogin() {
       const t = login.getTeam();
@@ -699,6 +739,11 @@
       const s = getSession();
       if (OVERRIDE) mountAdminBar();
       if (s.key && s.team === ADMIN_TEAM && !OVERRIDE) { location.replace('/reviewdash'); return; }
+      // Team parked off via TEAM_ENABLED while still signed in: show the "no access"
+      // stub instead of the app (login.js blocks new sign-ins; this catches a live
+      // session whose team was disabled). Admin override previewing a parked team also
+      // lands here — that team's board genuinely isn't available.
+      if (s.key && team() && !isTeamEnabled(team())) { showBlocked(); return; }
       if (s.key && (s.team || OVERRIDE)) {
         loadData().then(startAutoRefresh).catch((e) => {
           if (e.message === 'unauthorized') { clearSession(); showLogin(); }
@@ -775,7 +820,7 @@
         await store.markRead([id], read);
         const n = notes.find((x) => x.id === id);
         if (n) n.readTeam = read;
-        counts(); render();
+        counts(); render(); lastSig = dataSig();
       } catch (err) { b.disabled = false; alert('Could not update — ' + err.message); }
     });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));

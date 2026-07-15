@@ -35,8 +35,7 @@ import './core/teamdash.css';            // team-dashboard-specific styles
       Hidden at build; teamdash.js reveals it (and hides .tmd-app) when the signed-in
       team is parked off via TEAM_ENABLED / isTeamEnabled (../config → ./core/config.js).
       Self-contained + token-styled so it needs nothing from teamdash.css. */}
-  <div class="tmd-blocked" id="tmd-blocked" hidden
-       style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box">
+  <div class="tmd-blocked" id="tmd-blocked" hidden>
     <div style="max-width:420px;text-align:center;color:var(--pk-body)">
       <h1 style="margin:0 0 8px;font:700 22px/1.3 var(--pk-font,Outfit);color:var(--pk-ink)">Review access unavailable</h1>
       <p style="margin:0 0 20px;font:400 14px/1.5 var(--pk-font,Outfit)">This team’s review access isn’t currently available.</p>
@@ -48,11 +47,8 @@ import './core/teamdash.css';            // team-dashboard-specific styles
     <!-- Brand top bar -->
     <header class="tmd-top">
       <div class="tmd-brand">
-        <svg class="tmd-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z"/>
-          <circle cx="12" cy="9.5" r="1.6"/>
-        </svg>
-        <span class="tmd-word">ProoofKit</span>
+        <span class="tmd-mark" aria-hidden="true"></span>
+        <span class="tmd-word">Proofkit</span>
         <span class="tmd-tag">Content Review | <span class="tmd-tag-brand">Shriram FS</span><span class="tmd-tag-team" id="tmd-tag-team"></span></span>
       </div>
       <div class="tmd-actions">
@@ -84,8 +80,8 @@ import './core/teamdash.css';            // team-dashboard-specific styles
 
     <div class="tmd-shell">
       <aside class="tmd-side">
+        <button class="tmd-nav" data-view="delivery" hidden>Active<span class="tmd-navbadge" id="tmd-badge-delivery" hidden>0</span></button>
         <button class="tmd-nav is-active" data-view="comments">Completed</button>
-        <button class="tmd-nav" data-view="delivery">Active<span class="tmd-navbadge" id="tmd-badge-delivery" hidden>0</span></button>
         <button class="tmd-nav" data-view="notifs">
           Notifications
           <span class="tmd-navbadge" id="tmd-navbadge" hidden>0</span>

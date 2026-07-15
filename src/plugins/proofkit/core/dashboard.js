@@ -142,6 +142,12 @@
     async function loadData() {
       all = await store.all();
       try { notifs = await store.notifications(); } catch (e) { notifs = notifs || []; }
+      // Polling runs every ~5s; skip the whole re-render when the data is byte-identical to
+      // what's already on screen — stops the entry animation replaying (and the DOM churn /
+      // scroll jump) on every idle poll. Only repaint when something actually changed.
+      const sig = dataSig();
+      if (seenMarked && sig === lastSig) return;
+      lastSig = sig;
       counts(); render();
       if (!seenMarked) { seenMarked = true; try { localStorage.setItem(SEEN_KEY, new Date().toISOString()); } catch (e) {} }
     }
@@ -169,6 +175,15 @@
     }
     function hideLogin() { login && login.el.remove(); }
 
+    // Reveal the gated-off stub and hide the app shell (init calls this when a
+    // signed-in identity is parked off via TEAM_ENABLED). CSS keys `display` off
+    // `:not([hidden])`, so toggling `hidden` is all that's needed.
+    function showBlocked() {
+      const b = $('#rvd-blocked'); const app = $('.rvd-app');
+      if (b) b.hidden = false;
+      if (app) app.hidden = true;
+    }
+
     async function tryLogin() {
       const team = login.getTeam();
       const key = login.keyInput.value.trim();
@@ -192,6 +207,10 @@
       relabelNav();       // "Team Queue" + retire the Delivery nav
       const s = getSession();
       if (s.key && s.team && s.team !== ADMIN_TEAM) { location.replace('/teamdash'); return; }
+      // Defence-in-depth: a signed-in identity parked off via TEAM_ENABLED gets the
+      // "no access" stub, not the app. Builder/ADMIN_TEAM is always enabled, so this
+      // is belt-and-braces rather than a path hit in normal operation.
+      if (s.key && s.team && !isTeamEnabled(s.team)) { showBlocked(); return; }
       if (s.key && s.team === ADMIN_TEAM) {
         loadData().then(startAutoRefresh).catch((e) => {
           if (e.message === 'unauthorized') { clearSession(); showLogin(); }
@@ -272,6 +291,8 @@
     let all = [], notifs = [], tab = 'all', teamFilter = '', entryDetail = null, view = 'dash', search = '', sort = 'new';
     const sel = new Set();
     let selectMode = false;
+    let lastSig = '';   // signature of the last-rendered data — lets polling skip no-op re-renders
+    const dataSig = () => JSON.stringify([all, notifs]);
 
     // ---- unread: chains touched since the last dashboard visit ----
     const SEEN_KEY = 'reviewLastSeen';
@@ -491,7 +512,7 @@
         reason = reason.trim();
         if (!reason) { alert('A reason is required to reopen.'); return; }
       }
-      try { Object.assign(rec, await store.teamAction(rec, action, reason)); counts(); render(); }
+      try { Object.assign(rec, await store.teamAction(rec, action, reason)); counts(); render(); lastSig = dataSig(); }
       catch (e) { alert('Could not update — ' + e.message); }
     }
     async function rowDelete(root) {
@@ -500,7 +521,7 @@
         await store.del(root);
         const rootId = root.parentId || root.id;
         all = all.filter((c) => c.id !== rootId && c.parentId !== rootId);
-        counts(); render();
+        counts(); render(); lastSig = dataSig();
       } catch (e) { alert('Could not delete — ' + e.message); }
     }
     function rowMenuItems(root) {
@@ -577,7 +598,7 @@
       el.addEventListener('click', (e) => { if (e.target === el) close(); });
       el.querySelector('.rvd-editsave').addEventListener('click', async () => {
         const save = el.querySelector('.rvd-editsave'); save.disabled = true; save.textContent = 'Saving…';
-        try { Object.assign(root, await store.setTeams(root, fromDD.getValue(), toDD.getValue())); close(); counts(); render(); }
+        try { Object.assign(root, await store.setTeams(root, fromDD.getValue(), toDD.getValue())); close(); counts(); render(); lastSig = dataSig(); }
         catch (e) { save.disabled = false; save.textContent = 'Save'; alert('Could not save — ' + e.message); }
       });
     }
@@ -925,7 +946,7 @@
           else if (act === 'reopen') { Object.assign(rec, await store.teamAction(rec, 'reopen', reason)); }
           else if (act === 'delete') { await store.del(rec); const rid = rec.parentId || rec.id; all = all.filter((c) => c.id !== rid && c.parentId !== rid); }
         }
-        sel.clear(); updateBulk(); counts(); render();
+        sel.clear(); updateBulk(); counts(); render(); lastSig = dataSig();
       } catch (err) { alert('Bulk action failed — ' + err.message); }
       finally { [...$('#rvd-bulk').querySelectorAll('.rvd-bulk-a')].forEach((x) => (x.disabled = false)); }
     });

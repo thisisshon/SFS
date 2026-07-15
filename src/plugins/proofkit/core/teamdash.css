@@ -7,6 +7,11 @@
     min-height:100vh;padding:40px clamp(20px,5vw,48px) 96px}
   .tmd *{box-sizing:border-box}
   .tmd .tmd-app{max-width:1100px;margin:0 auto}
+  /* Gated-off "no access" stub. Layout lives here (NOT inline) so the `hidden`
+     attribute — which the JS toggles — actually wins; an inline `display` would
+     out-rank the UA `[hidden]{display:none}` rule and pin it permanently open. */
+  .tmd-blocked{min-height:70vh;align-items:center;justify-content:center;padding:24px}
+  .tmd-blocked:not([hidden]){display:flex}
   @keyframes tmd-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes tmd-spin{to{transform:rotate(360deg)}}
   @keyframes tmd-pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
@@ -33,9 +38,10 @@
   .tmd .tmd-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
     padding-bottom:24px;border-bottom:1px solid var(--pk-hair)}
   .tmd .tmd-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
-  .tmd .tmd-mark{display:block;flex:none}
-  .tmd .tmd-mark path{fill:var(--pk-red)}
-  .tmd .tmd-mark circle{fill:var(--pk-on-accent)}
+  /* Brand mark — the Proofkit dot: a brand-red disc with a soft red glow ring
+     (mirrors the verdict-page logo). Tracks the theme via --pk-red. */
+  .tmd .tmd-mark{display:block;flex:none;width:11px;height:11px;border-radius:50%;
+    background:var(--pk-red);box-shadow:0 0 0 4px color-mix(in srgb,var(--pk-red) 22%,transparent)}
   .tmd .tmd-word{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--pk-ink)}
   .tmd .tmd-tag{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
     color:var(--pk-muted);padding-left:12px;border-left:1px solid var(--pk-hair)}
@@ -89,6 +95,9 @@
     background:transparent;cursor:pointer;color:var(--pk-body);display:flex;align-items:center;gap:8px;
     font:600 12px/1 var(--pk-font);letter-spacing:.1em;text-transform:uppercase;transition:color .15s,background .15s}
   .tmd .tmd-nav::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;background:transparent;transition:background .15s}
+  /* A hidden nav tab (e.g. Active when nothing's been bounced back) must actually
+     collapse — the base rule's `display:flex` would otherwise out-rank UA `[hidden]`. */
+  .tmd .tmd-nav[hidden]{display:none}
   .tmd .tmd-nav.is-active{color:var(--pk-ink);background:var(--pk-active-bg)}
   .tmd .tmd-nav.is-active::before{background:var(--pk-red)}
   .tmd .tmd-navbadge{min-width:18px;height:18px;padding:0 4px;border-radius:9999px;background:var(--pk-red);color:var(--pk-on-accent);

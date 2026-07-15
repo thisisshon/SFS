@@ -6,6 +6,20 @@ outdated copy when re-syncing the package (see `INSTALL.md` → "Updating an exi
 
 The version is the package's, not the host site's — it travels with the folder.
 
+## 2.24.1 — 2026-07-15 — Brand mark: Proofkit dot logo on both dashboards
+
+Cosmetic. Swaps the chat-bubble SVG mark for the **Proofkit dot** — a brand-red disc with a soft red
+glow ring (`box-shadow:0 0 0 4px` of a `color-mix`'d red), mirroring the logo used on the feature-spec
+verdict dashboard — and corrects the wordmark typo **ProoofKit → Proofkit**. Applied to the admin
+`/reviewdash` and team `/teamdash` headers in both the Astro adapters and the standalone `core/*.html`
+entries; the dot tracks the active skin via `--pk-red` like the mark it replaces.
+
+- **Markup** — `.rvd-mark` / `.tmd-mark` are now a `<span>` dot (was an inline `<svg>` chat bubble) in
+  `Dashboard.astro`, `TeamDashboard.astro`, `core/dashboard.html`, `core/teamdash.html`.
+- **CSS** — `core/dashboard.css` / `core/teamdash.css`: `.rvd-mark` / `.tmd-mark` restyled as the dot;
+  the dead `path`/`circle` fill rules removed. No token or layout changes; the login + on-page overlay
+  marks are untouched.
+
 ## 2.24.0 — 2026-07-14 — Content↔Builder rework: real-time status, reopen loop, team access gating
 
 Phase 1 of Proofkit's Content↔Builder evolution. Restricts active review to the **Content** team and the

@@ -10,6 +10,11 @@
     min-height:100vh;padding:40px clamp(20px,5vw,48px) 96px}
   .rvd *{box-sizing:border-box}
   .rvd .rvd-app{max-width:1180px;margin:0 auto}
+  /* Gated-off "no access" stub. Layout lives here (NOT inline) so the `hidden`
+     attribute — which the JS toggles — actually wins; an inline `display` would
+     out-rank the UA `[hidden]{display:none}` rule and pin it permanently open. */
+  .rvd-blocked{min-height:70vh;align-items:center;justify-content:center;padding:24px}
+  .rvd-blocked:not([hidden]){display:flex}
   @keyframes pk-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes pk-spin{to{transform:rotate(360deg)}}
   @keyframes pk-pop-in{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
@@ -45,9 +50,10 @@
   .rvd .rvd-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
     padding-bottom:24px;border-bottom:1px solid var(--pk-hair)}
   .rvd .rvd-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
-  .rvd .rvd-mark{display:block;flex:none}
-  .rvd .rvd-mark path{fill:var(--pk-red)}
-  .rvd .rvd-mark circle{fill:var(--pk-on-accent)}
+  /* Brand mark — the Proofkit dot: a brand-red disc with a soft red glow ring
+     (mirrors the verdict-page logo). Tracks the theme via --pk-red. */
+  .rvd .rvd-mark{display:block;flex:none;width:11px;height:11px;border-radius:50%;
+    background:var(--pk-red);box-shadow:0 0 0 4px color-mix(in srgb,var(--pk-red) 22%,transparent)}
   .rvd .rvd-word{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--pk-ink)}
   .rvd .rvd-tag{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
     color:var(--pk-muted);padding-left:12px;border-left:1px solid var(--pk-hair)}

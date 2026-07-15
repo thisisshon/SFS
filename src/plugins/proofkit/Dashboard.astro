@@ -31,8 +31,7 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
       Hidden at build; dashboard.js reveals it (and hides .rvd-app) if a signed-in
       identity is parked off via TEAM_ENABLED / isTeamEnabled (Builder/admin is
       always enabled, so this is defence-in-depth). Self-contained + token-styled. */}
-  <div class="rvd-blocked" id="rvd-blocked" hidden
-       style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box">
+  <div class="rvd-blocked" id="rvd-blocked" hidden>
     <div style="max-width:420px;text-align:center;color:var(--pk-body)">
       <h1 style="margin:0 0 8px;font:700 22px/1.3 var(--pk-font,Outfit);color:var(--pk-ink)">Review access unavailable</h1>
       <p style="margin:0 0 20px;font:400 14px/1.5 var(--pk-font,Outfit)">This team’s review access isn’t currently available.</p>
@@ -44,11 +43,8 @@ import './core/dashboard.css';           // admin-dashboard-specific styles
     <!-- Brand top bar -->
     <header class="rvd-top">
       <div class="rvd-brand">
-        <svg class="rvd-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4V5Z"/>
-          <circle cx="12" cy="9.5" r="1.6"/>
-        </svg>
-        <span class="rvd-word">ProoofKit</span>
+        <span class="rvd-mark" aria-hidden="true"></span>
+        <span class="rvd-word">Proofkit</span>
         <span class="rvd-tag">Content Review | <span class="rvd-tag-brand">Shriram FS</span></span>
       </div>
       <div class="rvd-actions">
